@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DateFilterForm } from './DateFilterForm';
 
 interface DateRange {
   from: Date;
@@ -21,6 +22,7 @@ interface DateRangePickerProps {
 
 export const DateRangePicker = ({ value, onChange, className }: DateRangePickerProps) => {
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'form' | 'calendar'>('form');
   
   const presets = [
     {
@@ -45,21 +47,45 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
   ];
 
   const handlePresetClick = (preset: DateRange) => {
+    console.log('=== PRESET SELECIONADO ===');
+    console.log('Preset:', preset);
     onChange(preset);
     setOpen(false);
   };
 
+  const handleFormChange = (newRange: DateRange) => {
+    console.log('=== FORM CHANGE ===');
+    console.log('Nova range:', newRange);
+    onChange(newRange);
+    setOpen(false);
+  };
+
   const handleReset = () => {
-    onChange({ from: subDays(new Date(), 30), to: new Date() });
+    const defaultRange = { from: subDays(new Date(), 30), to: new Date() };
+    console.log('=== RESET FILTRO ===');
+    console.log('Range padrão:', defaultRange);
+    onChange(defaultRange);
     setOpen(false);
   };
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <label className="text-sm font-medium text-white">Período:</label>
+      <label htmlFor="date-range-picker" className="text-sm font-medium text-white">
+        Período:
+      </label>
+      
+      {/* Formulário simples sempre visível */}
+      <DateFilterForm 
+        value={value}
+        onChange={handleFormChange}
+        className="mb-4"
+      />
+      
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            id="date-range-picker"
+            name="dateRangePicker"
             variant="outline"
             className={cn(
               'w-full sm:w-auto justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600 min-w-[280px]',
@@ -67,18 +93,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {value?.from ? (
-              value.to ? (
-                <>
-                  {format(value.from, 'dd/MM/yyyy', { locale: ptBR })} -{' '}
-                  {format(value.to, 'dd/MM/yyyy', { locale: ptBR })}
-                </>
-              ) : (
-                format(value.from, 'dd/MM/yyyy', { locale: ptBR })
-              )
-            ) : (
-              <span>Selecionar período</span>
-            )}
+            Opções Avançadas
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-700" align="start">
@@ -89,9 +104,10 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
                 <h4 className="text-sm font-medium text-white">Períodos Rápidos</h4>
               </div>
               <div className="p-2 space-y-1 min-w-[160px]">
-                {presets.map((preset) => (
+                {presets.map((preset, index) => (
                   <Button
-                    key={preset.label}
+                    key={`preset-${index}`}
+                    id={`preset-button-${index}`}
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start text-slate-300 hover:bg-slate-700 hover:text-white"
@@ -101,6 +117,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
                   </Button>
                 ))}
                 <Button
+                  id="reset-button"
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start text-slate-400 hover:bg-slate-700 hover:text-white"
@@ -119,12 +136,15 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
                 <p className="text-xs text-slate-400">Clique na data inicial e final</p>
               </div>
               <Calendar
+                id="date-range-calendar"
                 initialFocus
                 mode="range"
                 defaultMonth={value?.from}
                 selected={{ from: value?.from, to: value?.to }}
                 onSelect={(range) => {
                   if (range?.from && range?.to) {
+                    console.log('=== CALENDAR SELECT ===');
+                    console.log('Range selecionada:', range);
                     onChange({ from: range.from, to: range.to });
                     setOpen(false);
                   } else if (range?.from) {
