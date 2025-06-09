@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveClient } from './useActiveClient';
-import { format } from 'date-fns';
 
 interface DateRange {
   from: Date;
@@ -43,8 +42,9 @@ export const useClientData = (dateRange?: DateRange) => {
 
         // Aplicar filtro de data se fornecido
         if (dateRange) {
-          const fromDate = format(dateRange.from, 'yyyy-MM-dd');
-          const toDate = format(dateRange.to, 'yyyy-MM-dd');
+          // Usar toISOString().split('T')[0] para garantir formato YYYY-MM-DD
+          const fromDate = dateRange.from.toISOString().split('T')[0];
+          const toDate = dateRange.to.toISOString().split('T')[0];
           
           fbQuery = fbQuery
             .gte('data', fromDate)
@@ -74,6 +74,30 @@ export const useClientData = (dateRange?: DateRange) => {
 
         console.log('Dados Facebook:', fbResponse.data?.length || 0, 'registros');
         console.log('Dados WhatsApp:', wppResponse.data?.length || 0, 'registros');
+
+        // Se não há dados no período mas temos o cliente, vamos verificar se existem dados sem filtro
+        if (dateRange && (!fbResponse.data?.length && !wppResponse.data?.length)) {
+          console.log('Verificando se existem dados para este cliente sem filtro de data...');
+          
+          const [fbAllResponse, wppAllResponse] = await Promise.all([
+            supabase
+              .from('facebook_ads')
+              .select('data')
+              .eq('cliente_nome', activeClient)
+              .limit(1),
+            supabase
+              .from('whatsapp_anuncio')
+              .select('data_criacao')
+              .eq('cliente_nome', activeClient)
+              .limit(1)
+          ]);
+          
+          if (fbAllResponse.data?.length || wppAllResponse.data?.length) {
+            console.log('Existem dados para este cliente, mas não no período selecionado');
+          } else {
+            console.log('Não existem dados para este cliente');
+          }
+        }
 
         setFacebookAds(fbResponse.data || []);
         setWhatsappLeads(wppResponse.data || []);

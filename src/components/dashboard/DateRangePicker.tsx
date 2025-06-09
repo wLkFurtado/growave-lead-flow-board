@@ -34,6 +34,13 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
     {
       label: 'Este mês',
       value: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
+    },
+    {
+      label: 'Mês passado',
+      value: { 
+        from: startOfMonth(subDays(startOfMonth(new Date()), 1)), 
+        to: endOfMonth(subDays(startOfMonth(new Date()), 1)) 
+      }
     }
   ];
 
@@ -75,13 +82,13 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-700" align="start">
-          <div className="flex flex-col sm:flex-row">
+          <div className="flex flex-col lg:flex-row">
             {/* Presets */}
-            <div className="border-b sm:border-b-0 sm:border-r border-slate-700">
+            <div className="border-b lg:border-b-0 lg:border-r border-slate-700">
               <div className="p-3 border-b border-slate-700">
                 <h4 className="text-sm font-medium text-white">Períodos Rápidos</h4>
               </div>
-              <div className="p-2 space-y-1 min-w-[150px]">
+              <div className="p-2 space-y-1 min-w-[160px]">
                 {presets.map((preset) => (
                   <Button
                     key={preset.label}
