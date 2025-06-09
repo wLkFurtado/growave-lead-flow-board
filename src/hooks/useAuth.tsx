@@ -35,47 +35,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('🔄 AuthProvider: useEffect principal iniciado');
     
     let mounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
 
     const initializeAuth = async () => {
-      try {
-        console.log('🔄 AuthProvider: Iniciando getSession...');
-        
-        // Aumentei o timeout para 15 segundos
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Session timeout')), 15000);
-        });
+      while (retryCount < maxRetries && mounted) {
+        try {
+          console.log(`🔄 AuthProvider: Tentativa ${retryCount + 1}/${maxRetries} - Iniciando getSession...`);
+          
+          const { data: { session }, error } = await supabase.auth.getSession();
 
-        const { data: { session }, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as any;
-
-        if (error) {
-          console.error('❌ AuthProvider: Erro ao buscar sessão:', error);
-          if (mounted) {
-            setIsLoading(false);
+          if (error) {
+            console.error(`❌ AuthProvider: Erro na tentativa ${retryCount + 1}:`, error);
+            retryCount++;
+            if (retryCount < maxRetries) {
+              console.log(`⏳ AuthProvider: Aguardando 2s antes da próxima tentativa...`);
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              continue;
+            } else {
+              console.error('❌ AuthProvider: Máximo de tentativas atingido');
+              if (mounted) {
+                setIsLoading(false);
+              }
+              return;
+            }
           }
-          return;
-        }
 
-        console.log('✅ AuthProvider: Session obtida:', !!session);
+          console.log('✅ AuthProvider: Session obtida:', !!session);
 
-        if (session?.user && mounted) {
-          console.log('🔄 AuthProvider: Usuário encontrado, buscando perfil...');
-          setUser(session.user);
-          await fetchProfile(session.user.id);
-        } else {
-          console.log('⚠️ AuthProvider: Nenhum usuário logado');
-          if (mounted) {
-            setIsLoading(false);
+          if (session?.user && mounted) {
+            console.log('🔄 AuthProvider: Usuário encontrado, buscando perfil...');
+            setUser(session.user);
+            await fetchProfile(session.user.id);
+          } else {
+            console.log('⚠️ AuthProvider: Nenhum usuário logado');
+            if (mounted) {
+              setIsLoading(false);
+            }
+          }
+          return; // Sucesso, sair do loop
+        } catch (error) {
+          console.error(`❌ AuthProvider: Erro fatal na tentativa ${retryCount + 1}:`, error);
+          retryCount++;
+          if (retryCount < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
-      } catch (error) {
-        console.error('❌ AuthProvider: Erro fatal na inicialização:', error);
-        if (mounted) {
-          setIsLoading(false);
-        }
+      }
+
+      // Se chegou aqui, todas as tentativas falharam
+      if (mounted) {
+        console.log('❌ AuthProvider: Todas as tentativas falharam, finalizando');
+        setIsLoading(false);
       }
     };
 
@@ -83,34 +94,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         console.log('🔄 AuthProvider: Buscando perfil para userId:', userId);
         
-        // Aumentei o timeout para 20 segundos e simplifiquei a query
-        const profilePromise = supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .single();
 
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Profile timeout')), 20000);
-        });
-
-        const { data, error } = await Promise.race([
-          profilePromise,
-          timeoutPromise
-        ]) as any;
-
         if (error) {
           console.error('❌ AuthProvider: Erro ao buscar perfil:', error);
-          // Mesmo com erro no perfil, vamos tentar continuar
+          // Criar perfil temporário para não quebrar o app
           if (mounted) {
-            // Criar um perfil temporário para não quebrar o app
             const tempProfile = {
               id: userId,
               nome_completo: 'Usuário',
-              email: 'usuario@email.com',
+              email: user?.email || 'usuario@email.com',
               role: 'client',
               clientes_associados: []
             };
+            console.log('🔧 AuthProvider: Usando perfil temporário');
             setProfile(tempProfile);
             setIsLoading(false);
           }
@@ -126,12 +127,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (data.role !== 'admin') {
             try {
               console.log('🔄 AuthProvider: Buscando clientes associados...');
-              const { data: userClientsData, error: clientsError } = await supabase
+              const { data: userClientsData } = await supabase
                 .from('user_clients')
                 .select('cliente_nome')
                 .eq('user_id', userId);
 
-              if (!clientsError && userClientsData) {
+              if (userClientsData) {
                 clientesAssociados = userClientsData.map(item => item.cliente_nome);
                 console.log('✅ AuthProvider: Clientes encontrados:', clientesAssociados);
               }
@@ -148,8 +149,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(profileWithClients);
           setUserClients(clientesAssociados);
           console.log('✅ AuthProvider: Profile e clientes definidos');
-        } else {
-          console.log('⚠️ AuthProvider: Nenhum perfil encontrado');
         }
 
         if (mounted) {
@@ -159,19 +158,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('❌ AuthProvider: Erro ao buscar perfil:', error);
         if (mounted) {
+          // Em caso de erro, criar perfil básico
+          const basicProfile = {
+            id: userId,
+            nome_completo: 'Usuário',
+            email: user?.email || 'usuario@email.com',
+            role: 'client',
+            clientes_associados: []
+          };
+          setProfile(basicProfile);
           console.log('✅ AuthProvider: Finalizando loading (erro fetchProfile)');
           setIsLoading(false);
         }
       }
     };
 
-    // Timeout global aumentado para 30 segundos
+    // Timeout de segurança reduzido
     const globalTimeout = setTimeout(() => {
       console.log('⏰ AuthProvider: TIMEOUT GLOBAL - Forçando finalização do loading');
       if (mounted) {
         setIsLoading(false);
       }
-    }, 30000);
+    }, 15000); // Reduzido para 15 segundos
 
     initializeAuth();
 
