@@ -16,7 +16,7 @@ export const useClientData = (dateRange?: DateRange) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('=== useClientData Effect ===');
+    console.log('=== useClientData Effect START ===');
     console.log('activeClient:', activeClient);
     console.log('clientLoading:', clientLoading);
     console.log('dateRange:', dateRange);
@@ -36,11 +36,11 @@ export const useClientData = (dateRange?: DateRange) => {
         return;
       }
       
+      console.log('=== INICIANDO BUSCA DE DADOS ===');
       setIsLoading(true);
       setError(null);
       
       try {
-        console.log('=== INÍCIO DA BUSCA ===');
         console.log('Cliente ativo:', activeClient);
         console.log('Período:', dateRange);
         
@@ -86,7 +86,7 @@ export const useClientData = (dateRange?: DateRange) => {
           wppQuery
         ]);
 
-        console.log('=== RESULTADOS ===');
+        console.log('=== RESULTADOS DA BUSCA ===');
         console.log('Facebook Response:', fbResponse);
         console.log('WhatsApp Response:', wppResponse);
 
@@ -103,7 +103,7 @@ export const useClientData = (dateRange?: DateRange) => {
         const fbData = fbResponse.data || [];
         const wppData = wppResponse.data || [];
 
-        console.log('Dados encontrados:');
+        console.log('Dados finais encontrados:');
         console.log('Facebook:', fbData.length, 'registros');
         console.log('WhatsApp:', wppData.length, 'registros');
 
@@ -111,11 +111,12 @@ export const useClientData = (dateRange?: DateRange) => {
         setWhatsappLeads(wppData);
         
       } catch (error: any) {
-        console.error('=== ERRO ===', error);
+        console.error('=== ERRO NA BUSCA ===', error);
         setError(error.message || 'Erro ao carregar dados');
         setFacebookAds([]);
         setWhatsappLeads([]);
       } finally {
+        console.log('=== FINALIZANDO BUSCA ===');
         setIsLoading(false);
       }
     };
@@ -123,7 +124,7 @@ export const useClientData = (dateRange?: DateRange) => {
     fetchData();
   }, [activeClient, clientLoading, dateRange]);
 
-  return {
+  const result = {
     facebookAds,
     whatsappLeads,
     isLoading: isLoading || clientLoading,
@@ -131,4 +132,7 @@ export const useClientData = (dateRange?: DateRange) => {
     activeClient,
     hasData: facebookAds.length > 0 || whatsappLeads.length > 0
   };
+
+  console.log('=== useClientData RETURN ===', result);
+  return result;
 };

@@ -9,41 +9,45 @@ export const useActiveClient = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log('=== useActiveClient Effect ===');
+    console.log('=== useActiveClient Effect START ===');
     console.log('authLoading:', authLoading);
     console.log('profile:', profile);
     console.log('isAdmin:', isAdmin);
     console.log('userClients:', userClients);
 
-    if (authLoading) {
-      console.log('Auth ainda carregando, aguardando...');
-      return;
-    }
-
-    if (!profile) {
-      console.log('Nenhum perfil encontrado');
-      setActiveClient('');
-      setAvailableClients([]);
-      setIsLoading(false);
-      return;
-    }
-
-    if (isAdmin) {
-      console.log('Usuário é admin, buscando todos os clientes...');
-      fetchAllClients();
-    } else {
-      console.log('Usuário é cliente, usando clientes associados:', userClients);
-      setAvailableClients(userClients);
-      if (userClients.length > 0) {
-        const clientToSet = userClients[0];
-        console.log('Definindo cliente ativo para:', clientToSet);
-        setActiveClient(clientToSet);
-      } else {
-        console.log('Nenhum cliente associado encontrado');
-        setActiveClient('');
+    const initializeClient = async () => {
+      if (authLoading) {
+        console.log('Auth ainda carregando, aguardando...');
+        return;
       }
-      setIsLoading(false);
-    }
+
+      if (!profile) {
+        console.log('Nenhum perfil encontrado');
+        setActiveClient('');
+        setAvailableClients([]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (isAdmin) {
+        console.log('Usuário é admin, buscando todos os clientes...');
+        await fetchAllClients();
+      } else {
+        console.log('Usuário é cliente regular, usando clientes associados:', userClients);
+        setAvailableClients(userClients);
+        if (userClients.length > 0) {
+          const clientToSet = userClients[0];
+          console.log('Definindo cliente ativo para:', clientToSet);
+          setActiveClient(clientToSet);
+        } else {
+          console.log('Nenhum cliente associado encontrado');
+          setActiveClient('');
+        }
+        setIsLoading(false);
+      }
+    };
+
+    initializeClient();
   }, [profile, userClients, isAdmin, authLoading]);
 
   const fetchAllClients = async () => {
@@ -74,17 +78,17 @@ export const useActiveClient = () => {
         console.error('Erro ao buscar clientes WPP:', wppResponse.error);
       }
 
-      const fbClients = fbResponse.data?.map(row => row.cliente_nome) || [];
-      const wppClients = wppResponse.data?.map(row => row.cliente_nome) || [];
+      const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
+      const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
       
       // Combinar e remover duplicatas
-      const allClients = [...new Set([...fbClients, ...wppClients])].filter(Boolean);
+      const allClients = [...new Set([...fbClients, ...wppClients])];
       console.log('Todos os clientes encontrados:', allClients);
       
       setAvailableClients(allClients);
       
       // Se não há cliente ativo e há clientes disponíveis, selecionar um
-      if (!activeClient && allClients.length > 0) {
+      if (allClients.length > 0) {
         const savedClient = localStorage.getItem('activeClient');
         console.log('Cliente salvo no localStorage:', savedClient);
         
@@ -95,10 +99,9 @@ export const useActiveClient = () => {
           console.log('Usando primeiro cliente da lista:', allClients[0]);
           setActiveClient(allClients[0]);
         }
-      } else if (activeClient && !allClients.includes(activeClient)) {
-        // Se o cliente ativo atual não está na lista, selecionar o primeiro
-        console.log('Cliente ativo atual não encontrado na lista, selecionando primeiro');
-        setActiveClient(allClients[0] || '');
+      } else {
+        console.log('Nenhum cliente encontrado');
+        setActiveClient('');
       }
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);
@@ -115,7 +118,7 @@ export const useActiveClient = () => {
     }
   };
 
-  console.log('=== useActiveClient State ===');
+  console.log('=== useActiveClient State FINAL ===');
   console.log('activeClient:', activeClient);
   console.log('availableClients:', availableClients);
   console.log('isLoading:', isLoading || authLoading);
