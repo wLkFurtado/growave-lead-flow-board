@@ -2,6 +2,7 @@
 import React from 'react';
 import { UserProfile } from './UserProfile';
 import { ClientSelector } from './ClientSelector';
+import { useAuth } from '@/hooks/useAuth';
 import { Bell, Search } from 'lucide-react';
 
 interface DashboardHeaderProps {
@@ -10,6 +11,8 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader = ({ activeTab, isCollapsed }: DashboardHeaderProps) => {
+  const { isAdmin, profile } = useAuth();
+
   const getTitle = () => {
     switch (activeTab) {
       case 'kanban':
@@ -43,7 +46,14 @@ export const DashboardHeader = ({ activeTab, isCollapsed }: DashboardHeaderProps
             </p>
           </div>
           
-          <ClientSelector />
+          {isAdmin && <ClientSelector />}
+          
+          {!isAdmin && profile && (
+            <div className="bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700">
+              <span className="text-sm text-slate-300">Cliente: </span>
+              <span className="text-sm font-medium text-white">{profile.name}</span>
+            </div>
+          )}
         </div>
         
         <div className="flex items-center space-x-4">
