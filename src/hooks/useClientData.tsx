@@ -23,15 +23,14 @@ export const useClientData = (dateRange?: DateRange) => {
 
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
 
     const fetchData = async () => {
       try {
-        // Se cliente ainda está carregando, aguardar um pouco
+        // Se cliente ainda está carregando, aguardar
         if (clientLoading) {
           console.log('⏳ useClientData: Cliente carregando, aguardando...');
           
-          timeoutId = setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             console.log('⏰ useClientData: TIMEOUT aguardando cliente - finalizando');
             if (mounted) {
               setFacebookAds([]);
@@ -39,8 +38,8 @@ export const useClientData = (dateRange?: DateRange) => {
               setError(null);
               setIsLoading(false);
             }
-          }, 8000);
-          return;
+          }, 10000);
+          return () => clearTimeout(timeoutId);
         }
 
         if (!activeClient) {
@@ -58,7 +57,7 @@ export const useClientData = (dateRange?: DateRange) => {
         setIsLoading(true);
         setError(null);
         
-        // Timeout para queries
+        // Timeout aumentado para 15 segundos
         const queryPromise = async () => {
           let fbQuery = supabase
             .from('facebook_ads')
@@ -90,15 +89,13 @@ export const useClientData = (dateRange?: DateRange) => {
         };
 
         const timeoutPromise = new Promise((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error('Query timeout')), 10000);
+          setTimeout(() => reject(new Error('Query timeout')), 15000);
         });
 
         const [fbResponse, wppResponse] = await Promise.race([
           queryPromise(),
           timeoutPromise
         ]) as any;
-
-        if (timeoutId) clearTimeout(timeoutId);
 
         console.log('✅ useClientData: Dados obtidos:', {
           fb: fbResponse.data?.length || 0,
@@ -138,21 +135,20 @@ export const useClientData = (dateRange?: DateRange) => {
       }
     };
 
-    // Timeout global
+    // Timeout global aumentado para 25 segundos
     const globalTimeout = setTimeout(() => {
       console.log('⏰ useClientData: TIMEOUT GLOBAL - Forçando finalização');
       if (mounted) {
         setIsLoading(false);
         setError('Timeout na busca de dados');
       }
-    }, 15000);
+    }, 25000);
 
     fetchData();
 
     return () => {
       console.log('🧹 useClientData: Cleanup');
       mounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
       clearTimeout(globalTimeout);
     };
   }, [activeClient, clientLoading, dateRange]);

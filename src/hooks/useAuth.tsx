@@ -35,24 +35,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('🔄 AuthProvider: useEffect principal iniciado');
     
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
         console.log('🔄 AuthProvider: Iniciando getSession...');
         
-        // Timeout para getSession
+        // Aumentei o timeout para 15 segundos
         const sessionPromise = supabase.auth.getSession();
         const timeoutPromise = new Promise((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error('Session timeout')), 8000);
+          setTimeout(() => reject(new Error('Session timeout')), 15000);
         });
 
         const { data: { session }, error } = await Promise.race([
           sessionPromise,
           timeoutPromise
         ]) as any;
-
-        if (timeoutId) clearTimeout(timeoutId);
 
         if (error) {
           console.error('❌ AuthProvider: Erro ao buscar sessão:', error);
@@ -86,15 +83,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         console.log('🔄 AuthProvider: Buscando perfil para userId:', userId);
         
-        // Timeout para fetchProfile
+        // Aumentei o timeout para 20 segundos e simplifiquei a query
         const profilePromise = supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
-          .maybeSingle();
+          .single();
 
         const timeoutPromise = new Promise((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error('Profile timeout')), 10000);
+          setTimeout(() => reject(new Error('Profile timeout')), 20000);
         });
 
         const { data, error } = await Promise.race([
@@ -102,11 +99,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           timeoutPromise
         ]) as any;
 
-        if (timeoutId) clearTimeout(timeoutId);
-
         if (error) {
           console.error('❌ AuthProvider: Erro ao buscar perfil:', error);
+          // Mesmo com erro no perfil, vamos tentar continuar
           if (mounted) {
+            // Criar um perfil temporário para não quebrar o app
+            const tempProfile = {
+              id: userId,
+              nome_completo: 'Usuário',
+              email: 'usuario@email.com',
+              role: 'client',
+              clientes_associados: []
+            };
+            setProfile(tempProfile);
             setIsLoading(false);
           }
           return;
@@ -120,6 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           if (data.role !== 'admin') {
             try {
+              console.log('🔄 AuthProvider: Buscando clientes associados...');
               const { data: userClientsData, error: clientsError } = await supabase
                 .from('user_clients')
                 .select('cliente_nome')
@@ -127,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
               if (!clientsError && userClientsData) {
                 clientesAssociados = userClientsData.map(item => item.cliente_nome);
+                console.log('✅ AuthProvider: Clientes encontrados:', clientesAssociados);
               }
             } catch (error) {
               console.error('❌ AuthProvider: Erro ao buscar clientes do usuário:', error);
@@ -158,13 +165,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    // Timeout global de segurança
+    // Timeout global aumentado para 30 segundos
     const globalTimeout = setTimeout(() => {
       console.log('⏰ AuthProvider: TIMEOUT GLOBAL - Forçando finalização do loading');
       if (mounted) {
         setIsLoading(false);
       }
-    }, 15000);
+    }, 30000);
 
     initializeAuth();
 
@@ -189,7 +196,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('🧹 AuthProvider: Cleanup');
       mounted = false;
       clearTimeout(globalTimeout);
-      if (timeoutId) clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);

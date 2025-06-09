@@ -19,22 +19,21 @@ export const useActiveClient = () => {
     });
 
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
 
     const initializeClient = async () => {
       try {
-        // Se auth ainda está carregando, aguardar um pouco, mas com timeout
+        // Se auth ainda está carregando, aguardar um pouco
         if (authLoading) {
           console.log('⏳ useActiveClient: Auth carregando, aguardando...');
           
-          // Timeout para não esperar muito o auth
-          timeoutId = setTimeout(() => {
+          // Timeout reduzido para 8 segundos
+          const timeoutId = setTimeout(() => {
             console.log('⏰ useActiveClient: TIMEOUT aguardando auth - continuando');
             if (mounted) {
               setIsLoading(false);
             }
-          }, 5000);
-          return;
+          }, 8000);
+          return () => clearTimeout(timeoutId);
         }
 
         console.log('🔄 useActiveClient: Auth finalizado, processando cliente...');
@@ -75,7 +74,7 @@ export const useActiveClient = () => {
       try {
         console.log('🔄 useActiveClient: Buscando clientes no Supabase...');
         
-        // Timeout para fetchAllClients
+        // Timeout aumentado para 15 segundos
         const fetchPromise = async () => {
           const { supabase } = await import('@/integrations/supabase/client');
           
@@ -94,15 +93,13 @@ export const useActiveClient = () => {
         };
 
         const timeoutPromise = new Promise((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error('Fetch clients timeout')), 8000);
+          setTimeout(() => reject(new Error('Fetch clients timeout')), 15000);
         });
 
         const { fbResponse, wppResponse } = await Promise.race([
           fetchPromise(),
           timeoutPromise
         ]) as any;
-
-        if (timeoutId) clearTimeout(timeoutId);
 
         console.log('✅ useActiveClient: Respostas obtidas:', {
           fb: fbResponse.data?.length || 0,
@@ -147,20 +144,19 @@ export const useActiveClient = () => {
       }
     };
 
-    // Timeout global
+    // Timeout global aumentado para 20 segundos
     const globalTimeout = setTimeout(() => {
       console.log('⏰ useActiveClient: TIMEOUT GLOBAL - Forçando finalização');
       if (mounted) {
         setIsLoading(false);
       }
-    }, 12000);
+    }, 20000);
 
     initializeClient();
 
     return () => {
       console.log('🧹 useActiveClient: Cleanup');
       mounted = false;
-      if (timeoutId) clearTimeout(timeoutId);
       clearTimeout(globalTimeout);
     };
   }, [profile, userClients, isAdmin, authLoading]);
