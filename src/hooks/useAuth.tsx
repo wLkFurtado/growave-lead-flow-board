@@ -51,7 +51,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (clientsError) throw clientsError;
 
-      setProfile(profileData);
+      // Converter o tipo string para o tipo específico esperado
+      const typedProfile: Profile = {
+        ...profileData,
+        role: profileData.role as 'admin' | 'client'
+      };
+
+      setProfile(typedProfile);
       setUserClients(clientsData?.map(c => c.cliente_nome) || []);
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);
