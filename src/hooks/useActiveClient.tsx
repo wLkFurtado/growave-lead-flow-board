@@ -21,41 +21,34 @@ export const useActiveClient = () => {
     let mounted = true;
 
     const initializeClient = async () => {
-      try {
-        if (authLoading) {
-          console.log('⏳ useActiveClient: Auth carregando, aguardando...');
-          return;
-        }
+      if (authLoading) {
+        console.log('⏳ useActiveClient: Auth carregando, aguardando...');
+        return;
+      }
 
-        console.log('🔄 useActiveClient: Auth finalizado, processando cliente...');
+      console.log('🔄 useActiveClient: Auth finalizado, processando cliente...');
 
-        if (!profile) {
-          console.log('⚠️ useActiveClient: Nenhum perfil, finalizando');
-          if (mounted) {
-            setActiveClient('');
-            setAvailableClients([]);
-            setIsLoading(false);
-          }
-          return;
-        }
-
-        if (isAdmin) {
-          console.log('🔄 useActiveClient: Usuário admin, buscando todos os clientes...');
-          await fetchAllClients();
-        } else {
-          console.log('🔄 useActiveClient: Usuário regular, usando clientes associados:', userClients);
-          if (mounted) {
-            setAvailableClients(userClients);
-            if (userClients.length > 0) {
-              setActiveClient(userClients[0]);
-              console.log('✅ useActiveClient: Cliente definido:', userClients[0]);
-            }
-            setIsLoading(false);
-          }
-        }
-      } catch (error) {
-        console.error('❌ useActiveClient: Erro na inicialização:', error);
+      if (!profile) {
+        console.log('⚠️ useActiveClient: Nenhum perfil, finalizando');
         if (mounted) {
+          setActiveClient('');
+          setAvailableClients([]);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (isAdmin) {
+        console.log('🔄 useActiveClient: Usuário admin, buscando todos os clientes...');
+        await fetchAllClients();
+      } else {
+        console.log('🔄 useActiveClient: Usuário regular, usando clientes associados:', userClients);
+        if (mounted) {
+          setAvailableClients(userClients);
+          if (userClients.length > 0) {
+            setActiveClient(userClients[0]);
+            console.log('✅ useActiveClient: Cliente definido:', userClients[0]);
+          }
           setIsLoading(false);
         }
       }
@@ -67,39 +60,15 @@ export const useActiveClient = () => {
         
         const { supabase } = await import('@/integrations/supabase/client');
         
-        // Timeout mais curto para queries
-        const queryTimeout = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout')), 3000)
-        );
-        
-        const fbQuery = supabase
-          .from('facebook_ads')
-          .select('cliente_nome')
-          .not('cliente_nome', 'is', null);
-          
-        const wppQuery = supabase
-          .from('whatsapp_anuncio')
-          .select('cliente_nome')
-          .not('cliente_nome', 'is', null);
-
-        const [fbResponse, wppResponse] = await Promise.race([
-          Promise.all([fbQuery, wppQuery]),
-          queryTimeout
-        ]) as any[];
+        const [fbResponse, wppResponse] = await Promise.all([
+          supabase.from('facebook_ads').select('cliente_nome').not('cliente_nome', 'is', null),
+          supabase.from('whatsapp_anuncio').select('cliente_nome').not('cliente_nome', 'is', null)
+        ]);
 
         console.log('✅ useActiveClient: Respostas obtidas:', {
           fb: fbResponse.data?.length || 0,
-          wpp: wppResponse.data?.length || 0,
-          fbError: !!fbResponse.error,
-          wppError: !!wppResponse.error
+          wpp: wppResponse.data?.length || 0
         });
-
-        if (fbResponse.error || wppResponse.error) {
-          console.error('❌ useActiveClient: Erro nas queries:', {
-            fb: fbResponse.error,
-            wpp: wppResponse.error
-          });
-        }
 
         const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
         const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
@@ -132,20 +101,11 @@ export const useActiveClient = () => {
       }
     };
 
-    // Timeout mais curto
-    const globalTimeout = setTimeout(() => {
-      console.log('⏰ useActiveClient: TIMEOUT GLOBAL - Forçando finalização');
-      if (mounted) {
-        setIsLoading(false);
-      }
-    }, 6000); // Reduzido de 10s para 6s
-
     initializeClient();
 
     return () => {
       console.log('🧹 useActiveClient: Cleanup');
       mounted = false;
-      clearTimeout(globalTimeout);
     };
   }, [profile, userClients, isAdmin, authLoading]);
 

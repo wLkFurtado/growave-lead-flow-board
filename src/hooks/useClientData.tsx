@@ -25,27 +25,27 @@ export const useClientData = (dateRange?: DateRange) => {
     let mounted = true;
 
     const fetchData = async () => {
-      try {
-        if (clientLoading) {
-          console.log('⏳ useClientData: Cliente carregando, aguardando...');
-          return;
-        }
+      if (clientLoading) {
+        console.log('⏳ useClientData: Cliente carregando, aguardando...');
+        return;
+      }
 
-        if (!activeClient) {
-          console.log('⚠️ useClientData: Nenhum cliente ativo');
-          if (mounted) {
-            setFacebookAds([]);
-            setWhatsappLeads([]);
-            setError(null);
-            setIsLoading(false);
-          }
-          return;
+      if (!activeClient) {
+        console.log('⚠️ useClientData: Nenhum cliente ativo');
+        if (mounted) {
+          setFacebookAds([]);
+          setWhatsappLeads([]);
+          setError(null);
+          setIsLoading(false);
         }
-        
-        console.log('🔄 useClientData: Buscando dados para cliente:', activeClient);
-        setIsLoading(true);
-        setError(null);
-        
+        return;
+      }
+      
+      console.log('🔄 useClientData: Buscando dados para cliente:', activeClient);
+      setIsLoading(true);
+      setError(null);
+      
+      try {
         let fbQuery = supabase
           .from('facebook_ads')
           .select('*')
@@ -112,20 +112,11 @@ export const useClientData = (dateRange?: DateRange) => {
       }
     };
 
-    const globalTimeout = setTimeout(() => {
-      console.log('⏰ useClientData: TIMEOUT GLOBAL - Forçando finalização');
-      if (mounted) {
-        setIsLoading(false);
-        setError('Timeout na busca de dados');
-      }
-    }, 10000);
-
     fetchData();
 
     return () => {
       console.log('🧹 useClientData: Cleanup');
       mounted = false;
-      clearTimeout(globalTimeout);
     };
   }, [activeClient, clientLoading, dateRange]);
 

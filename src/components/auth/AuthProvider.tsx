@@ -25,8 +25,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const initializeAuth = async () => {
       try {
-        if (!mounted) return;
-
         console.log('🔄 AuthProvider: Iniciando getSession...');
         
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -45,34 +43,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('🔄 AuthProvider: Usuário encontrado, buscando perfil...');
           setUser(session.user);
           
-          try {
-            // Timeout mais curto para fetchProfile
-            const profilePromise = fetchProfile(session.user.id, session.user);
-            const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-            );
-            
-            const profileData = await Promise.race([profilePromise, timeoutPromise]) as Profile;
-            
-            if (mounted) {
-              setProfile(profileData);
-              setUserClients(profileData.clientes_associados);
-              console.log('✅ AuthProvider: Profile e clientes definidos');
-            }
-          } catch (error) {
-            console.error('❌ AuthProvider: Erro ao buscar perfil:', error);
-            if (mounted) {
-              // Perfil básico em caso de erro
-              const basicProfile: Profile = {
-                id: session.user.id,
-                nome_completo: session.user.email?.split('@')[0] || 'Usuário',
-                email: session.user.email || 'usuario@email.com',
-                role: 'admin', // Assumir admin se não conseguir buscar
-                clientes_associados: []
-              };
-              setProfile(basicProfile);
-              console.log('✅ AuthProvider: Profile básico definido como admin');
-            }
+          // Buscar perfil de forma mais simples
+          const profileData = await fetchProfile(session.user.id, session.user);
+          
+          if (mounted) {
+            setProfile(profileData);
+            setUserClients(profileData.clientes_associados);
+            console.log('✅ AuthProvider: Profile definido:', profileData.role);
           }
         } else {
           console.log('⚠️ AuthProvider: Nenhum usuário logado');
@@ -90,14 +67,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     };
 
-    // Timeout global reduzido
-    const globalTimeout = setTimeout(() => {
-      console.log('⏰ AuthProvider: TIMEOUT GLOBAL - Forçando finalização do loading');
-      if (mounted) {
-        setIsLoading(false);
-      }
-    }, 8000); // Reduzido de 15s para 8s
-
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -113,22 +82,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsLoading(false);
         } else if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user);
-          try {
-            const profileData = await fetchProfile(session.user.id, session.user);
-            setProfile(profileData);
-            setUserClients(profileData.clientes_associados);
-          } catch (error) {
-            console.error('❌ AuthProvider: Erro ao buscar perfil no state change:', error);
-            // Perfil básico como fallback
-            const basicProfile: Profile = {
-              id: session.user.id,
-              nome_completo: session.user.email?.split('@')[0] || 'Usuário',
-              email: session.user.email || 'usuario@email.com',
-              role: 'admin',
-              clientes_associados: []
-            };
-            setProfile(basicProfile);
-          }
+          const profileData = await fetchProfile(session.user.id, session.user);
+          setProfile(profileData);
+          setUserClients(profileData.clientes_associados);
+          setIsLoading(false);
         }
       }
     );
@@ -136,7 +93,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => {
       console.log('🧹 AuthProvider: Cleanup');
       mounted = false;
-      clearTimeout(globalTimeout);
       subscription.unsubscribe();
     };
   }, []);
