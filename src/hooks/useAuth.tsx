@@ -2,6 +2,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface Profile {
   id: string;
@@ -160,14 +161,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('=== TENTATIVA DE LOGIN ===');
+      console.log('Email:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      return { error };
+      console.log('Login response:', { data, error });
+
+      if (error) {
+        console.error('Erro no login:', error);
+        return { error };
+      }
+
+      console.log('Login realizado com sucesso');
+      return { error: null };
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
+      console.error('Erro inesperado ao fazer login:', error);
       return { error };
     }
   };
