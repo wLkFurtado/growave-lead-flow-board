@@ -9,16 +9,30 @@ import { facebookAdsData, whatsappAnuncioData } from '../data/mockData';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 flex">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#00FF88]/5 via-transparent to-[#39FF14]/5 animate-pulse"></div>
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader />
-        
-        <main className="flex-1 overflow-auto p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+      />
+      
+      <DashboardHeader 
+        activeTab={activeTab}
+        isCollapsed={isCollapsed}
+      />
+      
+      <main className={`pt-16 transition-all duration-300 ${
+        isCollapsed ? 'ml-16' : 'ml-64'
+      }`}>
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto space-y-8">
             {activeTab === 'dashboard' && (
               <>
                 <DashboardOverview adsData={facebookAdsData} leadsData={whatsappAnuncioData} />
@@ -29,8 +43,8 @@ const Index = () => {
               <LeadKanbanBoard leadsData={whatsappAnuncioData} />
             )}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

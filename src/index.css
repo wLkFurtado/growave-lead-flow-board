@@ -109,15 +109,15 @@
   }
 
   .growave-neon-glow {
-    text-shadow: 0 0 5px hsl(var(--growave-neon-primary) / 0.5), 
-                 0 0 10px hsl(var(--growave-neon-primary) / 0.3),
-                 0 0 15px hsl(var(--growave-neon-primary) / 0.2);
+    text-shadow: 0 0 8px hsl(var(--growave-neon-primary) / 0.6), 
+                 0 0 16px hsl(var(--growave-neon-primary) / 0.4),
+                 0 0 24px hsl(var(--growave-neon-primary) / 0.2);
   }
 
   .growave-neon-border {
-    border: 1px solid hsl(var(--growave-neon-primary) / 0.3);
-    box-shadow: 0 0 10px hsl(var(--growave-neon-primary) / 0.2),
-                inset 0 0 10px hsl(var(--growave-neon-primary) / 0.1);
+    border: 1px solid hsl(var(--growave-neon-primary) / 0.4);
+    box-shadow: 0 0 20px hsl(var(--growave-neon-primary) / 0.2),
+                inset 0 0 20px hsl(var(--growave-neon-primary) / 0.05);
   }
 
   .growave-neon-bg {
@@ -127,43 +127,73 @@
   }
 
   .growave-logo-glow {
-    box-shadow: 0 0 20px hsl(var(--growave-neon-primary) / 0.4),
-                0 0 40px hsl(var(--growave-neon-primary) / 0.2);
+    box-shadow: 0 0 30px hsl(var(--growave-neon-primary) / 0.6),
+                0 0 60px hsl(var(--growave-neon-primary) / 0.3),
+                0 0 90px hsl(var(--growave-neon-primary) / 0.1);
+    animation: growave-pulse 3s ease-in-out infinite;
   }
 
   .growave-pulse {
     animation: growave-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  .growave-avatar-glow {
-    transition: all 0.3s ease;
-  }
-
-  .growave-avatar-glow:hover {
-    box-shadow: 0 0 15px hsl(var(--growave-neon-primary) / 0.6),
-                0 0 30px hsl(var(--growave-neon-primary) / 0.3);
-    border: 2px solid hsl(var(--growave-neon-primary) / 0.8);
-  }
-
   .growave-card-hover {
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
   }
 
-  .growave-card-hover:hover {
-    border-color: hsl(var(--growave-neon-primary) / 0.5);
-    box-shadow: 0 0 20px hsl(var(--growave-neon-primary) / 0.15);
-    transform: translateY(-2px);
+  .growave-card-hover::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, hsl(var(--growave-neon-primary) / 0.1), transparent);
+    transform: rotate(45deg) translate(-100%, -100%);
+    transition: transform 0.6s;
+  }
+
+  .growave-card-hover:hover::before {
+    transform: rotate(45deg) translate(100%, 100%);
+  }
+
+  .growave-glass {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
 
 @keyframes growave-pulse {
   0%, 100% {
-    text-shadow: 0 0 5px hsl(var(--growave-neon-primary) / 0.5), 
-                 0 0 10px hsl(var(--growave-neon-primary) / 0.3);
+    box-shadow: 0 0 20px hsl(var(--growave-neon-primary) / 0.4),
+                0 0 40px hsl(var(--growave-neon-primary) / 0.2),
+                0 0 60px hsl(var(--growave-neon-primary) / 0.1);
   }
   50% {
-    text-shadow: 0 0 8px hsl(var(--growave-neon-primary) / 0.7), 
-                 0 0 15px hsl(var(--growave-neon-primary) / 0.5),
-                 0 0 20px hsl(var(--growave-neon-primary) / 0.3);
+    box-shadow: 0 0 30px hsl(var(--growave-neon-primary) / 0.6),
+                0 0 60px hsl(var(--growave-neon-primary) / 0.3),
+                0 0 90px hsl(var(--growave-neon-primary) / 0.15);
   }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(var(--growave-neon-primary)), hsl(var(--growave-neon-secondary)));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, hsl(var(--growave-neon-secondary)), hsl(var(--growave-neon-primary)));
 }
