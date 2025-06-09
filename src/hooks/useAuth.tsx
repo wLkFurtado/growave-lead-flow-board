@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               setIsLoading(false);
             }
           }
-          return; // Sucesso, sair do loop
+          return;
         } catch (error) {
           console.error(`❌ AuthProvider: Erro fatal na tentativa ${retryCount + 1}:`, error);
           retryCount++;
@@ -83,7 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Se chegou aqui, todas as tentativas falharam
       if (mounted) {
         console.log('❌ AuthProvider: Todas as tentativas falharam, finalizando');
         setIsLoading(false);
@@ -102,9 +101,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (error) {
           console.error('❌ AuthProvider: Erro ao buscar perfil:', error);
-          // Criar perfil temporário para não quebrar o app
           if (mounted) {
-            const tempProfile = {
+            const tempProfile: Profile = {
               id: userId,
               nome_completo: 'Usuário',
               email: user?.email || 'usuario@email.com',
@@ -121,7 +119,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('✅ AuthProvider: Perfil obtido:', data);
 
         if (data && mounted) {
-          // Buscar clientes associados se não for admin
           let clientesAssociados: string[] = [];
           
           if (data.role !== 'admin') {
@@ -141,8 +138,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }
 
-          const profileWithClients = {
-            ...data,
+          const profileWithClients: Profile = {
+            id: data.id,
+            nome_completo: data.name || data.email,
+            email: data.email,
+            role: data.role,
             clientes_associados: clientesAssociados
           };
 
@@ -158,8 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('❌ AuthProvider: Erro ao buscar perfil:', error);
         if (mounted) {
-          // Em caso de erro, criar perfil básico
-          const basicProfile = {
+          const basicProfile: Profile = {
             id: userId,
             nome_completo: 'Usuário',
             email: user?.email || 'usuario@email.com',
@@ -173,17 +172,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    // Timeout de segurança reduzido
     const globalTimeout = setTimeout(() => {
       console.log('⏰ AuthProvider: TIMEOUT GLOBAL - Forçando finalização do loading');
       if (mounted) {
         setIsLoading(false);
       }
-    }, 15000); // Reduzido para 15 segundos
+    }, 30000);
 
     initializeAuth();
 
-    // Listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔔 AuthProvider: Auth state changed:', event);
@@ -208,7 +205,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  // Log do estado atual a cada mudança
   useEffect(() => {
     console.log('📊 AuthProvider: Estado atual:', {
       user: !!user,
