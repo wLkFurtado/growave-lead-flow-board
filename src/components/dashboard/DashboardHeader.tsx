@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { UserProfile } from './UserProfile';
 
 export const DashboardHeader = () => {
   return (
@@ -14,9 +15,7 @@ export const DashboardHeader = () => {
           </p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-sm font-medium">
-            Performance Analytics
-          </div>
+          <UserProfile />
         </div>
       </div>
     </header>
