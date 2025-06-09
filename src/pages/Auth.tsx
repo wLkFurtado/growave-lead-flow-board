@@ -7,18 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,18 +31,10 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      let result;
-      if (isLogin) {
-        result = await signIn(email, password);
-      } else {
-        result = await signUp(email, password, name);
-      }
+      const result = await signIn(email, password);
 
       if (result.error) {
         setError(result.error.message);
-      } else if (!isLogin) {
-        setError('');
-        alert('Conta criada! Verifique seu email para confirmar o cadastro.');
       }
     } catch (err) {
       setError('Erro inesperado. Tente novamente.');
@@ -64,33 +54,15 @@ const Auth = () => {
             <span className="text-2xl font-bold text-slate-900">G</span>
           </div>
           <CardTitle className="text-2xl font-bold text-white">
-            {isLogin ? 'Entrar' : 'Criar Conta'}
+            Entrar
           </CardTitle>
           <CardDescription className="text-slate-400">
-            {isLogin 
-              ? 'Acesse seu painel de marketing analytics' 
-              : 'Crie sua conta para acessar o dashboard'
-            }
+            Acesse seu painel de marketing analytics
           </CardDescription>
         </CardHeader>
         
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-slate-300">Nome</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                  placeholder="Seu nome completo"
-                  required={!isLogin}
-                />
-              </div>
-            )}
-            
             <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-300">Email</Label>
               <Input
@@ -139,34 +111,14 @@ const Auth = () => {
             >
               {isLoading ? (
                 'Processando...'
-              ) : isLogin ? (
+              ) : (
                 <>
                   <LogIn className="mr-2 h-4 w-4" />
                   Entrar
                 </>
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Criar Conta
-                </>
               )}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-              }}
-              className="text-[#00FF88] hover:text-[#39FF14] font-medium"
-            >
-              {isLogin 
-                ? 'Não tem conta? Criar nova conta' 
-                : 'Já tem conta? Fazer login'
-              }
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>
