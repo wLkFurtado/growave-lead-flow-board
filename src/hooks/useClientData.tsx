@@ -2,8 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveClient } from './useActiveClient';
+import { format } from 'date-fns';
 
-export const useClientData = () => {
+interface DateRange {
+  from: Date;
+  to: Date;
+}
+
+export const useClientData = (dateRange?: DateRange) => {
   const { activeClient } = useActiveClient();
   const [facebookAds, setFacebookAds] = useState<any[]>([]);
   const [whatsappLeads, setWhatsappLeads] = useState<any[]>([]);
@@ -22,16 +28,38 @@ export const useClientData = () => {
       
       try {
         console.log('Buscando dados para o cliente:', activeClient);
+        console.log('Período:', dateRange);
         
+        // Construir queries com filtro de data se fornecido
+        let fbQuery = supabase
+          .from('facebook_ads')
+          .select('*')
+          .eq('cliente_nome', activeClient);
+          
+        let wppQuery = supabase
+          .from('whatsapp_anuncio')
+          .select('*')
+          .eq('cliente_nome', activeClient);
+
+        // Aplicar filtro de data se fornecido
+        if (dateRange) {
+          const fromDate = format(dateRange.from, 'yyyy-MM-dd');
+          const toDate = format(dateRange.to, 'yyyy-MM-dd');
+          
+          fbQuery = fbQuery
+            .gte('data', fromDate)
+            .lte('data', toDate);
+            
+          wppQuery = wppQuery
+            .gte('data_criacao', fromDate)
+            .lte('data_criacao', toDate);
+            
+          console.log('Filtro de data aplicado:', fromDate, 'até', toDate);
+        }
+
         const [fbResponse, wppResponse] = await Promise.all([
-          supabase
-            .from('facebook_ads')
-            .select('*')
-            .eq('cliente_nome', activeClient),
-          supabase
-            .from('whatsapp_anuncio')
-            .select('*')
-            .eq('cliente_nome', activeClient)
+          fbQuery,
+          wppQuery
         ]);
 
         if (fbResponse.error) {
@@ -60,7 +88,7 @@ export const useClientData = () => {
     };
 
     fetchData();
-  }, [activeClient]);
+  }, [activeClient, dateRange]);
 
   return {
     facebookAds,

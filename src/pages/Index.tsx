@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { subDays } from 'date-fns';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { Sidebar } from '../components/dashboard/Sidebar';
 import { DashboardOverview } from '../components/dashboard/DashboardOverview';
@@ -12,11 +13,25 @@ import { useAuth } from '../hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Database } from 'lucide-react';
 
+interface DateRange {
+  from: Date;
+  to: Date;
+}
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = useClientData();
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: subDays(new Date(), 30),
+    to: new Date()
+  });
+  
+  const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = useClientData(dateRange);
   const { isAdmin } = useAuth();
+
+  const handleDateRangeChange = (newRange: DateRange) => {
+    setDateRange(newRange);
+  };
 
   if (isLoading) {
     return (
@@ -109,7 +124,7 @@ const Index = () => {
                 {!hasData && activeClient ? (
                   <EmptyState
                     title="Nenhum dado encontrado"
-                    description={`Não há dados disponíveis para o cliente "${activeClient}". Verifique se os dados foram importados corretamente.`}
+                    description={`Não há dados disponíveis para o cliente "${activeClient}" no período selecionado. Verifique se os dados foram importados corretamente ou ajuste o período.`}
                     action={
                       isAdmin && (
                         <div className="text-sm text-slate-400">
@@ -126,8 +141,18 @@ const Index = () => {
                   />
                 ) : (
                   <>
-                    <DashboardOverview adsData={facebookAds} leadsData={whatsappLeads} />
-                    <AdAnalysisTable adsData={facebookAds} leadsData={whatsappLeads} />
+                    <DashboardOverview 
+                      adsData={facebookAds} 
+                      leadsData={whatsappLeads}
+                      onDateRangeChange={handleDateRangeChange}
+                      dateRange={dateRange}
+                    />
+                    <AdAnalysisTable 
+                      adsData={facebookAds} 
+                      leadsData={whatsappLeads}
+                      onDateRangeChange={handleDateRangeChange}
+                      dateRange={dateRange}
+                    />
                   </>
                 )}
               </>
@@ -138,7 +163,7 @@ const Index = () => {
                 {!hasData && activeClient ? (
                   <EmptyState
                     title="Nenhum lead encontrado"
-                    description={`Não há leads disponíveis para o cliente "${activeClient}".`}
+                    description={`Não há leads disponíveis para o cliente "${activeClient}" no período selecionado.`}
                   />
                 ) : !activeClient ? (
                   <EmptyState

@@ -1,13 +1,20 @@
 
 import React, { useState, useMemo } from 'react';
+import { DateRangePicker } from './DateRangePicker';
+
+interface DateRange {
+  from: Date;
+  to: Date;
+}
 
 interface AdAnalysisTableProps {
   adsData: any[];
   leadsData: any[];
+  onDateRangeChange: (range: DateRange) => void;
+  dateRange: DateRange;
 }
 
-export const AdAnalysisTable = ({ adsData, leadsData }: AdAnalysisTableProps) => {
-  const [filterDate, setFilterDate] = useState('');
+export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRange }: AdAnalysisTableProps) => {
   const [filterCampaign, setFilterCampaign] = useState('');
 
   const adsMap = useMemo(() => {
@@ -37,23 +44,23 @@ export const AdAnalysisTable = ({ adsData, leadsData }: AdAnalysisTableProps) =>
         };
       })
       .filter(lead => {
-        const dateMatch = filterDate ? lead.data === filterDate : true;
         const campaignMatch = filterCampaign ? lead.campanha === filterCampaign : true;
-        return dateMatch && campaignMatch;
+        return campaignMatch;
       });
-  }, [leadsData, adsMap, filterDate, filterCampaign]);
+  }, [leadsData, adsMap, filterCampaign]);
 
   return (
     <section className="bg-slate-800/30 backdrop-blur-lg border border-slate-700 rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-white mb-6">Análise de Leads por Anúncio</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-white">Análise de Leads por Anúncio</h2>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <input
-          type="date"
-          value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-          className="px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+        <DateRangePicker
+          value={dateRange}
+          onChange={onDateRangeChange}
         />
+        
         <select
           value={filterCampaign}
           onChange={(e) => setFilterCampaign(e.target.value)}

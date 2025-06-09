@@ -1,14 +1,23 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { subDays } from 'date-fns';
 import { MetricCard } from './MetricCard';
 import { KanbanSummary } from './KanbanSummary';
+import { DateRangePicker } from './DateRangePicker';
+
+interface DateRange {
+  from: Date;
+  to: Date;
+}
 
 interface DashboardOverviewProps {
   adsData: any[];
   leadsData: any[];
+  onDateRangeChange: (range: DateRange) => void;
+  dateRange: DateRange;
 }
 
-export const DashboardOverview = ({ adsData, leadsData }: DashboardOverviewProps) => {
+export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateRange }: DashboardOverviewProps) => {
   const metrics = useMemo(() => {
     const totalInvestido = adsData.reduce((sum, ad) => sum + ad.investimento, 0);
     const totalCliques = adsData.reduce((sum, ad) => sum + ad.cliques_no_link, 0);
@@ -37,11 +46,15 @@ export const DashboardOverview = ({ adsData, leadsData }: DashboardOverviewProps
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Visão Geral do Desempenho</h2>
-        <div className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-sm">
-          Últimos 30 dias
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Visão Geral do Desempenho</h2>
+          <p className="text-slate-400">Performance das suas campanhas no período selecionado</p>
         </div>
+        <DateRangePicker
+          value={dateRange}
+          onChange={onDateRangeChange}
+        />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

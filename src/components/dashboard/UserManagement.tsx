@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +16,7 @@ interface Profile {
   id: string;
   email: string;
   name: string | null;
-  role: 'admin' | 'client';
+  role: string; // Changed from 'admin' | 'client' to string to fix typing error
   created_at: string;
 }
 
