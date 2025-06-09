@@ -21,7 +21,7 @@ export const useActiveClient = () => {
     }
 
     if (!profile) {
-      console.log('Nenhum perfil encontrado, redirecionando para auth...');
+      console.log('Nenhum perfil encontrado');
       setActiveClient('');
       setAvailableClients([]);
       setIsLoading(false);
@@ -40,6 +40,7 @@ export const useActiveClient = () => {
         setActiveClient(clientToSet);
       } else {
         console.log('Nenhum cliente associado encontrado');
+        setActiveClient('');
       }
       setIsLoading(false);
     }
@@ -82,7 +83,7 @@ export const useActiveClient = () => {
       
       setAvailableClients(allClients);
       
-      // Se não há cliente ativo, selecionar o primeiro ou o salvo
+      // Se não há cliente ativo e há clientes disponíveis, selecionar um
       if (!activeClient && allClients.length > 0) {
         const savedClient = localStorage.getItem('activeClient');
         console.log('Cliente salvo no localStorage:', savedClient);
@@ -94,6 +95,10 @@ export const useActiveClient = () => {
           console.log('Usando primeiro cliente da lista:', allClients[0]);
           setActiveClient(allClients[0]);
         }
+      } else if (activeClient && !allClients.includes(activeClient)) {
+        // Se o cliente ativo atual não está na lista, selecionar o primeiro
+        console.log('Cliente ativo atual não encontrado na lista, selecionando primeiro');
+        setActiveClient(allClients[0] || '');
       }
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);

@@ -9,7 +9,7 @@ interface DateRange {
 }
 
 export const useClientData = (dateRange?: DateRange) => {
-  const { activeClient } = useActiveClient();
+  const { activeClient, isLoading: clientLoading } = useActiveClient();
   const [facebookAds, setFacebookAds] = useState<any[]>([]);
   const [whatsappLeads, setWhatsappLeads] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,11 +18,18 @@ export const useClientData = (dateRange?: DateRange) => {
   useEffect(() => {
     console.log('=== useClientData Effect ===');
     console.log('activeClient:', activeClient);
+    console.log('clientLoading:', clientLoading);
     console.log('dateRange:', dateRange);
 
     const fetchData = async () => {
+      // Aguardar o cliente estar carregado
+      if (clientLoading) {
+        console.log('Cliente ainda carregando, aguardando...');
+        return;
+      }
+
       if (!activeClient) {
-        console.log('Nenhum cliente ativo, não buscando dados');
+        console.log('Nenhum cliente ativo, limpando dados');
         setFacebookAds([]);
         setWhatsappLeads([]);
         setIsLoading(false);
@@ -41,18 +48,21 @@ export const useClientData = (dateRange?: DateRange) => {
         let fbQuery = supabase
           .from('facebook_ads')
           .select('*')
-          .eq('cliente_nome', activeClient);
+          .eq('cliente_nome', activeClient)
+          .order('data', { ascending: false });
           
         let wppQuery = supabase
           .from('whatsapp_anuncio')
           .select('*')
-          .eq('cliente_nome', activeClient);
+          .eq('cliente_nome', activeClient)
+          .order('data_criacao', { ascending: false });
 
         // Aplicar filtro de data se fornecido
         if (dateRange) {
           const fromDate = new Date(dateRange.from);
           const toDate = new Date(dateRange.to);
           
+          // Garantir que a data final inclua o dia inteiro
           toDate.setHours(23, 59, 59, 999);
           
           const fromDateStr = fromDate.toISOString().split('T')[0];
@@ -82,12 +92,12 @@ export const useClientData = (dateRange?: DateRange) => {
 
         if (fbResponse.error) {
           console.error('Erro Facebook Ads:', fbResponse.error);
-          throw fbResponse.error;
+          throw new Error(`Erro ao carregar dados do Facebook: ${fbResponse.error.message}`);
         }
         
         if (wppResponse.error) {
           console.error('Erro WhatsApp:', wppResponse.error);
-          throw wppResponse.error;
+          throw new Error(`Erro ao carregar dados do WhatsApp: ${wppResponse.error.message}`);
         }
 
         const fbData = fbResponse.data || [];
@@ -111,12 +121,12 @@ export const useClientData = (dateRange?: DateRange) => {
     };
 
     fetchData();
-  }, [activeClient, dateRange]);
+  }, [activeClient, clientLoading, dateRange]);
 
   return {
     facebookAds,
     whatsappLeads,
-    isLoading,
+    isLoading: isLoading || clientLoading,
     error,
     activeClient,
     hasData: facebookAds.length > 0 || whatsappLeads.length > 0
