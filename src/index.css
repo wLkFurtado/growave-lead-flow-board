@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,20 +38,18 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Growave Neon Colors */
+    --growave-neon-primary: 136 100% 53%;  /* #00FF88 */
+    --growave-neon-secondary: 81 100% 55%; /* #39FF14 */
+    --growave-neon-accent: 136 80% 40%;    /* Darker green for accents */
   }
 
   .dark {
@@ -99,5 +98,72 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Growave Neon Effects */
+@layer components {
+  .growave-neon-text {
+    @apply text-transparent bg-clip-text;
+    background-image: linear-gradient(90deg, hsl(var(--growave-neon-primary)), hsl(var(--growave-neon-secondary)));
+  }
+
+  .growave-neon-glow {
+    text-shadow: 0 0 5px hsl(var(--growave-neon-primary) / 0.5), 
+                 0 0 10px hsl(var(--growave-neon-primary) / 0.3),
+                 0 0 15px hsl(var(--growave-neon-primary) / 0.2);
+  }
+
+  .growave-neon-border {
+    border: 1px solid hsl(var(--growave-neon-primary) / 0.3);
+    box-shadow: 0 0 10px hsl(var(--growave-neon-primary) / 0.2),
+                inset 0 0 10px hsl(var(--growave-neon-primary) / 0.1);
+  }
+
+  .growave-neon-bg {
+    background: linear-gradient(135deg, 
+      hsl(var(--growave-neon-primary) / 0.1), 
+      hsl(var(--growave-neon-secondary) / 0.05));
+  }
+
+  .growave-logo-glow {
+    box-shadow: 0 0 20px hsl(var(--growave-neon-primary) / 0.4),
+                0 0 40px hsl(var(--growave-neon-primary) / 0.2);
+  }
+
+  .growave-pulse {
+    animation: growave-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .growave-avatar-glow {
+    transition: all 0.3s ease;
+  }
+
+  .growave-avatar-glow:hover {
+    box-shadow: 0 0 15px hsl(var(--growave-neon-primary) / 0.6),
+                0 0 30px hsl(var(--growave-neon-primary) / 0.3);
+    border: 2px solid hsl(var(--growave-neon-primary) / 0.8);
+  }
+
+  .growave-card-hover {
+    transition: all 0.3s ease;
+  }
+
+  .growave-card-hover:hover {
+    border-color: hsl(var(--growave-neon-primary) / 0.5);
+    box-shadow: 0 0 20px hsl(var(--growave-neon-primary) / 0.15);
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes growave-pulse {
+  0%, 100% {
+    text-shadow: 0 0 5px hsl(var(--growave-neon-primary) / 0.5), 
+                 0 0 10px hsl(var(--growave-neon-primary) / 0.3);
+  }
+  50% {
+    text-shadow: 0 0 8px hsl(var(--growave-neon-primary) / 0.7), 
+                 0 0 15px hsl(var(--growave-neon-primary) / 0.5),
+                 0 0 20px hsl(var(--growave-neon-primary) / 0.3);
   }
 }

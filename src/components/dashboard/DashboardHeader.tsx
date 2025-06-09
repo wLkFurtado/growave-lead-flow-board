@@ -7,7 +7,7 @@ export const DashboardHeader = () => {
     <header className="bg-slate-800/50 backdrop-blur-lg border-b border-slate-700 px-6 py-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-white growave-neon-text growave-pulse">
             Dashboard Marketing
           </h1>
           <p className="text-slate-400 text-sm">
