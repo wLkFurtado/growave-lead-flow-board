@@ -7,17 +7,36 @@ export const useActiveClient = () => {
   const [activeClient, setActiveClient] = useState<string>('');
   const [availableClients, setAvailableClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  console.log('=== useActiveClient Effect START ===');
+  console.log('authLoading:', authLoading);
+  console.log('profile:', profile);
+  console.log('isAdmin:', isAdmin);
+  console.log('userClients:', userClients);
+  console.log('hasInitialized:', hasInitialized);
 
   useEffect(() => {
-    console.log('=== useActiveClient Effect START ===');
-    console.log('authLoading:', authLoading);
-    console.log('profile:', profile);
-    console.log('isAdmin:', isAdmin);
-    console.log('userClients:', userClients);
-
     const initializeClient = async () => {
-      if (authLoading) {
+      // Se auth ainda está carregando E ainda não inicializamos, aguardar um pouco
+      if (authLoading && !hasInitialized) {
         console.log('Auth ainda carregando, aguardando...');
+        
+        // Timeout de segurança para não esperar infinitamente
+        const authTimeout = setTimeout(() => {
+          console.log('TIMEOUT: Auth demorou mais de 8s, continuando sem ele');
+          setIsLoading(false);
+          setHasInitialized(true);
+        }, 8000);
+        
+        // Limpar timeout se o auth terminar antes
+        const checkAuth = () => {
+          if (!authLoading) {
+            clearTimeout(authTimeout);
+          }
+        };
+        checkAuth();
+        
         return;
       }
 
@@ -26,6 +45,7 @@ export const useActiveClient = () => {
         setActiveClient('');
         setAvailableClients([]);
         setIsLoading(false);
+        setHasInitialized(true);
         return;
       }
 
@@ -47,14 +67,24 @@ export const useActiveClient = () => {
         }
         setIsLoading(false);
       }
+      
+      setHasInitialized(true);
     };
 
     initializeClient();
-  }, [profile, userClients, isAdmin, authLoading]);
+  }, [profile, userClients, isAdmin, authLoading, hasInitialized]);
 
   const fetchAllClients = async () => {
     try {
       console.log('=== BUSCANDO TODOS OS CLIENTES PARA ADMIN ===');
+      
+      const clientsTimeout = setTimeout(() => {
+        console.log('TIMEOUT: Busca de clientes demorou mais de 10s, finalizando com lista vazia');
+        setAvailableClients([]);
+        setActiveClient('');
+        setIsLoading(false);
+      }, 10000);
+
       const { supabase } = await import('@/integrations/supabase/client');
       
       // Buscar clientes únicos das duas tabelas
@@ -68,6 +98,8 @@ export const useActiveClient = () => {
           .select('cliente_nome')
           .not('cliente_nome', 'is', null)
       ]);
+
+      clearTimeout(clientsTimeout);
 
       console.log('FB Response:', fbResponse.data?.length || 0, 'registros');
       console.log('WPP Response:', wppResponse.data?.length || 0, 'registros');
@@ -123,6 +155,19 @@ export const useActiveClient = () => {
       localStorage.setItem('activeClient', clientName);
     }
   };
+
+  // Timeout de segurança global para este hook
+  useEffect(() => {
+    const globalTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('TIMEOUT GLOBAL useActiveClient: Forçando finalização do loading após 20s');
+        setIsLoading(false);
+        setHasInitialized(true);
+      }
+    }, 20000);
+
+    return () => clearTimeout(globalTimeout);
+  }, [isLoading]);
 
   console.log('=== useActiveClient State FINAL ===');
   console.log('activeClient:', activeClient);

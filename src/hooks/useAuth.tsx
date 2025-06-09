@@ -27,24 +27,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userClients, setUserClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   console.log('=== AuthProvider State ===');
   console.log('user:', user?.id);
   console.log('profile:', profile);
   console.log('userClients:', userClients);
   console.log('isLoading:', isLoading);
+  console.log('hasInitialized:', hasInitialized);
 
   const fetchProfile = async (userId: string) => {
     try {
       console.log('=== INICIANDO BUSCA DO PERFIL ===');
       console.log('User ID:', userId);
       
-      // Usar maybeSingle() ao invés de single() para evitar erros
+      const profileTimer = setTimeout(() => {
+        console.log('TIMEOUT: Perfil demorou mais de 10s, finalizando loading');
+        setIsLoading(false);
+      }, 10000);
+
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
+
+      clearTimeout(profileTimer);
 
       console.log('Profile response:', { data: profileData, error: profileError });
 
@@ -85,10 +93,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Buscar clientes do usuário se não for admin
       if (profileData?.role !== 'admin') {
         console.log('Usuário não é admin, buscando clientes associados...');
+        const clientsTimer = setTimeout(() => {
+          console.log('TIMEOUT: Clientes demoraram mais de 5s, continuando sem eles');
+          setUserClients([]);
+          setIsLoading(false);
+        }, 5000);
+
         const { data: clientsData, error: clientsError } = await supabase
           .from('user_clients')
           .select('cliente_nome')
           .eq('user_id', userId);
+
+        clearTimeout(clientsTimer);
 
         console.log('Clientes response:', { data: clientsData, error: clientsError });
 
@@ -114,8 +130,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    if (hasInitialized) return;
+    
     console.log('=== AuthProvider useEffect INICIADO ===');
     
+    // Timeout de segurança global
+    const globalTimeout = setTimeout(() => {
+      console.log('TIMEOUT GLOBAL: Forçando finalização do loading após 15s');
+      setIsLoading(false);
+    }, 15000);
+
     // Verificar usuário atual
     const getCurrentUser = async () => {
       try {
@@ -126,6 +150,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (error) {
           console.error('Erro ao verificar usuário:', error);
           setIsLoading(false);
+          setHasInitialized(true);
+          clearTimeout(globalTimeout);
           return;
         }
 
@@ -137,9 +163,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('Nenhum usuário logado');
           setIsLoading(false);
         }
+        
+        setHasInitialized(true);
+        clearTimeout(globalTimeout);
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
         setIsLoading(false);
+        setHasInitialized(true);
+        clearTimeout(globalTimeout);
       }
     };
 
@@ -152,7 +183,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (session?.user) {
           setUser(session.user);
-          await fetchProfile(session.user.id);
+          if (hasInitialized) {
+            await fetchProfile(session.user.id);
+          }
         } else {
           setUser(null);
           setProfile(null);
@@ -164,8 +197,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => {
       subscription.unsubscribe();
+      clearTimeout(globalTimeout);
     };
-  }, []);
+  }, [hasInitialized]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -203,6 +237,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setProfile(null);
       setUserClients([]);
       setIsLoading(false);
+      setHasInitialized(false);
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }

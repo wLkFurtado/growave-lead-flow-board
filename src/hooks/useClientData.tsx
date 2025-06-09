@@ -15,17 +15,27 @@ export const useClientData = (dateRange?: DateRange) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log('=== useClientData Effect START ===');
-    console.log('activeClient:', activeClient);
-    console.log('clientLoading:', clientLoading);
-    console.log('dateRange:', dateRange);
+  console.log('=== useClientData Effect START ===');
+  console.log('activeClient:', activeClient);
+  console.log('clientLoading:', clientLoading);
+  console.log('dateRange:', dateRange);
 
+  useEffect(() => {
     const fetchData = async () => {
-      // Aguardar o cliente estar carregado
+      // Aguardar o cliente estar carregado, mas com timeout de segurança
       if (clientLoading) {
         console.log('Cliente ainda carregando, aguardando...');
-        return;
+        
+        // Timeout para não esperar infinitamente
+        const dataTimeout = setTimeout(() => {
+          console.log('TIMEOUT: Cliente demorou mais de 12s, finalizando com dados vazios');
+          setFacebookAds([]);
+          setWhatsappLeads([]);
+          setError(null);
+          setIsLoading(false);
+        }, 12000);
+        
+        return () => clearTimeout(dataTimeout);
       }
 
       if (!activeClient) {
@@ -44,6 +54,12 @@ export const useClientData = (dateRange?: DateRange) => {
       try {
         console.log('Período de busca:', dateRange);
         
+        const queryTimeout = setTimeout(() => {
+          console.log('TIMEOUT: Queries demoraram mais de 15s, finalizando com erro');
+          setError('Timeout na busca de dados - tente novamente');
+          setIsLoading(false);
+        }, 15000);
+
         // Construir queries base
         let fbQuery = supabase
           .from('facebook_ads')
@@ -84,6 +100,8 @@ export const useClientData = (dateRange?: DateRange) => {
           fbQuery,
           wppQuery
         ]);
+
+        clearTimeout(queryTimeout);
 
         console.log('=== RESULTADOS DA BUSCA ===');
         console.log('Facebook Response:', {
@@ -131,6 +149,19 @@ export const useClientData = (dateRange?: DateRange) => {
 
     fetchData();
   }, [activeClient, clientLoading, dateRange]);
+
+  // Timeout de segurança global para este hook
+  useEffect(() => {
+    const globalTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('TIMEOUT GLOBAL useClientData: Forçando finalização do loading após 25s');
+        setIsLoading(false);
+        setError('Timeout na busca de dados - recarregue a página');
+      }
+    }, 25000);
+
+    return () => clearTimeout(globalTimeout);
+  }, [isLoading]);
 
   const result = {
     facebookAds,
