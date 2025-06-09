@@ -48,13 +48,14 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
   };
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn('flex flex-col gap-2', className)}>
+      <label className="text-sm font-medium text-white">Período:</label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              'justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600',
+              'w-full sm:w-auto justify-start text-left font-normal bg-slate-700 border-slate-600 text-white hover:bg-slate-600 min-w-[280px]',
               !value && 'text-slate-400'
             )}
           >
@@ -74,13 +75,13 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-700" align="start">
-          <div className="flex">
+          <div className="flex flex-col sm:flex-row">
             {/* Presets */}
-            <div className="border-r border-slate-700">
+            <div className="border-b sm:border-b-0 sm:border-r border-slate-700">
               <div className="p-3 border-b border-slate-700">
-                <h4 className="text-sm font-medium text-white">Períodos</h4>
+                <h4 className="text-sm font-medium text-white">Períodos Rápidos</h4>
               </div>
-              <div className="p-2 space-y-1">
+              <div className="p-2 space-y-1 min-w-[150px]">
                 {presets.map((preset) => (
                   <Button
                     key={preset.label}
@@ -106,6 +107,10 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
             
             {/* Calendar */}
             <div className="p-3">
+              <div className="text-center mb-3">
+                <h4 className="text-sm font-medium text-white">Selecionar Período Personalizado</h4>
+                <p className="text-xs text-slate-400">Clique na data inicial e final</p>
+              </div>
               <Calendar
                 initialFocus
                 mode="range"

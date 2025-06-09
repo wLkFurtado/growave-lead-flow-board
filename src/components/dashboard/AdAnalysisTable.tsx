@@ -55,23 +55,28 @@ export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRan
         <h2 className="text-2xl font-bold text-white">Análise de Leads por Anúncio</h2>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <DateRangePicker
-          value={dateRange}
-          onChange={onDateRangeChange}
-        />
-        
-        <select
-          value={filterCampaign}
-          onChange={(e) => setFilterCampaign(e.target.value)}
-          className="px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
-        >
-          {uniqueCampaigns.map(campaign => (
-            <option key={campaign} value={campaign}>
-              {campaign === '' ? 'Todas as Campanhas' : campaign}
-            </option>
-          ))}
-        </select>
+      <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 rounded-xl p-4 mb-6">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <DateRangePicker
+            value={dateRange}
+            onChange={onDateRangeChange}
+          />
+          
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-white">Filtrar por Campanha:</label>
+            <select
+              value={filterCampaign}
+              onChange={(e) => setFilterCampaign(e.target.value)}
+              className="px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 min-w-[200px]"
+            >
+              {uniqueCampaigns.map(campaign => (
+                <option key={campaign} value={campaign}>
+                  {campaign === '' ? 'Todas as Campanhas' : campaign}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-slate-700">
