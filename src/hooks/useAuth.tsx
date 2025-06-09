@@ -35,57 +35,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('🔄 AuthProvider: useEffect principal iniciado');
     
     let mounted = true;
-    let retryCount = 0;
-    const maxRetries = 3;
 
     const initializeAuth = async () => {
-      while (retryCount < maxRetries && mounted) {
-        try {
-          console.log(`🔄 AuthProvider: Tentativa ${retryCount + 1}/${maxRetries} - Iniciando getSession...`);
-          
-          const { data: { session }, error } = await supabase.auth.getSession();
+      try {
+        console.log('🔄 AuthProvider: Iniciando getSession...');
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-          if (error) {
-            console.error(`❌ AuthProvider: Erro na tentativa ${retryCount + 1}:`, error);
-            retryCount++;
-            if (retryCount < maxRetries) {
-              console.log(`⏳ AuthProvider: Aguardando 2s antes da próxima tentativa...`);
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              continue;
-            } else {
-              console.error('❌ AuthProvider: Máximo de tentativas atingido');
-              if (mounted) {
-                setIsLoading(false);
-              }
-              return;
-            }
-          }
-
-          console.log('✅ AuthProvider: Session obtida:', !!session);
-
-          if (session?.user && mounted) {
-            console.log('🔄 AuthProvider: Usuário encontrado, buscando perfil...');
-            setUser(session.user);
-            await fetchProfile(session.user.id);
-          } else {
-            console.log('⚠️ AuthProvider: Nenhum usuário logado');
-            if (mounted) {
-              setIsLoading(false);
-            }
+        if (error) {
+          console.error('❌ AuthProvider: Erro ao obter sessão:', error);
+          if (mounted) {
+            setIsLoading(false);
           }
           return;
-        } catch (error) {
-          console.error(`❌ AuthProvider: Erro fatal na tentativa ${retryCount + 1}:`, error);
-          retryCount++;
-          if (retryCount < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        console.log('✅ AuthProvider: Session obtida:', !!session);
+
+        if (session?.user && mounted) {
+          console.log('🔄 AuthProvider: Usuário encontrado, buscando perfil...');
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else {
+          console.log('⚠️ AuthProvider: Nenhum usuário logado');
+          if (mounted) {
+            setIsLoading(false);
           }
         }
-      }
-
-      if (mounted) {
-        console.log('❌ AuthProvider: Todas as tentativas falharam, finalizando');
-        setIsLoading(false);
+      } catch (error) {
+        console.error('❌ AuthProvider: Erro na inicialização:', error);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -121,9 +102,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (data && mounted) {
           let clientesAssociados: string[] = [];
           
+          // Para usuários não-admin, buscar clientes da tabela user_clients
           if (data.role !== 'admin') {
             try {
-              console.log('🔄 AuthProvider: Buscando clientes associados...');
+              console.log('🔄 AuthProvider: Buscando clientes associados para usuário regular...');
               const { data: userClientsData } = await supabase
                 .from('user_clients')
                 .select('cliente_nome')
@@ -137,6 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               console.error('❌ AuthProvider: Erro ao buscar clientes do usuário:', error);
             }
           }
+          // Para admins, não buscar clientes aqui - será feito no useActiveClient
 
           const profileWithClients: Profile = {
             id: data.id,
@@ -177,7 +160,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (mounted) {
         setIsLoading(false);
       }
-    }, 30000);
+    }, 15000);
 
     initializeAuth();
 

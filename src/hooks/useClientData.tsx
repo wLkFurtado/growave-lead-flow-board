@@ -26,20 +26,9 @@ export const useClientData = (dateRange?: DateRange) => {
 
     const fetchData = async () => {
       try {
-        // Se cliente ainda está carregando, aguardar
         if (clientLoading) {
           console.log('⏳ useClientData: Cliente carregando, aguardando...');
-          
-          const timeoutId = setTimeout(() => {
-            console.log('⏰ useClientData: TIMEOUT aguardando cliente - finalizando');
-            if (mounted) {
-              setFacebookAds([]);
-              setWhatsappLeads([]);
-              setError(null);
-              setIsLoading(false);
-            }
-          }, 10000);
-          return () => clearTimeout(timeoutId);
+          return;
         }
 
         if (!activeClient) {
@@ -57,45 +46,33 @@ export const useClientData = (dateRange?: DateRange) => {
         setIsLoading(true);
         setError(null);
         
-        // Timeout aumentado para 15 segundos
-        const queryPromise = async () => {
-          let fbQuery = supabase
-            .from('facebook_ads')
-            .select('*')
-            .eq('cliente_nome', activeClient)
-            .order('data', { ascending: false });
-            
-          let wppQuery = supabase
-            .from('whatsapp_anuncio')
-            .select('*')
-            .eq('cliente_nome', activeClient)
-            .order('data_criacao', { ascending: false });
+        let fbQuery = supabase
+          .from('facebook_ads')
+          .select('*')
+          .eq('cliente_nome', activeClient)
+          .order('data', { ascending: false });
+          
+        let wppQuery = supabase
+          .from('whatsapp_anuncio')
+          .select('*')
+          .eq('cliente_nome', activeClient)
+          .order('data_criacao', { ascending: false });
 
-          if (dateRange) {
-            const fromDate = new Date(dateRange.from);
-            const toDate = new Date(dateRange.to);
-            toDate.setHours(23, 59, 59, 999);
-            
-            const fromDateStr = fromDate.toISOString().split('T')[0];
-            const toDateStr = toDate.toISOString().split('T')[0];
-            
-            console.log('🔄 useClientData: Aplicando filtro de data:', fromDateStr, 'até', toDateStr);
-            
-            fbQuery = fbQuery.gte('data', fromDateStr).lte('data', toDateStr);
-            wppQuery = wppQuery.gte('data_criacao', fromDateStr).lte('data_criacao', toDateStr);
-          }
+        if (dateRange) {
+          const fromDate = new Date(dateRange.from);
+          const toDate = new Date(dateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          
+          const fromDateStr = fromDate.toISOString().split('T')[0];
+          const toDateStr = toDate.toISOString().split('T')[0];
+          
+          console.log('🔄 useClientData: Aplicando filtro de data:', fromDateStr, 'até', toDateStr);
+          
+          fbQuery = fbQuery.gte('data', fromDateStr).lte('data', toDateStr);
+          wppQuery = wppQuery.gte('data_criacao', fromDateStr).lte('data_criacao', toDateStr);
+        }
 
-          return Promise.all([fbQuery, wppQuery]);
-        };
-
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Query timeout')), 15000);
-        });
-
-        const [fbResponse, wppResponse] = await Promise.race([
-          queryPromise(),
-          timeoutPromise
-        ]) as any;
+        const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
 
         console.log('✅ useClientData: Dados obtidos:', {
           fb: fbResponse.data?.length || 0,
@@ -135,14 +112,13 @@ export const useClientData = (dateRange?: DateRange) => {
       }
     };
 
-    // Timeout global aumentado para 25 segundos
     const globalTimeout = setTimeout(() => {
       console.log('⏰ useClientData: TIMEOUT GLOBAL - Forçando finalização');
       if (mounted) {
         setIsLoading(false);
         setError('Timeout na busca de dados');
       }
-    }, 25000);
+    }, 10000);
 
     fetchData();
 
@@ -153,7 +129,6 @@ export const useClientData = (dateRange?: DateRange) => {
     };
   }, [activeClient, clientLoading, dateRange]);
 
-  // Log do estado atual
   useEffect(() => {
     console.log('📊 useClientData: Estado atual:', {
       activeClient,

@@ -22,18 +22,9 @@ export const useActiveClient = () => {
 
     const initializeClient = async () => {
       try {
-        // Se auth ainda está carregando, aguardar um pouco
         if (authLoading) {
           console.log('⏳ useActiveClient: Auth carregando, aguardando...');
-          
-          // Timeout reduzido para 8 segundos
-          const timeoutId = setTimeout(() => {
-            console.log('⏰ useActiveClient: TIMEOUT aguardando auth - continuando');
-            if (mounted) {
-              setIsLoading(false);
-            }
-          }, 8000);
-          return () => clearTimeout(timeoutId);
+          return;
         }
 
         console.log('🔄 useActiveClient: Auth finalizado, processando cliente...');
@@ -74,36 +65,24 @@ export const useActiveClient = () => {
       try {
         console.log('🔄 useActiveClient: Buscando clientes no Supabase...');
         
-        // Timeout aumentado para 15 segundos
-        const fetchPromise = async () => {
-          const { supabase } = await import('@/integrations/supabase/client');
-          
-          const [fbResponse, wppResponse] = await Promise.all([
-            supabase
-              .from('facebook_ads')
-              .select('cliente_nome')
-              .not('cliente_nome', 'is', null),
-            supabase
-              .from('whatsapp_anuncio')
-              .select('cliente_nome')
-              .not('cliente_nome', 'is', null)
-          ]);
-
-          return { fbResponse, wppResponse };
-        };
-
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Fetch clients timeout')), 15000);
-        });
-
-        const { fbResponse, wppResponse } = await Promise.race([
-          fetchPromise(),
-          timeoutPromise
-        ]) as any;
+        const { supabase } = await import('@/integrations/supabase/client');
+        
+        const [fbResponse, wppResponse] = await Promise.all([
+          supabase
+            .from('facebook_ads')
+            .select('cliente_nome')
+            .not('cliente_nome', 'is', null),
+          supabase
+            .from('whatsapp_anuncio')
+            .select('cliente_nome')
+            .not('cliente_nome', 'is', null)
+        ]);
 
         console.log('✅ useActiveClient: Respostas obtidas:', {
           fb: fbResponse.data?.length || 0,
-          wpp: wppResponse.data?.length || 0
+          wpp: wppResponse.data?.length || 0,
+          fbError: !!fbResponse.error,
+          wppError: !!wppResponse.error
         });
 
         if (fbResponse.error || wppResponse.error) {
@@ -144,13 +123,12 @@ export const useActiveClient = () => {
       }
     };
 
-    // Timeout global aumentado para 20 segundos
     const globalTimeout = setTimeout(() => {
       console.log('⏰ useActiveClient: TIMEOUT GLOBAL - Forçando finalização');
       if (mounted) {
         setIsLoading(false);
       }
-    }, 20000);
+    }, 10000);
 
     initializeClient();
 
@@ -161,7 +139,6 @@ export const useActiveClient = () => {
     };
   }, [profile, userClients, isAdmin, authLoading]);
 
-  // Log do estado atual
   useEffect(() => {
     console.log('📊 useActiveClient: Estado atual:', {
       activeClient,
