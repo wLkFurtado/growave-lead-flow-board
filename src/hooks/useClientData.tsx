@@ -8,13 +8,21 @@ export const useClientData = () => {
   const [facebookAds, setFacebookAds] = useState<any[]>([]);
   const [whatsappLeads, setWhatsappLeads] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!activeClient) return;
+      if (!activeClient) {
+        setIsLoading(false);
+        return;
+      }
       
       setIsLoading(true);
+      setError(null);
+      
       try {
+        console.log('Buscando dados para o cliente:', activeClient);
+        
         const [fbResponse, wppResponse] = await Promise.all([
           supabase
             .from('facebook_ads')
@@ -26,13 +34,26 @@ export const useClientData = () => {
             .eq('cliente_nome', activeClient)
         ]);
 
-        if (fbResponse.error) throw fbResponse.error;
-        if (wppResponse.error) throw wppResponse.error;
+        if (fbResponse.error) {
+          console.error('Erro Facebook Ads:', fbResponse.error);
+          throw fbResponse.error;
+        }
+        
+        if (wppResponse.error) {
+          console.error('Erro WhatsApp:', wppResponse.error);
+          throw wppResponse.error;
+        }
+
+        console.log('Dados Facebook:', fbResponse.data?.length || 0, 'registros');
+        console.log('Dados WhatsApp:', wppResponse.data?.length || 0, 'registros');
 
         setFacebookAds(fbResponse.data || []);
         setWhatsappLeads(wppResponse.data || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro ao buscar dados do cliente:', error);
+        setError(error.message || 'Erro ao carregar dados');
+        setFacebookAds([]);
+        setWhatsappLeads([]);
       } finally {
         setIsLoading(false);
       }
@@ -45,6 +66,8 @@ export const useClientData = () => {
     facebookAds,
     whatsappLeads,
     isLoading,
-    activeClient
+    error,
+    activeClient,
+    hasData: facebookAds.length > 0 || whatsappLeads.length > 0
   };
 };
