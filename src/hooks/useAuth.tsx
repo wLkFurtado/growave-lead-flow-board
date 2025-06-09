@@ -17,6 +17,7 @@ interface AuthContextType {
   userClients: string[];
   isAdmin: boolean;
   isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -87,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Timeout para fetchProfile
         const profilePromise = supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
           .eq('id', userId)
           .maybeSingle();
@@ -114,8 +115,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('✅ AuthProvider: Perfil obtido:', data);
 
         if (data && mounted) {
-          setProfile(data);
-          setUserClients(data.clientes_associados || []);
+          // Buscar clientes associados se não for admin
+          let clientesAssociados: string[] = [];
+          
+          if (data.role !== 'admin') {
+            try {
+              const { data: userClientsData, error: clientsError } = await supabase
+                .from('user_clients')
+                .select('cliente_nome')
+                .eq('user_id', userId);
+
+              if (!clientsError && userClientsData) {
+                clientesAssociados = userClientsData.map(item => item.cliente_nome);
+              }
+            } catch (error) {
+              console.error('❌ AuthProvider: Erro ao buscar clientes do usuário:', error);
+            }
+          }
+
+          const profileWithClients = {
+            ...data,
+            clientes_associados: clientesAssociados
+          };
+
+          setProfile(profileWithClients);
+          setUserClients(clientesAssociados);
           console.log('✅ AuthProvider: Profile e clientes definidos');
         } else {
           console.log('⚠️ AuthProvider: Nenhum perfil encontrado');
@@ -181,6 +205,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [user, profile, userClients, isLoading]);
 
+  const signIn = async (email: string, password: string) => {
+    console.log('🔄 AuthProvider: Fazendo login...');
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     console.log('🔄 AuthProvider: Fazendo logout...');
     await supabase.auth.signOut();
@@ -192,6 +225,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userClients,
     isAdmin: profile?.role === 'admin',
     isLoading,
+    signIn,
     signOut,
   };
 

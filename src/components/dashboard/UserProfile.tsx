@@ -17,9 +17,9 @@ export const UserProfile = () => {
 
   if (!profile) return null;
 
-  const getInitials = (name: string | null, email: string) => {
-    if (name) {
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const getInitials = (nomeCompleto: string | null, email: string) => {
+    if (nomeCompleto) {
+      return nomeCompleto.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
     return email.slice(0, 2).toUpperCase();
   };
@@ -37,7 +37,7 @@ export const UserProfile = () => {
       <DropdownMenuTrigger className="flex items-center space-x-3 hover:bg-slate-800/50 rounded-xl px-3 py-2 transition-all duration-200 group">
         <div className="text-right hidden sm:block">
           <p className="text-sm font-medium text-white group-hover:text-[#00FF88] transition-colors">
-            {profile.name || profile.email}
+            {profile.nome_completo || profile.email}
           </p>
           <div className="flex items-center space-x-1">
             {isAdmin && <Shield size={12} className="text-[#00FF88]" />}
@@ -48,7 +48,7 @@ export const UserProfile = () => {
         </div>
         <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-[#00FF88]/50 transition-all duration-200">
           <AvatarFallback className="bg-gradient-to-br from-[#00FF88] to-[#39FF14] text-slate-900 text-sm font-bold">
-            {getInitials(profile.name, profile.email)}
+            {getInitials(profile.nome_completo, profile.email)}
           </AvatarFallback>
         </Avatar>
         <ChevronDown size={16} className="text-slate-400 group-hover:text-[#00FF88] transition-colors" />
@@ -60,7 +60,7 @@ export const UserProfile = () => {
       >
         <DropdownMenuLabel className="pb-3">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium text-white">{profile.name || profile.email}</p>
+            <p className="text-sm font-medium text-white">{profile.nome_completo || profile.email}</p>
             <p className="text-xs text-slate-400">{profile.email}</p>
             <div className="flex items-center space-x-1 text-xs text-[#00FF88]">
               {isAdmin ? <Shield className="h-3 w-3" /> : <Building className="h-3 w-3" />}

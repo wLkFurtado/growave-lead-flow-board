@@ -51,7 +51,7 @@ export const DashboardHeader = ({ activeTab, isCollapsed }: DashboardHeaderProps
           {!isAdmin && profile && (
             <div className="bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700">
               <span className="text-sm text-slate-300">Cliente: </span>
-              <span className="text-sm font-medium text-white">{profile.name}</span>
+              <span className="text-sm font-medium text-white">{profile.nome_completo}</span>
             </div>
           )}
         </div>
