@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { UserProfile } from './UserProfile';
+import { ClientSelector } from './ClientSelector';
 import { Bell, Search } from 'lucide-react';
 
 interface DashboardHeaderProps {
@@ -32,13 +33,17 @@ export const DashboardHeader = ({ activeTab, isCollapsed }: DashboardHeaderProps
       isCollapsed ? 'left-16' : 'left-64'
     }`}>
       <div className="h-full px-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-white growave-neon-text">
-            {getTitle()}
-          </h1>
-          <p className="text-slate-400 text-sm">
-            {getSubtitle()}
-          </p>
+        <div className="flex items-center space-x-6">
+          <div>
+            <h1 className="text-xl font-bold text-white growave-neon-text">
+              {getTitle()}
+            </h1>
+            <p className="text-slate-400 text-sm">
+              {getSubtitle()}
+            </p>
+          </div>
+          
+          <ClientSelector />
         </div>
         
         <div className="flex items-center space-x-4">

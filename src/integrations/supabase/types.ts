@@ -9,12 +9,12 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      "[FB] Hospital_do_cabelo": {
+      facebook_ads: {
         Row: {
           alcance: number | null
           anuncio: string | null
           campanha: string
-          "cliente-name": string | null
+          cliente_nome: string | null
           cliques_no_link: number | null
           conjunto_anuncio: string
           data: string
@@ -35,7 +35,7 @@ export type Database = {
           alcance?: number | null
           anuncio?: string | null
           campanha: string
-          "cliente-name"?: string | null
+          cliente_nome?: string | null
           cliques_no_link?: number | null
           conjunto_anuncio: string
           data: string
@@ -56,7 +56,7 @@ export type Database = {
           alcance?: number | null
           anuncio?: string | null
           campanha?: string
-          "cliente-name"?: string | null
+          cliente_nome?: string | null
           cliques_no_link?: number | null
           conjunto_anuncio?: string
           data?: string
@@ -75,10 +75,28 @@ export type Database = {
         }
         Relationships: []
       }
-      "[WPP] Hospital_do_cabelo": {
+      n8n_chat_histories: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_anuncio: {
         Row: {
           cidade: string | null
-          "cliente-name": string | null
+          cliente_nome: string | null
           cta: string | null
           ctwaclid: string | null
           data_criacao: string
@@ -103,7 +121,7 @@ export type Database = {
         }
         Insert: {
           cidade?: string | null
-          "cliente-name"?: string | null
+          cliente_nome?: string | null
           cta?: string | null
           ctwaclid?: string | null
           data_criacao: string
@@ -128,7 +146,7 @@ export type Database = {
         }
         Update: {
           cidade?: string | null
-          "cliente-name"?: string | null
+          cliente_nome?: string | null
           cta?: string | null
           ctwaclid?: string | null
           data_criacao?: string
@@ -150,24 +168,6 @@ export type Database = {
           status?: string | null
           telefone?: string
           valor_venda?: number | null
-        }
-        Relationships: []
-      }
-      n8n_chat_histories: {
-        Row: {
-          id: number
-          message: Json
-          session_id: string
-        }
-        Insert: {
-          id?: number
-          message: Json
-          session_id: string
-        }
-        Update: {
-          id?: number
-          message?: Json
-          session_id?: string
         }
         Relationships: []
       }

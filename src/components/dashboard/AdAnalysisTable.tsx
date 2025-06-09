@@ -12,7 +12,7 @@ export const AdAnalysisTable = ({ adsData, leadsData }: AdAnalysisTableProps) =>
 
   const adsMap = useMemo(() => {
     return adsData.reduce((acc, ad) => {
-      acc[ad.id] = ad;
+      acc[ad.source_id] = ad;
       return acc;
     }, {});
   }, [adsData]);
@@ -26,14 +26,14 @@ export const AdAnalysisTable = ({ adsData, leadsData }: AdAnalysisTableProps) =>
     return leadsData
       .filter(lead => lead.telefone && lead.telefone.length > 0)
       .map(lead => {
-        const ad = adsMap[lead.facebook_ad_id];
+        const ad = adsMap[lead.source_id];
         return {
           ...lead,
-          data: ad ? ad.data : 'N/A',
-          campanha: ad ? ad.campanha : 'N/A',
-          conjunto_anuncio: ad ? ad.conjunto_anuncio : 'N/A',
-          anuncio: ad ? ad.anuncio : 'N/A',
-          link_anuncio: ad ? ad.link_anuncio : '#',
+          data: ad ? ad.data : lead.data_criacao || 'N/A',
+          campanha: ad ? ad.campanha : lead.nome_campanha || 'N/A',
+          conjunto_anuncio: ad ? ad.conjunto_anuncio : lead.nome_conjunto || 'N/A',
+          anuncio: ad ? ad.anuncio : lead.nome_anuncio || 'N/A',
+          link_anuncio: ad ? ad.source_url : lead.source_url || '#',
         };
       })
       .filter(lead => {
@@ -81,8 +81,8 @@ export const AdAnalysisTable = ({ adsData, leadsData }: AdAnalysisTableProps) =>
           </thead>
           <tbody className="bg-slate-800 divide-y divide-slate-700">
             {processedLeadsForTable.length > 0 ? (
-              processedLeadsForTable.map((lead) => (
-                <tr key={lead.id} className="hover:bg-slate-700 transition-colors duration-200">
+              processedLeadsForTable.map((lead, index) => (
+                <tr key={lead.id || index} className="hover:bg-slate-700 transition-colors duration-200">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">{lead.data}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-medium">{lead.telefone}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">{lead.campanha}</td>

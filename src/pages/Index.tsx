@@ -5,11 +5,20 @@ import { Sidebar } from '../components/dashboard/Sidebar';
 import { DashboardOverview } from '../components/dashboard/DashboardOverview';
 import { AdAnalysisTable } from '../components/dashboard/AdAnalysisTable';
 import { LeadKanbanBoard } from '../components/dashboard/LeadKanbanBoard';
-import { facebookAdsData, whatsappAnuncioData } from '../data/mockData';
+import { useClientData } from '../hooks/useClientData';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { facebookAds, whatsappLeads, isLoading, activeClient } = useClientData();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-xl">Carregando dados...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
@@ -35,12 +44,12 @@ const Index = () => {
           <div className="max-w-7xl mx-auto space-y-8">
             {activeTab === 'dashboard' && (
               <>
-                <DashboardOverview adsData={facebookAdsData} leadsData={whatsappAnuncioData} />
-                <AdAnalysisTable adsData={facebookAdsData} leadsData={whatsappAnuncioData} />
+                <DashboardOverview adsData={facebookAds} leadsData={whatsappLeads} />
+                <AdAnalysisTable adsData={facebookAds} leadsData={whatsappLeads} />
               </>
             )}
             {activeTab === 'kanban' && (
-              <LeadKanbanBoard leadsData={whatsappAnuncioData} />
+              <LeadKanbanBoard leadsData={whatsappLeads} />
             )}
           </div>
         </div>
