@@ -16,6 +16,7 @@ interface AuthContextType {
   userClients: string[];
   isAdmin: boolean;
   isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -157,6 +158,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      return { error };
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      return { error };
+    }
+  };
+
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -177,6 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       userClients,
       isAdmin,
       isLoading,
+      signIn,
       signOut
     }}>
       {children}
