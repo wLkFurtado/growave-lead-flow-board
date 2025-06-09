@@ -67,16 +67,25 @@ export const useActiveClient = () => {
         
         const { supabase } = await import('@/integrations/supabase/client');
         
-        const [fbResponse, wppResponse] = await Promise.all([
-          supabase
-            .from('facebook_ads')
-            .select('cliente_nome')
-            .not('cliente_nome', 'is', null),
-          supabase
-            .from('whatsapp_anuncio')
-            .select('cliente_nome')
-            .not('cliente_nome', 'is', null)
-        ]);
+        // Timeout mais curto para queries
+        const queryTimeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Query timeout')), 3000)
+        );
+        
+        const fbQuery = supabase
+          .from('facebook_ads')
+          .select('cliente_nome')
+          .not('cliente_nome', 'is', null);
+          
+        const wppQuery = supabase
+          .from('whatsapp_anuncio')
+          .select('cliente_nome')
+          .not('cliente_nome', 'is', null);
+
+        const [fbResponse, wppResponse] = await Promise.race([
+          Promise.all([fbQuery, wppQuery]),
+          queryTimeout
+        ]) as any[];
 
         console.log('✅ useActiveClient: Respostas obtidas:', {
           fb: fbResponse.data?.length || 0,
@@ -123,12 +132,13 @@ export const useActiveClient = () => {
       }
     };
 
+    // Timeout mais curto
     const globalTimeout = setTimeout(() => {
       console.log('⏰ useActiveClient: TIMEOUT GLOBAL - Forçando finalização');
       if (mounted) {
         setIsLoading(false);
       }
-    }, 10000);
+    }, 6000); // Reduzido de 10s para 6s
 
     initializeClient();
 

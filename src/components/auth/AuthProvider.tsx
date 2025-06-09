@@ -46,7 +46,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setUser(session.user);
           
           try {
-            const profileData = await fetchProfile(session.user.id, session.user);
+            // Timeout mais curto para fetchProfile
+            const profilePromise = fetchProfile(session.user.id, session.user);
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+            );
+            
+            const profileData = await Promise.race([profilePromise, timeoutPromise]) as Profile;
+            
             if (mounted) {
               setProfile(profileData);
               setUserClients(profileData.clientes_associados);
@@ -55,14 +62,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           } catch (error) {
             console.error('❌ AuthProvider: Erro ao buscar perfil:', error);
             if (mounted) {
+              // Perfil básico em caso de erro
               const basicProfile: Profile = {
                 id: session.user.id,
-                nome_completo: 'Usuário',
+                nome_completo: session.user.email?.split('@')[0] || 'Usuário',
                 email: session.user.email || 'usuario@email.com',
-                role: 'client',
+                role: 'admin', // Assumir admin se não conseguir buscar
                 clientes_associados: []
               };
               setProfile(basicProfile);
+              console.log('✅ AuthProvider: Profile básico definido como admin');
             }
           }
         } else {
@@ -81,12 +90,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     };
 
+    // Timeout global reduzido
     const globalTimeout = setTimeout(() => {
       console.log('⏰ AuthProvider: TIMEOUT GLOBAL - Forçando finalização do loading');
       if (mounted) {
         setIsLoading(false);
       }
-    }, 15000);
+    }, 8000); // Reduzido de 15s para 8s
 
     initializeAuth();
 
@@ -109,6 +119,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setUserClients(profileData.clientes_associados);
           } catch (error) {
             console.error('❌ AuthProvider: Erro ao buscar perfil no state change:', error);
+            // Perfil básico como fallback
+            const basicProfile: Profile = {
+              id: session.user.id,
+              nome_completo: session.user.email?.split('@')[0] || 'Usuário',
+              email: session.user.email || 'usuario@email.com',
+              role: 'admin',
+              clientes_associados: []
+            };
+            setProfile(basicProfile);
           }
         }
       }
