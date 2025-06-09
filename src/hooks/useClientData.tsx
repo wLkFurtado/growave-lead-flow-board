@@ -26,10 +26,11 @@ export const useClientData = (dateRange?: DateRange) => {
       setError(null);
       
       try {
-        console.log('Buscando dados para o cliente:', activeClient);
-        console.log('Período:', dateRange);
+        console.log('=== INÍCIO DA BUSCA ===');
+        console.log('Cliente ativo:', activeClient);
+        console.log('Período original:', dateRange);
         
-        // Construir queries com filtro de data se fornecido
+        // Construir queries base
         let fbQuery = supabase
           .from('facebook_ads')
           .select('*')
@@ -42,25 +43,45 @@ export const useClientData = (dateRange?: DateRange) => {
 
         // Aplicar filtro de data se fornecido
         if (dateRange) {
-          // Usar toISOString().split('T')[0] para garantir formato YYYY-MM-DD
-          const fromDate = dateRange.from.toISOString().split('T')[0];
-          const toDate = dateRange.to.toISOString().split('T')[0];
+          // Garantir que as datas sejam no formato correto
+          const fromDate = new Date(dateRange.from);
+          const toDate = new Date(dateRange.to);
+          
+          // Ajustar a data final para o final do dia
+          toDate.setHours(23, 59, 59, 999);
+          
+          // Converter para string no formato ISO e pegar apenas a parte da data
+          const fromDateStr = fromDate.toISOString().split('T')[0];
+          const toDateStr = toDate.toISOString().split('T')[0];
+          
+          console.log('Data FROM original:', dateRange.from);
+          console.log('Data TO original:', dateRange.to);
+          console.log('Data FROM formatada:', fromDateStr);
+          console.log('Data TO formatada:', toDateStr);
           
           fbQuery = fbQuery
-            .gte('data', fromDate)
-            .lte('data', toDate);
+            .gte('data', fromDateStr)
+            .lte('data', toDateStr);
             
           wppQuery = wppQuery
-            .gte('data_criacao', fromDate)
-            .lte('data_criacao', toDate);
+            .gte('data_criacao', fromDateStr)
+            .lte('data_criacao', toDateStr);
             
-          console.log('Filtro de data aplicado:', fromDate, 'até', toDate);
+          console.log('Filtros aplicados - FB: data >=', fromDateStr, 'AND data <=', toDateStr);
+          console.log('Filtros aplicados - WPP: data_criacao >=', fromDateStr, 'AND data_criacao <=', toDateStr);
+        } else {
+          console.log('Nenhum filtro de data aplicado - buscando todos os dados');
         }
 
+        console.log('Executando queries...');
         const [fbResponse, wppResponse] = await Promise.all([
           fbQuery,
           wppQuery
         ]);
+
+        console.log('=== RESULTADOS DAS QUERIES ===');
+        console.log('Facebook Response:', fbResponse);
+        console.log('WhatsApp Response:', wppResponse);
 
         if (fbResponse.error) {
           console.error('Erro Facebook Ads:', fbResponse.error);
@@ -72,42 +93,68 @@ export const useClientData = (dateRange?: DateRange) => {
           throw wppResponse.error;
         }
 
-        console.log('Dados Facebook:', fbResponse.data?.length || 0, 'registros');
-        console.log('Dados WhatsApp:', wppResponse.data?.length || 0, 'registros');
+        const fbData = fbResponse.data || [];
+        const wppData = wppResponse.data || [];
 
-        // Se não há dados no período mas temos o cliente, vamos verificar se existem dados sem filtro
-        if (dateRange && (!fbResponse.data?.length && !wppResponse.data?.length)) {
-          console.log('Verificando se existem dados para este cliente sem filtro de data...');
+        console.log('Dados Facebook encontrados:', fbData.length, 'registros');
+        console.log('Dados WhatsApp encontrados:', wppData.length, 'registros');
+        
+        if (fbData.length > 0) {
+          console.log('Primeiro registro FB:', fbData[0]);
+          console.log('Datas FB encontradas:', fbData.map(item => item.data));
+        }
+        
+        if (wppData.length > 0) {
+          console.log('Primeiro registro WPP:', wppData[0]);
+          console.log('Datas WPP encontradas:', wppData.map(item => item.data_criacao));
+        }
+
+        // Se não há dados no período, vamos verificar se existem dados para este cliente
+        if (dateRange && (fbData.length === 0 && wppData.length === 0)) {
+          console.log('=== VERIFICANDO DADOS SEM FILTRO ===');
           
           const [fbAllResponse, wppAllResponse] = await Promise.all([
             supabase
               .from('facebook_ads')
-              .select('data')
+              .select('data, cliente_nome')
               .eq('cliente_nome', activeClient)
-              .limit(1),
+              .limit(5),
             supabase
               .from('whatsapp_anuncio')
-              .select('data_criacao')
+              .select('data_criacao, cliente_nome')
               .eq('cliente_nome', activeClient)
-              .limit(1)
+              .limit(5)
           ]);
           
+          console.log('Dados FB sem filtro:', fbAllResponse.data);
+          console.log('Dados WPP sem filtro:', wppAllResponse.data);
+          
           if (fbAllResponse.data?.length || wppAllResponse.data?.length) {
-            console.log('Existem dados para este cliente, mas não no período selecionado');
+            console.log('DIAGNÓSTICO: Existem dados para este cliente, mas não no período selecionado');
+            if (fbAllResponse.data?.length) {
+              console.log('Amostras de datas FB disponíveis:', fbAllResponse.data.map(item => item.data));
+            }
+            if (wppAllResponse.data?.length) {
+              console.log('Amostras de datas WPP disponíveis:', wppAllResponse.data.map(item => item.data_criacao));
+            }
           } else {
-            console.log('Não existem dados para este cliente');
+            console.log('DIAGNÓSTICO: Não existem dados para este cliente');
           }
         }
 
-        setFacebookAds(fbResponse.data || []);
-        setWhatsappLeads(wppResponse.data || []);
+        console.log('=== DEFININDO ESTADO FINAL ===');
+        setFacebookAds(fbData);
+        setWhatsappLeads(wppData);
+        
       } catch (error: any) {
-        console.error('Erro ao buscar dados do cliente:', error);
+        console.error('=== ERRO NA BUSCA ===');
+        console.error('Erro completo:', error);
         setError(error.message || 'Erro ao carregar dados');
         setFacebookAds([]);
         setWhatsappLeads([]);
       } finally {
         setIsLoading(false);
+        console.log('=== FIM DA BUSCA ===');
       }
     };
 
