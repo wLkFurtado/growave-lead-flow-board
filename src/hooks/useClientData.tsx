@@ -29,20 +29,20 @@ export const useClientData = (dateRange?: DateRange) => {
       }
 
       if (!activeClient) {
-        console.log('Nenhum cliente ativo, limpando dados');
+        console.log('Nenhum cliente ativo, limpando dados e finalizando loading');
         setFacebookAds([]);
         setWhatsappLeads([]);
+        setError(null);
         setIsLoading(false);
         return;
       }
       
-      console.log('=== INICIANDO BUSCA DE DADOS ===');
+      console.log('=== INICIANDO BUSCA DE DADOS PARA CLIENTE:', activeClient, '===');
       setIsLoading(true);
       setError(null);
       
       try {
-        console.log('Cliente ativo:', activeClient);
-        console.log('Período:', dateRange);
+        console.log('Período de busca:', dateRange);
         
         // Construir queries base
         let fbQuery = supabase
@@ -68,8 +68,7 @@ export const useClientData = (dateRange?: DateRange) => {
           const fromDateStr = fromDate.toISOString().split('T')[0];
           const toDateStr = toDate.toISOString().split('T')[0];
           
-          console.log('Aplicando filtro de data:');
-          console.log('De:', fromDateStr, 'Até:', toDateStr);
+          console.log('Aplicando filtro de data: De', fromDateStr, 'até', toDateStr);
           
           fbQuery = fbQuery
             .gte('data', fromDateStr)
@@ -80,15 +79,23 @@ export const useClientData = (dateRange?: DateRange) => {
             .lte('data_criacao', toDateStr);
         }
 
-        console.log('Executando queries...');
+        console.log('Executando queries em paralelo...');
         const [fbResponse, wppResponse] = await Promise.all([
           fbQuery,
           wppQuery
         ]);
 
         console.log('=== RESULTADOS DA BUSCA ===');
-        console.log('Facebook Response:', fbResponse);
-        console.log('WhatsApp Response:', wppResponse);
+        console.log('Facebook Response:', {
+          success: !fbResponse.error,
+          count: fbResponse.data?.length || 0,
+          error: fbResponse.error
+        });
+        console.log('WhatsApp Response:', {
+          success: !wppResponse.error,
+          count: wppResponse.data?.length || 0,
+          error: wppResponse.error
+        });
 
         if (fbResponse.error) {
           console.error('Erro Facebook Ads:', fbResponse.error);
@@ -103,20 +110,21 @@ export const useClientData = (dateRange?: DateRange) => {
         const fbData = fbResponse.data || [];
         const wppData = wppResponse.data || [];
 
-        console.log('Dados finais encontrados:');
-        console.log('Facebook:', fbData.length, 'registros');
-        console.log('WhatsApp:', wppData.length, 'registros');
+        console.log('Dados carregados com sucesso:');
+        console.log('- Facebook:', fbData.length, 'registros');
+        console.log('- WhatsApp:', wppData.length, 'registros');
 
         setFacebookAds(fbData);
         setWhatsappLeads(wppData);
+        setError(null);
         
       } catch (error: any) {
-        console.error('=== ERRO NA BUSCA ===', error);
+        console.error('=== ERRO NA BUSCA DE DADOS ===', error);
         setError(error.message || 'Erro ao carregar dados');
         setFacebookAds([]);
         setWhatsappLeads([]);
       } finally {
-        console.log('=== FINALIZANDO BUSCA ===');
+        console.log('=== FINALIZANDO BUSCA DE DADOS ===');
         setIsLoading(false);
       }
     };
@@ -133,6 +141,14 @@ export const useClientData = (dateRange?: DateRange) => {
     hasData: facebookAds.length > 0 || whatsappLeads.length > 0
   };
 
-  console.log('=== useClientData RETURN ===', result);
+  console.log('=== useClientData RETURN ===', {
+    activeClient: result.activeClient,
+    isLoading: result.isLoading,
+    hasData: result.hasData,
+    fbCount: result.facebookAds.length,
+    wppCount: result.whatsappLeads.length,
+    error: result.error
+  });
+
   return result;
 };

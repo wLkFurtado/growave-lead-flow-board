@@ -22,12 +22,14 @@ export const useActiveClient = () => {
       }
 
       if (!profile) {
-        console.log('Nenhum perfil encontrado');
+        console.log('Nenhum perfil encontrado, finalizando loading');
         setActiveClient('');
         setAvailableClients([]);
         setIsLoading(false);
         return;
       }
+
+      setIsLoading(true);
 
       if (isAdmin) {
         console.log('Usuário é admin, buscando todos os clientes...');
@@ -52,7 +54,7 @@ export const useActiveClient = () => {
 
   const fetchAllClients = async () => {
     try {
-      console.log('Buscando todos os clientes para admin...');
+      console.log('=== BUSCANDO TODOS OS CLIENTES PARA ADMIN ===');
       const { supabase } = await import('@/integrations/supabase/client');
       
       // Buscar clientes únicos das duas tabelas
@@ -67,8 +69,8 @@ export const useActiveClient = () => {
           .not('cliente_nome', 'is', null)
       ]);
 
-      console.log('FB Response:', fbResponse);
-      console.log('WPP Response:', wppResponse);
+      console.log('FB Response:', fbResponse.data?.length || 0, 'registros');
+      console.log('WPP Response:', wppResponse.data?.length || 0, 'registros');
 
       if (fbResponse.error) {
         console.error('Erro ao buscar clientes FB:', fbResponse.error);
@@ -83,7 +85,8 @@ export const useActiveClient = () => {
       
       // Combinar e remover duplicatas
       const allClients = [...new Set([...fbClients, ...wppClients])];
-      console.log('Todos os clientes encontrados:', allClients);
+      console.log('Total de clientes únicos encontrados:', allClients.length);
+      console.log('Clientes:', allClients);
       
       setAvailableClients(allClients);
       
@@ -100,12 +103,15 @@ export const useActiveClient = () => {
           setActiveClient(allClients[0]);
         }
       } else {
-        console.log('Nenhum cliente encontrado');
+        console.log('Nenhum cliente encontrado na base de dados');
         setActiveClient('');
       }
     } catch (error) {
-      console.error('Erro ao buscar clientes:', error);
+      console.error('Erro fatal ao buscar clientes:', error);
+      setAvailableClients([]);
+      setActiveClient('');
     } finally {
+      console.log('=== FINALIZANDO BUSCA DE CLIENTES ===');
       setIsLoading(false);
     }
   };
@@ -120,7 +126,7 @@ export const useActiveClient = () => {
 
   console.log('=== useActiveClient State FINAL ===');
   console.log('activeClient:', activeClient);
-  console.log('availableClients:', availableClients);
+  console.log('availableClients:', availableClients.length, 'clientes');
   console.log('isLoading:', isLoading || authLoading);
 
   return {
