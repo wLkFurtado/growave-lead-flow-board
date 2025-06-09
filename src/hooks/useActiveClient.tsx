@@ -21,7 +21,7 @@ export const useActiveClient = () => {
     }
 
     if (!profile) {
-      console.log('Nenhum perfil encontrado');
+      console.log('Nenhum perfil encontrado, redirecionando para auth...');
       setActiveClient('');
       setAvailableClients([]);
       setIsLoading(false);
@@ -65,11 +65,19 @@ export const useActiveClient = () => {
       console.log('FB Response:', fbResponse);
       console.log('WPP Response:', wppResponse);
 
+      if (fbResponse.error) {
+        console.error('Erro ao buscar clientes FB:', fbResponse.error);
+      }
+      
+      if (wppResponse.error) {
+        console.error('Erro ao buscar clientes WPP:', wppResponse.error);
+      }
+
       const fbClients = fbResponse.data?.map(row => row.cliente_nome) || [];
       const wppClients = wppResponse.data?.map(row => row.cliente_nome) || [];
       
       // Combinar e remover duplicatas
-      const allClients = [...new Set([...fbClients, ...wppClients])];
+      const allClients = [...new Set([...fbClients, ...wppClients])].filter(Boolean);
       console.log('Todos os clientes encontrados:', allClients);
       
       setAvailableClients(allClients);
