@@ -22,7 +22,6 @@ interface DateRangePickerProps {
 
 export const DateRangePicker = ({ value, onChange, className }: DateRangePickerProps) => {
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'form' | 'calendar'>('form');
   
   const presets = [
     {
@@ -47,25 +46,52 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
   ];
 
   const handlePresetClick = (preset: DateRange) => {
-    console.log('=== PRESET SELECIONADO ===');
-    console.log('Preset:', preset);
-    onChange(preset);
-    setOpen(false);
+    try {
+      console.log('=== PRESET SELECIONADO ===');
+      console.log('Preset:', preset);
+      onChange(preset);
+      setOpen(false);
+    } catch (error) {
+      console.error('Erro ao aplicar preset:', error);
+    }
   };
 
   const handleFormChange = (newRange: DateRange) => {
-    console.log('=== FORM CHANGE ===');
-    console.log('Nova range:', newRange);
-    onChange(newRange);
-    setOpen(false);
+    try {
+      console.log('=== FORM CHANGE ===');
+      console.log('Nova range:', newRange);
+      onChange(newRange);
+      setOpen(false);
+    } catch (error) {
+      console.error('Erro ao aplicar filtro do form:', error);
+    }
   };
 
   const handleReset = () => {
-    const defaultRange = { from: subDays(new Date(), 30), to: new Date() };
-    console.log('=== RESET FILTRO ===');
-    console.log('Range padrão:', defaultRange);
-    onChange(defaultRange);
-    setOpen(false);
+    try {
+      const defaultRange = { from: subDays(new Date(), 30), to: new Date() };
+      console.log('=== RESET FILTRO ===');
+      console.log('Range padrão:', defaultRange);
+      onChange(defaultRange);
+      setOpen(false);
+    } catch (error) {
+      console.error('Erro ao resetar filtro:', error);
+    }
+  };
+
+  const handleCalendarSelect = (range: any) => {
+    try {
+      if (range?.from && range?.to) {
+        console.log('=== CALENDAR SELECT ===');
+        console.log('Range selecionada:', range);
+        onChange({ from: range.from, to: range.to });
+        setOpen(false);
+      } else if (range?.from) {
+        onChange({ from: range.from, to: range.from });
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar no calendário:', error);
+    }
   };
 
   return (
@@ -141,16 +167,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
                 mode="range"
                 defaultMonth={value?.from}
                 selected={{ from: value?.from, to: value?.to }}
-                onSelect={(range) => {
-                  if (range?.from && range?.to) {
-                    console.log('=== CALENDAR SELECT ===');
-                    console.log('Range selecionada:', range);
-                    onChange({ from: range.from, to: range.to });
-                    setOpen(false);
-                  } else if (range?.from) {
-                    onChange({ from: range.from, to: range.from });
-                  }
-                }}
+                onSelect={handleCalendarSelect}
                 numberOfMonths={2}
                 className={cn("p-3 pointer-events-auto")}
                 classNames={{

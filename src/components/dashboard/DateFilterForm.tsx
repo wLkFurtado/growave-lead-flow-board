@@ -33,27 +33,37 @@ export const DateFilterForm = ({ value, onChange, className }: DateFilterFormPro
   });
 
   const onSubmit = (data: FormData) => {
-    const fromDate = new Date(data.startDate);
-    const toDate = new Date(data.endDate);
-    
-    // Garantir que as datas sejam válidas
-    if (fromDate && toDate && fromDate <= toDate) {
-      onChange({ from: fromDate, to: toDate });
-      console.log('=== FILTRO APLICADO ===');
-      console.log('Data FROM:', fromDate.toISOString());
-      console.log('Data TO:', toDate.toISOString());
+    try {
+      const fromDate = new Date(data.startDate);
+      const toDate = new Date(data.endDate);
+      
+      // Garantir que as datas sejam válidas
+      if (fromDate && toDate && fromDate <= toDate) {
+        onChange({ from: fromDate, to: toDate });
+        console.log('=== FILTRO APLICADO ===');
+        console.log('Data FROM:', fromDate.toISOString());
+        console.log('Data TO:', toDate.toISOString());
+      } else {
+        console.error('Datas inválidas:', { fromDate, toDate });
+      }
+    } catch (error) {
+      console.error('Erro ao aplicar filtro:', error);
     }
   };
 
   const handleReset = () => {
-    const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    
-    form.setValue('startDate', format(thirtyDaysAgo, 'yyyy-MM-dd'));
-    form.setValue('endDate', format(today, 'yyyy-MM-dd'));
-    
-    onChange({ from: thirtyDaysAgo, to: today });
+    try {
+      const today = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      
+      form.setValue('startDate', format(thirtyDaysAgo, 'yyyy-MM-dd'));
+      form.setValue('endDate', format(today, 'yyyy-MM-dd'));
+      
+      onChange({ from: thirtyDaysAgo, to: today });
+    } catch (error) {
+      console.error('Erro ao resetar datas:', error);
+    }
   };
 
   return (
