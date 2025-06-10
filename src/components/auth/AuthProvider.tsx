@@ -21,8 +21,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     console.log('🔄 AuthProvider: useEffect principal iniciado');
     
-    let mounted = true;
-
     const initializeAuth = async () => {
       try {
         console.log('🔄 AuthProvider: Iniciando getSession...');
@@ -31,39 +29,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         if (error) {
           console.error('❌ AuthProvider: Erro ao obter sessão:', error);
-          if (mounted) {
-            setIsLoading(false);
-          }
+          setIsLoading(false);
           return;
         }
 
         console.log('✅ AuthProvider: Session obtida:', !!session);
 
-        if (session?.user && mounted) {
+        if (session?.user) {
           console.log('🔄 AuthProvider: Usuário encontrado, buscando perfil...');
           setUser(session.user);
           
-          // Buscar perfil de forma mais simples
           const profileData = await fetchProfile(session.user.id, session.user);
           
-          if (mounted) {
-            setProfile(profileData);
-            setUserClients(profileData.clientes_associados);
-            console.log('✅ AuthProvider: Profile definido:', profileData.role);
-          }
+          setProfile(profileData);
+          setUserClients(profileData.clientes_associados);
+          console.log('✅ AuthProvider: Profile definido:', profileData.role);
         } else {
           console.log('⚠️ AuthProvider: Nenhum usuário logado');
         }
 
-        if (mounted) {
-          console.log('✅ AuthProvider: Finalizando loading');
-          setIsLoading(false);
-        }
+        console.log('✅ AuthProvider: Finalizando loading');
+        setIsLoading(false);
       } catch (error) {
         console.error('❌ AuthProvider: Erro na inicialização:', error);
-        if (mounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
@@ -72,8 +61,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔔 AuthProvider: Auth state changed:', event);
-        
-        if (!mounted) return;
         
         if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -92,7 +79,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     return () => {
       console.log('🧹 AuthProvider: Cleanup');
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

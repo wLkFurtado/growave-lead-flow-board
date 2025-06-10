@@ -18,39 +18,31 @@ export const useActiveClient = () => {
       userClients: userClients.length
     });
 
-    let mounted = true;
+    if (authLoading) {
+      console.log('⏳ useActiveClient: Auth carregando, aguardando...');
+      return;
+    }
+
+    if (!profile) {
+      console.log('⚠️ useActiveClient: Nenhum perfil, finalizando');
+      setActiveClient('');
+      setAvailableClients([]);
+      setIsLoading(false);
+      return;
+    }
 
     const initializeClient = async () => {
-      if (authLoading) {
-        console.log('⏳ useActiveClient: Auth carregando, aguardando...');
-        return;
-      }
-
-      console.log('🔄 useActiveClient: Auth finalizado, processando cliente...');
-
-      if (!profile) {
-        console.log('⚠️ useActiveClient: Nenhum perfil, finalizando');
-        if (mounted) {
-          setActiveClient('');
-          setAvailableClients([]);
-          setIsLoading(false);
-        }
-        return;
-      }
-
       if (isAdmin) {
         console.log('🔄 useActiveClient: Usuário admin, buscando todos os clientes...');
         await fetchAllClients();
       } else {
         console.log('🔄 useActiveClient: Usuário regular, usando clientes associados:', userClients);
-        if (mounted) {
-          setAvailableClients(userClients);
-          if (userClients.length > 0) {
-            setActiveClient(userClients[0]);
-            console.log('✅ useActiveClient: Cliente definido:', userClients[0]);
-          }
-          setIsLoading(false);
+        setAvailableClients(userClients);
+        if (userClients.length > 0) {
+          setActiveClient(userClients[0]);
+          console.log('✅ useActiveClient: Cliente definido:', userClients[0]);
         }
+        setIsLoading(false);
       }
     };
 
@@ -76,37 +68,28 @@ export const useActiveClient = () => {
 
         console.log('✅ useActiveClient: Clientes encontrados:', allClients);
 
-        if (mounted) {
-          setAvailableClients(allClients);
+        setAvailableClients(allClients);
+        
+        if (allClients.length > 0) {
+          const savedClient = localStorage.getItem('activeClient');
+          const clientToSet = (savedClient && allClients.includes(savedClient)) 
+            ? savedClient 
+            : allClients[0];
           
-          if (allClients.length > 0) {
-            const savedClient = localStorage.getItem('activeClient');
-            const clientToSet = (savedClient && allClients.includes(savedClient)) 
-              ? savedClient 
-              : allClients[0];
-            
-            setActiveClient(clientToSet);
-            console.log('✅ useActiveClient: Cliente ativo definido:', clientToSet);
-          }
-          
-          setIsLoading(false);
+          setActiveClient(clientToSet);
+          console.log('✅ useActiveClient: Cliente ativo definido:', clientToSet);
         }
+        
+        setIsLoading(false);
       } catch (error) {
         console.error('❌ useActiveClient: Erro ao buscar clientes:', error);
-        if (mounted) {
-          setAvailableClients([]);
-          setActiveClient('');
-          setIsLoading(false);
-        }
+        setAvailableClients([]);
+        setActiveClient('');
+        setIsLoading(false);
       }
     };
 
     initializeClient();
-
-    return () => {
-      console.log('🧹 useActiveClient: Cleanup');
-      mounted = false;
-    };
   }, [profile, userClients, isAdmin, authLoading]);
 
   useEffect(() => {
