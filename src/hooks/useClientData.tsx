@@ -17,7 +17,8 @@ export const useClientData = (dateRange?: DateRange) => {
 
   console.log('🔄 useClientData: Hook iniciado', {
     activeClient,
-    clientLoading
+    clientLoading,
+    dateRange
   });
 
   useEffect(() => {
@@ -59,6 +60,26 @@ export const useClientData = (dateRange?: DateRange) => {
           .eq('cliente_nome', activeClient)
           .order('data_criacao', { ascending: false });
 
+        // Primeiro vamos buscar alguns dados sem filtro para debug
+        console.log('🔄 useClientData: Buscando dados sem filtro primeiro...');
+        const [fbSampleResponse, wppSampleResponse] = await Promise.all([
+          supabase
+            .from('facebook_ads')
+            .select('data, cliente_nome')
+            .eq('cliente_nome', activeClient)
+            .limit(5),
+          supabase
+            .from('whatsapp_anuncio')
+            .select('data_criacao, cliente_nome')
+            .eq('cliente_nome', activeClient)
+            .limit(5)
+        ]);
+
+        console.log('📊 useClientData: Amostras de dados:', {
+          fbSample: fbSampleResponse.data,
+          wppSample: wppSampleResponse.data
+        });
+
         // Aplicar filtro de data se fornecido
         if (dateRange) {
           const fromDate = dateRange.from.toISOString().split('T')[0];
@@ -68,6 +89,8 @@ export const useClientData = (dateRange?: DateRange) => {
           
           fbQuery = fbQuery.gte('data', fromDate).lte('data', toDate);
           wppQuery = wppQuery.gte('data_criacao', fromDate).lte('data_criacao', toDate);
+        } else {
+          console.log('📅 useClientData: Sem filtro de data aplicado');
         }
 
         const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);

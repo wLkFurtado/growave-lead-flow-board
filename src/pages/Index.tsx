@@ -21,8 +21,9 @@ interface DateRange {
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  // Período mais amplo para capturar mais dados - 6 meses
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: subDays(new Date(), 30),
+    from: subDays(new Date(), 180),
     to: new Date()
   });
   
@@ -36,8 +37,16 @@ const Index = () => {
   console.log('whatsappLeads.length:', whatsappLeads.length);
   console.log('hasData:', hasData);
   console.log('error:', error);
+  console.log('dateRange:', {
+    from: dateRange.from.toISOString().split('T')[0],
+    to: dateRange.to.toISOString().split('T')[0]
+  });
 
   const handleDateRangeChange = (newRange: DateRange) => {
+    console.log('📅 INDEX: Mudando período:', {
+      from: newRange.from.toISOString().split('T')[0],
+      to: newRange.to.toISOString().split('T')[0]
+    });
     setDateRange(newRange);
   };
 
@@ -136,7 +145,7 @@ const Index = () => {
                 {!hasData && activeClient ? (
                   <EmptyState
                     title="Nenhum dado encontrado"
-                    description={`Não há dados disponíveis para o cliente "${activeClient}" no período selecionado. Verifique se os dados foram importados corretamente ou ajuste o período.`}
+                    description={`Não há dados disponíveis para o cliente "${activeClient}" no período selecionado (${dateRange.from.toISOString().split('T')[0]} até ${dateRange.to.toISOString().split('T')[0]}). Verifique se os dados foram importados corretamente ou ajuste o período.`}
                     action={
                       isAdmin && (
                         <div className="text-sm text-slate-400">
