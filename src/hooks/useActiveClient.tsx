@@ -9,22 +9,22 @@ export const useActiveClient = () => {
   const [availableClients, setAvailableClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  console.log('🔄 useActiveClient: Hook iniciado');
+  console.log('🔄 useActiveClient: Hook iniciado', {
+    authLoading,
+    profile: !!profile,
+    isAdmin
+  });
 
   useEffect(() => {
-    console.log('🔄 useActiveClient: useEffect iniciado', {
-      authLoading,
-      profile: !!profile,
-      isAdmin
-    });
+    console.log('🔄 useActiveClient: useEffect iniciado');
 
     if (authLoading) {
-      console.log('⏳ useActiveClient: Auth carregando...');
+      console.log('⏳ useActiveClient: Auth ainda carregando...');
       return;
     }
 
     if (!profile) {
-      console.log('⚠️ useActiveClient: Sem perfil');
+      console.log('⚠️ useActiveClient: Sem perfil, finalizando');
       setActiveClient('');
       setAvailableClients([]);
       setIsLoading(false);
@@ -33,9 +33,10 @@ export const useActiveClient = () => {
 
     const fetchClients = async () => {
       try {
-        console.log('🔄 useActiveClient: Buscando clientes...');
+        console.log('🔄 useActiveClient: Buscando clientes nas tabelas...');
+        setIsLoading(true);
         
-        // Buscar clientes nas duas tabelas
+        // Buscar clientes diretamente das tabelas de dados
         const [fbResponse, wppResponse] = await Promise.all([
           supabase
             .from('facebook_ads')
@@ -54,6 +55,14 @@ export const useActiveClient = () => {
           wppError: wppResponse.error
         });
 
+        if (fbResponse.error) {
+          console.error('❌ useActiveClient: Erro FB:', fbResponse.error);
+        }
+        
+        if (wppResponse.error) {
+          console.error('❌ useActiveClient: Erro WPP:', wppResponse.error);
+        }
+
         const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
         const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
         const allClients = [...new Set([...fbClients, ...wppClients])];
@@ -68,13 +77,15 @@ export const useActiveClient = () => {
           console.log('✅ useActiveClient: Cliente ativo definido:', firstClient);
         } else {
           console.log('⚠️ useActiveClient: Nenhum cliente encontrado');
+          setActiveClient('');
         }
         
-        setIsLoading(false);
       } catch (error) {
         console.error('❌ useActiveClient: Erro ao buscar clientes:', error);
         setAvailableClients([]);
         setActiveClient('');
+      } finally {
+        console.log('✅ useActiveClient: Finalizando loading');
         setIsLoading(false);
       }
     };
