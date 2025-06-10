@@ -26,13 +26,11 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
       .eq('id', userId)
       .maybeSingle();
 
+    console.log('✅ AuthUtils: Resposta da busca de perfil:', { data, error });
+
     if (error) {
       console.error('❌ AuthUtils: Erro ao buscar perfil:', error);
-      throw error;
-    }
-
-    if (!data) {
-      console.log('⚠️ AuthUtils: Perfil não encontrado, usando fallback admin');
+      // Retornar perfil admin padrão em caso de erro
       return {
         id: userId,
         nome_completo: user?.email?.split('@')[0] || 'Admin',
@@ -42,36 +40,28 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
       };
     }
 
-    console.log('✅ AuthUtils: Perfil obtido:', data);
-    
-    // Para admin, retornar sem buscar clientes associados (eles veem todos)
-    if (data.role === 'admin') {
+    if (!data) {
+      console.log('⚠️ AuthUtils: Perfil não encontrado, criando perfil admin padrão');
       return {
-        id: data.id,
-        nome_completo: data.name || data.email,
-        email: data.email,
-        role: data.role,
-        clientes_associados: [] // Admin vê todos os clientes, não precisa de associação
+        id: userId,
+        nome_completo: user?.email?.split('@')[0] || 'Admin',
+        email: user?.email || 'admin@email.com',
+        role: 'admin',
+        clientes_associados: []
       };
     }
 
-    // Para usuários regulares, buscar clientes da tabela user_clients
-    const { data: userClientsData } = await supabase
-      .from('user_clients')
-      .select('cliente_nome')
-      .eq('user_id', userId);
-
-    const clientesAssociados = userClientsData?.map(item => item.cliente_nome) || [];
-
+    console.log('✅ AuthUtils: Perfil encontrado:', data);
+    
     return {
       id: data.id,
       nome_completo: data.name || data.email,
       email: data.email,
-      role: data.role,
-      clientes_associados: clientesAssociados
+      role: data.role || 'admin',
+      clientes_associados: []
     };
   } catch (error) {
-    console.error('❌ AuthUtils: Erro fatal, usando admin fallback:', error);
+    console.error('❌ AuthUtils: Erro fatal ao buscar perfil:', error);
     return {
       id: userId,
       nome_completo: user?.email?.split('@')[0] || 'Admin',

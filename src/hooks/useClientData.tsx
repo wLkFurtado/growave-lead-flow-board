@@ -17,8 +17,7 @@ export const useClientData = (dateRange?: DateRange) => {
 
   console.log('🔄 useClientData: Hook iniciado', {
     activeClient,
-    clientLoading,
-    dateRange: dateRange ? 'definido' : 'undefined'
+    clientLoading
   });
 
   useEffect(() => {
@@ -26,7 +25,7 @@ export const useClientData = (dateRange?: DateRange) => {
 
     const fetchData = async () => {
       if (clientLoading) {
-        console.log('⏳ useClientData: Cliente carregando, aguardando...');
+        console.log('⏳ useClientData: Cliente carregando...');
         return;
       }
 
@@ -46,30 +45,29 @@ export const useClientData = (dateRange?: DateRange) => {
       setError(null);
       
       try {
+        // Buscar dados do Facebook Ads
         let fbQuery = supabase
           .from('facebook_ads')
           .select('*')
           .eq('cliente_nome', activeClient)
           .order('data', { ascending: false });
           
+        // Buscar dados do WhatsApp
         let wppQuery = supabase
           .from('whatsapp_anuncio')
           .select('*')
           .eq('cliente_nome', activeClient)
           .order('data_criacao', { ascending: false });
 
+        // Aplicar filtro de data se fornecido
         if (dateRange) {
-          const fromDate = new Date(dateRange.from);
-          const toDate = new Date(dateRange.to);
-          toDate.setHours(23, 59, 59, 999);
+          const fromDate = dateRange.from.toISOString().split('T')[0];
+          const toDate = dateRange.to.toISOString().split('T')[0];
           
-          const fromDateStr = fromDate.toISOString().split('T')[0];
-          const toDateStr = toDate.toISOString().split('T')[0];
+          console.log('🔄 useClientData: Aplicando filtro de data:', fromDate, 'até', toDate);
           
-          console.log('🔄 useClientData: Aplicando filtro de data:', fromDateStr, 'até', toDateStr);
-          
-          fbQuery = fbQuery.gte('data', fromDateStr).lte('data', toDateStr);
-          wppQuery = wppQuery.gte('data_criacao', fromDateStr).lte('data_criacao', toDateStr);
+          fbQuery = fbQuery.gte('data', fromDate).lte('data', toDate);
+          wppQuery = wppQuery.gte('data_criacao', fromDate).lte('data_criacao', toDate);
         }
 
         const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
@@ -77,24 +75,22 @@ export const useClientData = (dateRange?: DateRange) => {
         console.log('✅ useClientData: Dados obtidos:', {
           fb: fbResponse.data?.length || 0,
           wpp: wppResponse.data?.length || 0,
-          fbError: !!fbResponse.error,
-          wppError: !!wppResponse.error
+          fbError: fbResponse.error,
+          wppError: wppResponse.error
         });
 
-        if (fbResponse.error || wppResponse.error) {
-          const errorMsg = `Erro ao carregar dados: ${fbResponse.error?.message || wppResponse.error?.message}`;
-          console.error('❌ useClientData:', errorMsg);
-          if (mounted) {
-            setError(errorMsg);
-            setFacebookAds([]);
-            setWhatsappLeads([]);
-          }
-        } else {
-          if (mounted) {
-            setFacebookAds(fbResponse.data || []);
-            setWhatsappLeads(wppResponse.data || []);
-            setError(null);
-          }
+        if (fbResponse.error) {
+          console.error('❌ useClientData: Erro FB:', fbResponse.error);
+        }
+        
+        if (wppResponse.error) {
+          console.error('❌ useClientData: Erro WPP:', wppResponse.error);
+        }
+
+        if (mounted) {
+          setFacebookAds(fbResponse.data || []);
+          setWhatsappLeads(wppResponse.data || []);
+          setError(null);
         }
         
       } catch (error: any) {
@@ -120,16 +116,14 @@ export const useClientData = (dateRange?: DateRange) => {
     };
   }, [activeClient, clientLoading, dateRange]);
 
-  useEffect(() => {
-    console.log('📊 useClientData: Estado atual:', {
-      activeClient,
-      isLoading: isLoading || clientLoading,
-      hasData: facebookAds.length > 0 || whatsappLeads.length > 0,
-      fbCount: facebookAds.length,
-      wppCount: whatsappLeads.length,
-      error
-    });
-  }, [activeClient, isLoading, clientLoading, facebookAds, whatsappLeads, error]);
+  console.log('📊 useClientData: Estado final:', {
+    activeClient,
+    isLoading: isLoading || clientLoading,
+    fbCount: facebookAds.length,
+    wppCount: whatsappLeads.length,
+    hasData: facebookAds.length > 0 || whatsappLeads.length > 0,
+    error
+  });
 
   return {
     facebookAds,

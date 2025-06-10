@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useActiveClient = () => {
-  const { profile, userClients, isAdmin, isLoading: authLoading } = useAuth();
+  const { profile, isAdmin, isLoading: authLoading } = useAuth();
   const [activeClient, setActiveClient] = useState<string>('');
   const [availableClients, setAvailableClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -11,73 +12,62 @@ export const useActiveClient = () => {
   console.log('🔄 useActiveClient: Hook iniciado');
 
   useEffect(() => {
-    console.log('🔄 useActiveClient: useEffect principal iniciado', {
+    console.log('🔄 useActiveClient: useEffect iniciado', {
       authLoading,
       profile: !!profile,
-      isAdmin,
-      userClients: userClients.length
+      isAdmin
     });
 
     if (authLoading) {
-      console.log('⏳ useActiveClient: Auth carregando, aguardando...');
+      console.log('⏳ useActiveClient: Auth carregando...');
       return;
     }
 
     if (!profile) {
-      console.log('⚠️ useActiveClient: Nenhum perfil, finalizando');
+      console.log('⚠️ useActiveClient: Sem perfil');
       setActiveClient('');
       setAvailableClients([]);
       setIsLoading(false);
       return;
     }
 
-    const initializeClient = async () => {
-      if (isAdmin) {
-        console.log('🔄 useActiveClient: Usuário admin, buscando todos os clientes...');
-        await fetchAllClients();
-      } else {
-        console.log('🔄 useActiveClient: Usuário regular, usando clientes associados:', userClients);
-        setAvailableClients(userClients);
-        if (userClients.length > 0) {
-          setActiveClient(userClients[0]);
-          console.log('✅ useActiveClient: Cliente definido:', userClients[0]);
-        }
-        setIsLoading(false);
-      }
-    };
-
-    const fetchAllClients = async () => {
+    const fetchClients = async () => {
       try {
-        console.log('🔄 useActiveClient: Buscando clientes no Supabase...');
+        console.log('🔄 useActiveClient: Buscando clientes...');
         
-        const { supabase } = await import('@/integrations/supabase/client');
-        
+        // Buscar clientes nas duas tabelas
         const [fbResponse, wppResponse] = await Promise.all([
-          supabase.from('facebook_ads').select('cliente_nome').not('cliente_nome', 'is', null),
-          supabase.from('whatsapp_anuncio').select('cliente_nome').not('cliente_nome', 'is', null)
+          supabase
+            .from('facebook_ads')
+            .select('cliente_nome')
+            .not('cliente_nome', 'is', null),
+          supabase
+            .from('whatsapp_anuncio')
+            .select('cliente_nome')
+            .not('cliente_nome', 'is', null)
         ]);
 
         console.log('✅ useActiveClient: Respostas obtidas:', {
           fb: fbResponse.data?.length || 0,
-          wpp: wppResponse.data?.length || 0
+          wpp: wppResponse.data?.length || 0,
+          fbError: fbResponse.error,
+          wppError: wppResponse.error
         });
 
         const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
         const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
         const allClients = [...new Set([...fbClients, ...wppClients])];
 
-        console.log('✅ useActiveClient: Clientes encontrados:', allClients);
+        console.log('✅ useActiveClient: Clientes únicos encontrados:', allClients);
 
         setAvailableClients(allClients);
         
         if (allClients.length > 0) {
-          const savedClient = localStorage.getItem('activeClient');
-          const clientToSet = (savedClient && allClients.includes(savedClient)) 
-            ? savedClient 
-            : allClients[0];
-          
-          setActiveClient(clientToSet);
-          console.log('✅ useActiveClient: Cliente ativo definido:', clientToSet);
+          const firstClient = allClients[0];
+          setActiveClient(firstClient);
+          console.log('✅ useActiveClient: Cliente ativo definido:', firstClient);
+        } else {
+          console.log('⚠️ useActiveClient: Nenhum cliente encontrado');
         }
         
         setIsLoading(false);
@@ -89,24 +79,19 @@ export const useActiveClient = () => {
       }
     };
 
-    initializeClient();
-  }, [profile, userClients, isAdmin, authLoading]);
-
-  useEffect(() => {
-    console.log('📊 useActiveClient: Estado atual:', {
-      activeClient,
-      availableClients: availableClients.length,
-      isLoading: isLoading || authLoading
-    });
-  }, [activeClient, availableClients, isLoading, authLoading]);
+    fetchClients();
+  }, [profile, isAdmin, authLoading]);
 
   const changeActiveClient = (clientName: string) => {
     console.log('🔄 useActiveClient: Mudando cliente para:', clientName);
     setActiveClient(clientName);
-    if (isAdmin) {
-      localStorage.setItem('activeClient', clientName);
-    }
   };
+
+  console.log('📊 useActiveClient: Estado atual:', {
+    activeClient,
+    availableClients: availableClients.length,
+    isLoading: isLoading || authLoading
+  });
 
   return {
     activeClient,
