@@ -29,11 +29,20 @@ const Index = () => {
   const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = useClientData(dateRange);
   const { isAdmin } = useAuth();
 
+  console.log('=== INDEX RENDER ===');
+  console.log('activeClient:', activeClient);
+  console.log('isLoading:', isLoading);
+  console.log('facebookAds.length:', facebookAds.length);
+  console.log('whatsappLeads.length:', whatsappLeads.length);
+  console.log('hasData:', hasData);
+  console.log('error:', error);
+
   const handleDateRangeChange = (newRange: DateRange) => {
     setDateRange(newRange);
   };
 
   if (isLoading) {
+    console.log('📊 INDEX: Renderizando loading state');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#00FF88]/5 via-transparent to-[#39FF14]/5 animate-pulse"></div>
@@ -64,6 +73,7 @@ const Index = () => {
   }
 
   if (error) {
+    console.log('📊 INDEX: Renderizando error state:', error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#00FF88]/5 via-transparent to-[#39FF14]/5 animate-pulse"></div>
@@ -97,6 +107,8 @@ const Index = () => {
       </div>
     );
   }
+
+  console.log('📊 INDEX: Renderizando dashboard normal');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">

@@ -76,20 +76,32 @@ export const useClientData = (dateRange?: DateRange) => {
           fb: fbResponse.data?.length || 0,
           wpp: wppResponse.data?.length || 0,
           fbError: fbResponse.error,
-          wppError: wppResponse.error
+          wppError: wppResponse.error,
+          fbData: fbResponse.data?.slice(0, 3), // Mostra primeiros 3 registros
+          wppData: wppResponse.data?.slice(0, 3) // Mostra primeiros 3 registros
         });
 
         if (fbResponse.error) {
           console.error('❌ useClientData: Erro FB:', fbResponse.error);
+          throw new Error(`Erro Facebook: ${fbResponse.error.message}`);
         }
         
         if (wppResponse.error) {
           console.error('❌ useClientData: Erro WPP:', wppResponse.error);
+          throw new Error(`Erro WhatsApp: ${wppResponse.error.message}`);
         }
 
         if (mounted) {
-          setFacebookAds(fbResponse.data || []);
-          setWhatsappLeads(wppResponse.data || []);
+          const fbData = fbResponse.data || [];
+          const wppData = wppResponse.data || [];
+          
+          console.log('✅ useClientData: Definindo dados:', {
+            fbCount: fbData.length,
+            wppCount: wppData.length
+          });
+          
+          setFacebookAds(fbData);
+          setWhatsappLeads(wppData);
           setError(null);
         }
         
@@ -116,12 +128,14 @@ export const useClientData = (dateRange?: DateRange) => {
     };
   }, [activeClient, clientLoading, dateRange]);
 
+  const hasData = facebookAds.length > 0 || whatsappLeads.length > 0;
+
   console.log('📊 useClientData: Estado final:', {
     activeClient,
     isLoading: isLoading || clientLoading,
     fbCount: facebookAds.length,
     wppCount: whatsappLeads.length,
-    hasData: facebookAds.length > 0 || whatsappLeads.length > 0,
+    hasData,
     error
   });
 
@@ -131,6 +145,6 @@ export const useClientData = (dateRange?: DateRange) => {
     isLoading: isLoading || clientLoading,
     error,
     activeClient,
-    hasData: facebookAds.length > 0 || whatsappLeads.length > 0
+    hasData
   };
 };
