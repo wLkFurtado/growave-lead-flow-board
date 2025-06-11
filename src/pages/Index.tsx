@@ -11,7 +11,7 @@ import { DashboardSkeleton, EmptyState } from '../components/dashboard/LoadingSt
 import { useClientData } from '../hooks/useClientData';
 import { useAuth } from '../hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Database } from 'lucide-react';
+import { AlertTriangle, Database, Calendar } from 'lucide-react';
 
 interface DateRange {
   from: Date;
@@ -21,9 +21,9 @@ interface DateRange {
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  // Período mais amplo para capturar mais dados - 6 meses
+  // Período padrão de 12 meses para capturar mais dados históricos
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: subDays(new Date(), 180),
+    from: subDays(new Date(), 365),
     to: new Date()
   });
   
@@ -143,18 +143,32 @@ const Index = () => {
             {activeTab === 'dashboard' && (
               <>
                 {!hasData && activeClient ? (
-                  <EmptyState
-                    title="Nenhum dado encontrado"
-                    description={`Não há dados disponíveis para o cliente "${activeClient}" no período selecionado (${dateRange.from.toISOString().split('T')[0]} até ${dateRange.to.toISOString().split('T')[0]}). Verifique se os dados foram importados corretamente ou ajuste o período.`}
-                    action={
-                      isAdmin && (
-                        <div className="text-sm text-slate-400">
-                          <Database className="inline-block w-4 h-4 mr-1" />
-                          Como admin, você pode verificar a importação de dados no Supabase.
+                  <div className="space-y-4">
+                    <Alert className="bg-amber-900/20 border-amber-500/50 text-amber-400">
+                      <Calendar className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Nenhum dado encontrado no período:</strong> {dateRange.from.toISOString().split('T')[0]} até {dateRange.to.toISOString().split('T')[0]}
+                      </AlertDescription>
+                    </Alert>
+                    <EmptyState
+                      title="Experimente ampliar o período"
+                      description={`Tente selecionar um período maior ou diferente para ver os dados do cliente "${activeClient}". Os dados podem estar em meses anteriores ao período atual selecionado.`}
+                      action={
+                        <div className="text-sm text-slate-400 space-y-2">
+                          <div>
+                            <Calendar className="inline-block w-4 h-4 mr-1" />
+                            Sugestão: Use o filtro de período acima para selecionar "Últimos 30 dias", "Este mês" ou "Mês passado"
+                          </div>
+                          {isAdmin && (
+                            <div>
+                              <Database className="inline-block w-4 h-4 mr-1" />
+                              Como admin, você pode verificar a importação de dados no Supabase.
+                            </div>
+                          )}
                         </div>
-                      )
-                    }
-                  />
+                      }
+                    />
+                  </div>
                 ) : !activeClient ? (
                   <EmptyState
                     title="Nenhum cliente selecionado"
@@ -184,7 +198,7 @@ const Index = () => {
                 {!hasData && activeClient ? (
                   <EmptyState
                     title="Nenhum lead encontrado"
-                    description={`Não há leads disponíveis para o cliente "${activeClient}" no período selecionado.`}
+                    description={`Não há leads disponíveis para o cliente "${activeClient}" no período selecionado. Tente ampliar o período de busca.`}
                   />
                 ) : !activeClient ? (
                   <EmptyState

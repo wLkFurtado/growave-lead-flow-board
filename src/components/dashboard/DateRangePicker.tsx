@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -33,15 +32,27 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
       value: { from: subDays(new Date(), 30), to: new Date() }
     },
     {
+      label: 'Últimos 90 dias', 
+      value: { from: subDays(new Date(), 90), to: new Date() }
+    },
+    {
       label: 'Este mês',
       value: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
     },
     {
       label: 'Mês passado',
       value: { 
-        from: startOfMonth(subDays(startOfMonth(new Date()), 1)), 
-        to: endOfMonth(subDays(startOfMonth(new Date()), 1)) 
+        from: startOfMonth(subMonths(new Date(), 1)), 
+        to: endOfMonth(subMonths(new Date(), 1)) 
       }
+    },
+    {
+      label: 'Últimos 6 meses',
+      value: { from: subDays(new Date(), 180), to: new Date() }
+    },
+    {
+      label: 'Último ano',
+      value: { from: subDays(new Date(), 365), to: new Date() }
     }
   ];
 
@@ -69,7 +80,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
 
   const handleReset = () => {
     try {
-      const defaultRange = { from: subDays(new Date(), 30), to: new Date() };
+      const defaultRange = { from: subDays(new Date(), 365), to: new Date() };
       console.log('=== RESET FILTRO ===');
       console.log('Range padrão:', defaultRange);
       onChange(defaultRange);
@@ -93,7 +104,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
       console.error('Erro ao selecionar no calendário:', error);
     }
   };
-
+  
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <label htmlFor="date-range-picker" className="text-sm font-medium text-white">
