@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, startOfDay, endOfDay, subDays as sub } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,35 +25,23 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
   
   const presets = [
     {
-      label: 'Últimos 7 dias',
-      value: { from: subDays(new Date(), 7), to: new Date() }
+      label: 'Hoje',
+      value: { from: startOfDay(new Date()), to: endOfDay(new Date()) }
     },
     {
-      label: 'Últimos 30 dias', 
-      value: { from: subDays(new Date(), 30), to: new Date() }
-    },
-    {
-      label: 'Últimos 90 dias', 
-      value: { from: subDays(new Date(), 90), to: new Date() }
-    },
-    {
-      label: 'Este mês',
-      value: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
-    },
-    {
-      label: 'Mês passado',
+      label: 'Ontem', 
       value: { 
-        from: startOfMonth(subMonths(new Date(), 1)), 
-        to: endOfMonth(subMonths(new Date(), 1)) 
+        from: startOfDay(subDays(new Date(), 1)), 
+        to: endOfDay(subDays(new Date(), 1)) 
       }
     },
     {
-      label: 'Últimos 6 meses',
-      value: { from: subDays(new Date(), 180), to: new Date() }
+      label: 'Últimos 7 dias', 
+      value: { from: subDays(new Date(), 7), to: new Date() }
     },
     {
-      label: 'Último ano',
-      value: { from: subDays(new Date(), 365), to: new Date() }
+      label: 'Mês',
+      value: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
     }
   ];
 
@@ -80,7 +69,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
 
   const handleReset = () => {
     try {
-      const defaultRange = { from: subDays(new Date(), 365), to: new Date() };
+      const defaultRange = { from: subDays(new Date(), 7), to: new Date() };
       console.log('=== RESET FILTRO ===');
       console.log('Range padrão:', defaultRange);
       onChange(defaultRange);
@@ -111,6 +100,22 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
         Período:
       </label>
       
+      {/* Filtros rápidos sempre visíveis */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+        {presets.map((preset, index) => (
+          <Button
+            key={`preset-${index}`}
+            id={`quick-filter-${index}`}
+            variant="outline"
+            size="sm"
+            className="bg-slate-700 border-slate-600 text-white hover:bg-[#00FF88] hover:text-slate-900 transition-colors"
+            onClick={() => handlePresetClick(preset.value)}
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+      
       {/* Formulário simples sempre visível */}
       <DateFilterForm 
         value={value}
@@ -130,65 +135,43 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            Opções Avançadas
+            Seleção Personalizada
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-slate-800 border-slate-700" align="start">
-          <div className="flex flex-col lg:flex-row">
-            {/* Presets */}
-            <div className="border-b lg:border-b-0 lg:border-r border-slate-700">
-              <div className="p-3 border-b border-slate-700">
-                <h4 className="text-sm font-medium text-white">Períodos Rápidos</h4>
-              </div>
-              <div className="p-2 space-y-1 min-w-[160px]">
-                {presets.map((preset, index) => (
-                  <Button
-                    key={`preset-${index}`}
-                    id={`preset-button-${index}`}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start text-slate-300 hover:bg-slate-700 hover:text-white"
-                    onClick={() => handlePresetClick(preset.value)}
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
-                <Button
-                  id="reset-button"
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start text-slate-400 hover:bg-slate-700 hover:text-white"
-                  onClick={handleReset}
-                >
-                  <X className="w-3 h-3 mr-2" />
-                  Limpar
-                </Button>
-              </div>
+          <div className="p-3">
+            <div className="text-center mb-3">
+              <h4 className="text-sm font-medium text-white">Selecionar Período Personalizado</h4>
+              <p className="text-xs text-slate-400">Clique na data inicial e final</p>
             </div>
-            
-            {/* Calendar */}
-            <div className="p-3">
-              <div className="text-center mb-3">
-                <h4 className="text-sm font-medium text-white">Selecionar Período Personalizado</h4>
-                <p className="text-xs text-slate-400">Clique na data inicial e final</p>
-              </div>
-              <Calendar
-                id="date-range-calendar"
-                initialFocus
-                mode="range"
-                defaultMonth={value?.from}
-                selected={{ from: value?.from, to: value?.to }}
-                onSelect={handleCalendarSelect}
-                numberOfMonths={2}
-                className={cn("p-3 pointer-events-auto")}
-                classNames={{
-                  day_selected: "bg-[#00FF88] text-slate-900 hover:bg-[#00FF88] hover:text-slate-900",
-                  day_range_middle: "bg-[#00FF88]/20 text-white",
-                  day_range_end: "bg-[#00FF88] text-slate-900",
-                  day_today: "bg-slate-600 text-white"
-                }}
-                disabled={(date) => date > new Date()}
-              />
+            <Calendar
+              id="date-range-calendar"
+              initialFocus
+              mode="range"
+              defaultMonth={value?.from}
+              selected={{ from: value?.from, to: value?.to }}
+              onSelect={handleCalendarSelect}
+              numberOfMonths={2}
+              className={cn("p-3 pointer-events-auto")}
+              classNames={{
+                day_selected: "bg-[#00FF88] text-slate-900 hover:bg-[#00FF88] hover:text-slate-900",
+                day_range_middle: "bg-[#00FF88]/20 text-white",
+                day_range_end: "bg-[#00FF88] text-slate-900",
+                day_today: "bg-slate-600 text-white"
+              }}
+              disabled={(date) => date > new Date()}
+            />
+            <div className="mt-3 pt-3 border-t border-slate-700">
+              <Button
+                id="reset-button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-center text-slate-400 hover:bg-slate-700 hover:text-white"
+                onClick={handleReset}
+              >
+                <X className="w-3 h-3 mr-2" />
+                Resetar para Últimos 7 dias
+              </Button>
             </div>
           </div>
         </PopoverContent>
