@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { DateRangePicker } from './DateRangePicker';
 
@@ -40,7 +39,7 @@ export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRan
           campanha: ad ? ad.campanha : lead.nome_campanha || 'N/A',
           conjunto_anuncio: ad ? ad.conjunto_anuncio : lead.nome_conjunto || 'N/A',
           anuncio: ad ? ad.anuncio : lead.nome_anuncio || 'N/A',
-          link_anuncio: ad ? ad.source_url : lead.source_url || '#',
+          link_anuncio: ad ? ad.source_url : lead.source_url || null,
         };
       })
       .filter(lead => {
@@ -101,14 +100,18 @@ export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRan
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">{lead.conjunto_anuncio}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">{lead.anuncio}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <a 
-                      href={lead.link_anuncio} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-emerald-400 hover:text-emerald-300 transition-colors duration-200 font-medium"
-                    >
-                      Abrir Link
-                    </a>
+                    {lead.link_anuncio ? (
+                      <a 
+                        href={lead.link_anuncio} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-emerald-400 hover:text-emerald-300 transition-colors duration-200 font-medium"
+                      >
+                        Abrir Link
+                      </a>
+                    ) : (
+                      <span className="text-slate-500 text-sm">Link indisponível</span>
+                    )}
                   </td>
                 </tr>
               ))
