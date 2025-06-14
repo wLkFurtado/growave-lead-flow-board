@@ -39,7 +39,7 @@ export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRan
           campanha: ad ? ad.campanha : lead.nome_campanha || 'N/A',
           conjunto_anuncio: ad ? ad.conjunto_anuncio : lead.nome_conjunto || 'N/A',
           anuncio: ad ? ad.anuncio : lead.nome_anuncio || 'N/A',
-          link_anuncio: ad ? ad.source_url : lead.source_url || null,
+          link_anuncio: lead.source_url || null,
         };
       })
       .filter(lead => {
@@ -107,7 +107,7 @@ export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRan
                         rel="noopener noreferrer" 
                         className="text-emerald-400 hover:text-emerald-300 transition-colors duration-200 font-medium"
                       >
-                        Abrir Link
+                        Abrir Anúncio
                       </a>
                     ) : (
                       <span className="text-slate-500 text-sm">Link indisponível</span>
