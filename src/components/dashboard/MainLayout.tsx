@@ -20,7 +20,12 @@ export const MainLayout = ({
 }: MainLayoutProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#00FF88]/5 via-transparent to-[#39FF14]/5 animate-pulse"></div>
+      {/* Enhanced animated background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#00FF88]/8 via-transparent to-[#39FF14]/8 animate-pulse"></div>
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-[#00FF88]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-[#39FF14]/3 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
       
       <Sidebar 
         activeTab={activeTab} 
@@ -34,11 +39,11 @@ export const MainLayout = ({
         isCollapsed={isCollapsed}
       />
       
-      <main className={`pt-16 transition-all duration-300 ${
+      <main className={`pt-16 transition-all duration-300 ease-out ${
         isCollapsed ? 'ml-16' : 'ml-64'
       }`}>
-        <div className="p-8">
-          <div className="max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-8">
+          <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
             {children}
           </div>
         </div>
