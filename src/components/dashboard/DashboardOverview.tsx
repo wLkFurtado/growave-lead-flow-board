@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { subDays } from 'date-fns';
 import { MetricCard } from './MetricCard';
@@ -46,13 +45,13 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Visão Geral do Desempenho</h2>
           <p className="text-slate-400">Performance das suas campanhas no período selecionado</p>
         </div>
         
-        <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 rounded-xl p-4">
+        <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 rounded-xl p-3">
           <DateRangePicker
             value={dateRange}
             onChange={onDateRangeChange}
