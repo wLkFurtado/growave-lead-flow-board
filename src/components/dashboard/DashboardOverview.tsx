@@ -1,5 +1,3 @@
-
-
 import React, { useMemo, useState } from 'react';
 import { subDays } from 'date-fns';
 import { MetricCard } from './MetricCard';
@@ -28,7 +26,6 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
     const leadsComTelefone = leadsData.filter(lead => lead.telefone && lead.telefone.length > 0);
     const totalLeadsTelefone = leadsComTelefone.length;
 
-    const taxaConversaoMensagens = totalCliques > 0 ? (totalMensagens / totalCliques) * 100 : 0;
     const custoPorLeadTelefone = totalLeadsTelefone > 0 ? totalInvestido / totalLeadsTelefone : 0;
     const custoPorMensagemIniciada = totalMensagens > 0 ? totalInvestido / totalMensagens : 0;
 
@@ -42,7 +39,6 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
       totalMensagens,
       totalLeadsTelefone,
       totalAlcance,
-      taxaConversaoMensagens,
       custoPorLeadTelefone,
       custoPorMensagemIniciada,
       faturamentoMes,
@@ -71,7 +67,7 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
         <MetricCard title="Custo por Mensagem Iniciada" value={metrics.custoPorMensagemIniciada} unit=" R$" />
         <MetricCard title="Mensagens Iniciadas" value={metrics.totalMensagens} />
         <MetricCard title="Leads com Telefone" value={metrics.totalLeadsTelefone} trend="up" />
-        <MetricCard title="Taxa de Conversão" value={metrics.taxaConversaoMensagens} unit="%" />
+        <MetricCard title="Custo Real por Mensagem" value={metrics.custoPorLeadTelefone} unit=" R$" />
         <MetricCard title="Custo por Lead" value={metrics.custoPorLeadTelefone} unit=" R$" />
         <MetricCard 
           title="ROI" 
@@ -85,4 +81,3 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
     </section>
   );
 };
-
