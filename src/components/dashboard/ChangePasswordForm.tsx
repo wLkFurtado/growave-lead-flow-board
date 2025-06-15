@@ -23,6 +23,9 @@ const changePasswordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"]
+}).refine((data) => data.currentPassword !== data.newPassword, {
+  message: "A nova senha deve ser diferente da senha atual",
+  path: ["newPassword"]
 });
 
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
@@ -56,16 +59,25 @@ export const ChangePasswordForm = () => {
     setIsLoading(true);
     
     try {
-      // Supabase automaticamente verifica a senha atual ao tentar atualizá-la
+      console.log('Tentando alterar senha...');
+      
       const { error } = await supabase.auth.updateUser({
         password: data.newPassword
       });
 
       if (error) {
-        if (error.message.includes('same as the old password')) {
+        console.error('Erro ao alterar senha:', error);
+        
+        if (error.message.includes('same as the old password') || error.message.includes('same_password')) {
           toast({
             title: "Erro",
             description: "A nova senha deve ser diferente da senha atual.",
+            variant: "destructive"
+          });
+        } else if (error.message.includes('should be at least')) {
+          toast({
+            title: "Erro",
+            description: "A senha deve atender aos critérios de segurança.",
             variant: "destructive"
           });
         } else {
@@ -78,6 +90,7 @@ export const ChangePasswordForm = () => {
         return;
       }
 
+      console.log('Senha alterada com sucesso!');
       toast({
         title: "Sucesso!",
         description: "Sua senha foi alterada com sucesso.",
@@ -86,7 +99,7 @@ export const ChangePasswordForm = () => {
 
       form.reset();
     } catch (error) {
-      console.error('Erro ao alterar senha:', error);
+      console.error('Erro inesperado ao alterar senha:', error);
       toast({
         title: "Erro",
         description: "Ocorreu um erro inesperado ao alterar a senha.",
