@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { BarChart3, Kanban, Users, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -54,7 +55,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
           "w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-300 text-left group relative overflow-hidden",
           isActive 
             ? "bg-gradient-to-r from-[#00FF88]/20 to-[#39FF14]/20 text-[#00FF88] growave-neon-border shadow-lg shadow-[#00FF88]/20" 
-            : "text-slate-400 hover:text-white hover:bg-slate-800/50 hover:shadow-lg hover:shadow-slate-900/20"
+            : "text-slate-400 dark:text-slate-400 text-slate-600 hover:text-white dark:hover:text-white hover:text-slate-900 hover:bg-slate-800/50 dark:hover:bg-slate-800/50 hover:bg-slate-200/50 hover:shadow-lg hover:shadow-slate-900/20 dark:hover:shadow-slate-900/20 hover:shadow-slate-300/20"
         )}
       >
         {/* Animated background */}
@@ -74,11 +75,11 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
           <div className="flex-1 relative z-10">
             <div className={cn(
               "font-medium transition-colors duration-300",
-              isActive ? "text-[#00FF88]" : "group-hover:text-white"
+              isActive ? "text-[#00FF88]" : "group-hover:text-white dark:group-hover:text-white group-hover:text-slate-900"
             )}>
               {item.label}
             </div>
-            <div className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors duration-300">
+            <div className="text-xs text-slate-500 dark:text-slate-500 text-slate-400 group-hover:text-slate-400 dark:group-hover:text-slate-400 group-hover:text-slate-600 transition-colors duration-300">
               {item.description}
             </div>
           </div>
@@ -98,10 +99,10 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
             <TooltipTrigger asChild>
               {button}
             </TooltipTrigger>
-            <TooltipContent side="right" className="growave-glass border-slate-700">
+            <TooltipContent side="right" className="growave-glass border-slate-700 dark:border-slate-700 border-slate-300">
               <div>
                 <p className="font-medium">{item.label}</p>
-                <p className="text-xs text-slate-400">{item.description}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-400 text-slate-600">{item.description}</p>
               </div>
             </TooltipContent>
           </Tooltip>
@@ -114,16 +115,16 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-full growave-glass border-r border-slate-700/50 z-50 transition-all duration-300 ease-out",
+      "fixed left-0 top-0 h-full growave-glass border-r border-slate-700/50 dark:border-slate-700/50 border-slate-300/50 z-50 transition-all duration-300 ease-out",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
-      <div className="h-16 border-b border-slate-700/50 flex items-center justify-between px-4">
+      <div className="h-16 border-b border-slate-700/50 dark:border-slate-700/50 border-slate-300/50 flex items-center justify-between px-4">
         <AppLogo />
         
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 rounded-lg hover:bg-slate-800/50 text-slate-400 hover:text-white transition-all duration-200 growave-card-hover"
+          className="p-2 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 hover:bg-slate-200/50 text-slate-400 dark:text-slate-400 text-slate-600 hover:text-white dark:hover:text-white hover:text-slate-900 transition-all duration-200 growave-card-hover"
         >
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
@@ -139,7 +140,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
       {/* Footer */}
       {!isCollapsed && (
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="growave-glass rounded-xl p-4 border border-slate-700/50 growave-card-hover">
+          <div className="growave-glass rounded-xl p-4 border border-slate-700/50 dark:border-slate-700/50 border-slate-300/50 growave-card-hover">
             <div className="flex items-center space-x-3 mb-3">
               {profile && (
                 <div className="w-8 h-8 bg-gradient-to-br from-[#00FF88] to-[#39FF14] rounded-full flex items-center justify-center text-slate-900 font-semibold text-sm">
@@ -147,15 +148,15 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-white truncate">
+                <div className="text-xs font-medium text-white dark:text-white text-slate-900 truncate">
                   {profile?.nome_completo || 'Usuário'}
                 </div>
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-slate-400 dark:text-slate-400 text-slate-600">
                   {isAdmin ? 'Administrador' : 'Cliente'}
                 </div>
               </div>
             </div>
-            <div className="text-xs text-slate-500 border-t border-slate-700/50 pt-2">
+            <div className="text-xs text-slate-500 dark:text-slate-500 text-slate-400 border-t border-slate-700/50 dark:border-slate-700/50 border-slate-300/50 pt-2">
               Analytics v2.0
             </div>
           </div>
