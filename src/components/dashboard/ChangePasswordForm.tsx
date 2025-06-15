@@ -23,18 +23,24 @@ export const ChangePasswordForm = () => {
       newPassword: '',
       confirmPassword: ''
     },
-    mode: 'onChange' // Validação em tempo real
+    mode: 'onChange'
   });
 
   const newPassword = form.watch('newPassword');
 
   const onSubmit = async (data: ChangePasswordFormType) => {
-    if (isLoading) return; // Prevenir múltiplos envios
+    if (isLoading) return;
+    
+    console.log('=== FORMULÁRIO ENVIADO ===');
+    console.log('Dados do formulário:', {
+      currentPasswordLength: data.currentPassword.length,
+      newPasswordLength: data.newPassword.length,
+      confirmPasswordLength: data.confirmPassword.length
+    });
     
     setIsLoading(true);
     
     try {
-      console.log('Iniciando processo de alteração de senha...');
       await updatePassword(data);
       
       toast({
@@ -45,13 +51,25 @@ export const ChangePasswordForm = () => {
 
       // Limpar o formulário após sucesso
       form.reset();
+      console.log('Formulário resetado após sucesso');
     } catch (error) {
-      console.error('Erro ao alterar senha:', error);
+      console.error('=== ERRO NO COMPONENTE ===');
+      console.error('Erro capturado:', error);
       
       const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro inesperado ao alterar a senha.";
       
+      // Melhor distinção entre tipos de erro
+      let title = "Erro ao alterar senha";
+      if (errorMessage.includes('diferente da sua senha atual no sistema')) {
+        title = "Nova senha inválida";
+      } else if (errorMessage.includes('não coincidem')) {
+        title = "Senhas não coincidem";
+      } else if (errorMessage.includes('atual incorreta')) {
+        title = "Senha atual incorreta";
+      }
+      
       toast({
-        title: "Erro ao alterar senha",
+        title,
         description: errorMessage,
         variant: "destructive"
       });

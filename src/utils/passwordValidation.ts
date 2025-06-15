@@ -12,9 +12,7 @@ export const changePasswordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Nova senha e confirmação não coincidem",
   path: ["confirmPassword"]
-}).refine((data) => data.currentPassword !== data.newPassword, {
-  message: "A nova senha deve ser diferente da senha atual",
-  path: ["newPassword"]
 });
+// Removida a validação currentPassword !== newPassword que causava conflito
 
 export type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
