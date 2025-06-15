@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { subDays } from 'date-fns';
 import { MetricCard } from './MetricCard';
@@ -21,6 +22,7 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
     const totalInvestido = adsData.reduce((sum, ad) => sum + ad.investimento, 0);
     const totalCliques = adsData.reduce((sum, ad) => sum + ad.cliques_no_link, 0);
     const totalMensagens = adsData.reduce((sum, ad) => sum + ad.mensagens_iniciadas, 0);
+    const totalAlcance = adsData.reduce((sum, ad) => sum + (ad.alcance || 0), 0);
 
     const leadsComTelefone = leadsData.filter(lead => lead.telefone && lead.telefone.length > 0);
     const totalLeadsTelefone = leadsComTelefone.length;
@@ -37,6 +39,7 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
       totalCliques,
       totalMensagens,
       totalLeadsTelefone,
+      totalAlcance,
       taxaConversaoMensagens,
       custoPorLeadTelefone,
       faturamentoMes,
@@ -61,7 +64,7 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <MetricCard title="Total Investido" value={metrics.totalInvestido} unit=" R$" trend="up" />
-        <MetricCard title="Faturamento do Mês" value={metrics.faturamentoMes} unit=" R$" trend="up" />
+        <MetricCard title="Alcance" value={metrics.totalAlcance} trend="up" />
         <MetricCard title="Cliques no Link" value={metrics.totalCliques} />
         <MetricCard title="Mensagens Iniciadas" value={metrics.totalMensagens} />
         <MetricCard title="Leads com Telefone" value={metrics.totalLeadsTelefone} trend="up" />
