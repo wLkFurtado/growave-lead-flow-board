@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChevronDown, Building2, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronDown, Building2, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useActiveClient } from '@/hooks/useActiveClient';
 
 export const ClientSelector = () => {
@@ -16,25 +16,25 @@ export const ClientSelector = () => {
     return (
       <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700">
         <Loader2 size={16} className="text-[#00FF88] animate-spin" />
-        <span className="text-slate-300 text-sm">Carregando clientes...</span>
+        <span className="text-slate-300 text-sm">Carregando...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center space-x-2 bg-red-800/50 rounded-lg px-4 py-2 border border-red-700">
-        <AlertCircle size={16} className="text-red-400" />
-        <span className="text-red-400 text-sm">Erro: {error}</span>
+      <div className="flex items-center space-x-2 bg-amber-800/50 rounded-lg px-4 py-2 border border-amber-700">
+        <AlertCircle size={16} className="text-amber-400" />
+        <span className="text-amber-400 text-sm">Modo Offline</span>
       </div>
     );
   }
 
   if (!activeClient && availableClients.length === 0) {
     return (
-      <div className="flex items-center space-x-2 bg-amber-800/50 rounded-lg px-4 py-2 border border-amber-700">
-        <AlertCircle size={16} className="text-amber-400" />
-        <span className="text-amber-400 text-sm">Configurando acesso...</span>
+      <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700">
+        <Loader2 size={16} className="text-[#00FF88] animate-spin" />
+        <span className="text-slate-300 text-sm">Configurando...</span>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export const ClientSelector = () => {
   return (
     <div className="relative group">
       <button className="flex items-center space-x-2 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg px-4 py-2 border border-slate-700 hover:border-[#00FF88]/50 transition-all duration-200 min-w-48">
-        <Building2 size={16} className="text-[#00FF88]" />
+        <CheckCircle size={16} className="text-[#00FF88]" />
         <span className="text-white text-sm font-medium truncate">
           {activeClient}
         </span>

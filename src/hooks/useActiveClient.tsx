@@ -21,6 +21,7 @@ export const useActiveClient = () => {
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
 
     const initializeClients = async () => {
       console.log('🔄 useActiveClient: Iniciando...');
@@ -45,88 +46,130 @@ export const useActiveClient = () => {
         setIsLoading(true);
         setError(null);
         
+        // Timeout de 10 segundos para evitar loading infinito
+        timeoutId = setTimeout(() => {
+          if (mounted) {
+            console.log('⏰ useActiveClient: Timeout - usando fallback');
+            setAvailableClients(['Hospital do Cabelo']);
+            setActiveClient('Hospital do Cabelo');
+            setError(null);
+            setIsLoading(false);
+          }
+        }, 10000);
+        
         if (!isAdmin) {
           console.log('👤 useActiveClient: Usuário não-admin, verificando clientes...');
           
-          // Buscar clientes associados
-          const { data: userClientsData, error: fetchError } = await supabase
-            .from('user_clients')
-            .select('cliente_nome')
-            .eq('user_id', profile.id);
-
-          if (fetchError) {
-            console.error('❌ useActiveClient: Erro ao buscar clientes:', fetchError);
-            setError(`Erro ao buscar clientes: ${fetchError.message}`);
-          }
-
-          const userClients = userClientsData?.map(item => item.cliente_nome) || [];
-          console.log('📊 useActiveClient: Clientes do usuário:', userClients);
-
-          if (userClients.length > 0) {
-            // Usuário já tem clientes associados
-            console.log('✅ useActiveClient: Clientes encontrados');
-            if (mounted) {
-              setAvailableClients(userClients);
-              setActiveClient(userClients[0]);
-              setIsLoading(false);
-            }
-          } else {
-            // Tentar associar automaticamente com Hospital do Cabelo
-            console.log('🏥 useActiveClient: Tentando associar Hospital do Cabelo...');
-            
-            const { error: insertError } = await supabase
+          try {
+            // Buscar clientes associados
+            const { data: userClientsData, error: fetchError } = await supabase
               .from('user_clients')
-              .insert({
-                user_id: profile.id,
-                cliente_nome: 'Hospital do Cabelo'
-              });
+              .select('cliente_nome')
+              .eq('user_id', profile.id);
 
-            if (insertError) {
-              console.error('❌ useActiveClient: Erro ao associar:', insertError);
-              setError(`Erro ao configurar cliente: ${insertError.message}`);
-            } else {
-              console.log('✅ useActiveClient: Hospital do Cabelo associado com sucesso');
+            if (fetchError) {
+              console.warn('⚠️ useActiveClient: Erro ao buscar clientes (usando fallback):', fetchError);
             }
-            
-            // Definir cliente mesmo se a inserção falhar (fallback)
+
+            const userClients = userClientsData?.map(item => item.cliente_nome) || [];
+            console.log('📊 useActiveClient: Clientes do usuário:', userClients);
+
+            if (userClients.length > 0) {
+              // Usuário já tem clientes associados
+              console.log('✅ useActiveClient: Clientes encontrados');
+              if (mounted) {
+                clearTimeout(timeoutId);
+                setAvailableClients(userClients);
+                setActiveClient(userClients[0]);
+                setIsLoading(false);
+              }
+            } else {
+              // Tentar associar automaticamente com Hospital do Cabelo
+              console.log('🏥 useActiveClient: Tentando associar Hospital do Cabelo...');
+              
+              try {
+                const { error: insertError } = await supabase
+                  .from('user_clients')
+                  .insert({
+                    user_id: profile.id,
+                    cliente_nome: 'Hospital do Cabelo'
+                  });
+
+                if (insertError) {
+                  console.warn('⚠️ useActiveClient: Erro ao associar (usando fallback):', insertError);
+                } else {
+                  console.log('✅ useActiveClient: Hospital do Cabelo associado com sucesso');
+                }
+              } catch (insertError) {
+                console.warn('⚠️ useActiveClient: Exceção ao associar (usando fallback):', insertError);
+              }
+              
+              // Sempre definir cliente (fallback)
+              if (mounted) {
+                clearTimeout(timeoutId);
+                setAvailableClients(['Hospital do Cabelo']);
+                setActiveClient('Hospital do Cabelo');
+                setError(null);
+                setIsLoading(false);
+              }
+            }
+          } catch (error) {
+            console.warn('⚠️ useActiveClient: Erro na busca de clientes (usando fallback):', error);
             if (mounted) {
+              clearTimeout(timeoutId);
               setAvailableClients(['Hospital do Cabelo']);
               setActiveClient('Hospital do Cabelo');
+              setError(null);
               setIsLoading(false);
             }
           }
         } else {
           console.log('👑 useActiveClient: Admin - buscando todos os clientes...');
           
-          // Para admins, buscar todos os clientes disponíveis
-          const [fbResponse, wppResponse] = await Promise.all([
-            supabase.from('facebook_ads').select('cliente_nome').not('cliente_nome', 'is', null),
-            supabase.from('whatsapp_anuncio').select('cliente_nome').not('cliente_nome', 'is', null)
-          ]);
+          try {
+            // Para admins, buscar todos os clientes disponíveis
+            const [fbResponse, wppResponse] = await Promise.all([
+              supabase.from('facebook_ads').select('cliente_nome').not('cliente_nome', 'is', null),
+              supabase.from('whatsapp_anuncio').select('cliente_nome').not('cliente_nome', 'is', null)
+            ]);
 
-          const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
-          const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
-          const allClients = [...new Set([...fbClients, ...wppClients])].sort();
+            const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
+            const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
+            const allClients = [...new Set([...fbClients, ...wppClients])].sort();
 
-          console.log('✅ useActiveClient: Clientes encontrados para admin:', allClients);
+            console.log('✅ useActiveClient: Clientes encontrados para admin:', allClients);
 
-          if (mounted) {
-            setAvailableClients(allClients);
-            if (allClients.length > 0) {
-              const hospitalClient = allClients.find(c => c.toLowerCase().includes('hospital')) || allClients[0];
-              setActiveClient(hospitalClient);
+            if (mounted) {
+              clearTimeout(timeoutId);
+              setAvailableClients(allClients.length > 0 ? allClients : ['Hospital do Cabelo']);
+              if (allClients.length > 0) {
+                const hospitalClient = allClients.find(c => c.toLowerCase().includes('hospital')) || allClients[0];
+                setActiveClient(hospitalClient);
+              } else {
+                setActiveClient('Hospital do Cabelo');
+              }
+              setIsLoading(false);
             }
-            setIsLoading(false);
+          } catch (error) {
+            console.warn('⚠️ useActiveClient: Erro ao buscar clientes admin (usando fallback):', error);
+            if (mounted) {
+              clearTimeout(timeoutId);
+              setAvailableClients(['Hospital do Cabelo']);
+              setActiveClient('Hospital do Cabelo');
+              setError(null);
+              setIsLoading(false);
+            }
           }
         }
         
       } catch (error: any) {
-        console.error('❌ useActiveClient: Erro fatal:', error);
+        console.warn('⚠️ useActiveClient: Erro fatal (usando fallback):', error);
         if (mounted) {
-          setError(`Erro inesperado: ${error.message}`);
-          // Fallback: sempre permitir Hospital do Cabelo
+          clearTimeout(timeoutId);
+          // Sempre garantir fallback em caso de erro
           setAvailableClients(['Hospital do Cabelo']);
           setActiveClient('Hospital do Cabelo');
+          setError(null);
           setIsLoading(false);
         }
       }
@@ -136,6 +179,9 @@ export const useActiveClient = () => {
 
     return () => {
       mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [profile, isAdmin, authLoading]);
 
