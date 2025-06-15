@@ -41,33 +41,65 @@ export const useActiveClient = () => {
       return;
     }
 
-    // Para usuários não-admin, usar apenas os clientes associados ao perfil
-    if (!isAdmin && profile.clientes_associados && profile.clientes_associados.length > 0) {
-      console.log('👤 useActiveClient: Usuário não-admin, usando clientes do perfil:', profile.clientes_associados);
-      
-      setAvailableClients(profile.clientes_associados);
-      
-      // Se o usuário tem apenas um cliente associado, usar esse
-      if (profile.clientes_associados.length === 1) {
-        const clienteAssociado = profile.clientes_associados[0];
-        console.log('✅ useActiveClient: Selecionando único cliente associado:', clienteAssociado);
-        setActiveClient(clienteAssociado);
-      } else {
-        // Se tem múltiplos clientes, priorizar "Hospital do Cabelo"
-        const hospitalDoCabelo = profile.clientes_associados.find(cliente => {
-          const clienteLower = cliente.toLowerCase();
-          return (clienteLower.includes('hospital') && clienteLower.includes('cabelo')) ||
-                 clienteLower.includes('hospital do cabelo');
-        });
+    // Para usuários não-admin, verificar se tem clientes associados
+    if (!isAdmin) {
+      if (profile.clientes_associados && profile.clientes_associados.length > 0) {
+        console.log('👤 useActiveClient: Usuário não-admin, usando clientes do perfil:', profile.clientes_associados);
         
-        const clienteParaSelecionar = hospitalDoCabelo || profile.clientes_associados[0];
-        console.log('✅ useActiveClient: Selecionando cliente associado:', clienteParaSelecionar);
-        setActiveClient(clienteParaSelecionar);
+        setAvailableClients(profile.clientes_associados);
+        
+        // Se o usuário tem apenas um cliente associado, usar esse
+        if (profile.clientes_associados.length === 1) {
+          const clienteAssociado = profile.clientes_associados[0];
+          console.log('✅ useActiveClient: Selecionando único cliente associado:', clienteAssociado);
+          setActiveClient(clienteAssociado);
+        } else {
+          // Se tem múltiplos clientes, priorizar "Hospital do Cabelo"
+          const hospitalDoCabelo = profile.clientes_associados.find(cliente => {
+            const clienteLower = cliente.toLowerCase();
+            return (clienteLower.includes('hospital') && clienteLower.includes('cabelo')) ||
+                   clienteLower.includes('hospital do cabelo');
+          });
+          
+          const clienteParaSelecionar = hospitalDoCabelo || profile.clientes_associados[0];
+          console.log('✅ useActiveClient: Selecionando cliente associado:', clienteParaSelecionar);
+          setActiveClient(clienteParaSelecionar);
+        }
+        
+        setIsLoading(false);
+        setHasInitialized(true);
+        return;
+      } else {
+        // Usuário não-admin sem clientes associados - vamos configurar com Hospital do Cabelo
+        console.log('⚠️ useActiveClient: Usuário sem clientes associados, configurando Hospital do Cabelo...');
+        
+        const updateProfile = async () => {
+          try {
+            const { error } = await supabase
+              .from('profiles')
+              .update({ 
+                clientes_associados: ['Hospital do Cabelo']
+              })
+              .eq('id', profile.id);
+
+            if (error) {
+              console.error('❌ useActiveClient: Erro ao atualizar perfil:', error);
+            } else {
+              console.log('✅ useActiveClient: Perfil atualizado com Hospital do Cabelo');
+              setAvailableClients(['Hospital do Cabelo']);
+              setActiveClient('Hospital do Cabelo');
+            }
+          } catch (error) {
+            console.error('❌ useActiveClient: Erro fatal ao atualizar perfil:', error);
+          } finally {
+            setIsLoading(false);
+            setHasInitialized(true);
+          }
+        };
+
+        updateProfile();
+        return;
       }
-      
-      setIsLoading(false);
-      setHasInitialized(true);
-      return;
     }
 
     // Para admins, continuar com a lógica atual de buscar todos os clientes
@@ -164,12 +196,6 @@ export const useActiveClient = () => {
       };
 
       fetchClients();
-    } else {
-      console.log('⚠️ useActiveClient: Usuário sem clientes associados');
-      setActiveClient('');
-      setAvailableClients([]);
-      setIsLoading(false);
-      setHasInitialized(true);
     }
   }, [profile, isAdmin, authLoading, hasInitialized]);
 
