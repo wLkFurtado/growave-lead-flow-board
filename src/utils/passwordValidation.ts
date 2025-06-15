@@ -10,7 +10,7 @@ export const changePasswordSchema = z.object({
     .regex(/[0-9]/, 'Nova senha deve conter pelo menos um número'),
   confirmPassword: z.string().min(1, 'Confirmação de senha é obrigatória')
 }).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "As senhas não coincidem",
+  message: "Nova senha e confirmação não coincidem",
   path: ["confirmPassword"]
 }).refine((data) => data.currentPassword !== data.newPassword, {
   message: "A nova senha deve ser diferente da senha atual",

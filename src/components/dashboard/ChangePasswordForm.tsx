@@ -22,15 +22,19 @@ export const ChangePasswordForm = () => {
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
-    }
+    },
+    mode: 'onChange' // Validação em tempo real
   });
 
   const newPassword = form.watch('newPassword');
 
   const onSubmit = async (data: ChangePasswordFormType) => {
+    if (isLoading) return; // Prevenir múltiplos envios
+    
     setIsLoading(true);
     
     try {
+      console.log('Iniciando processo de alteração de senha...');
       await updatePassword(data);
       
       toast({
@@ -39,12 +43,16 @@ export const ChangePasswordForm = () => {
         variant: "default"
       });
 
+      // Limpar o formulário após sucesso
       form.reset();
     } catch (error) {
-      console.error('Erro inesperado ao alterar senha:', error);
+      console.error('Erro ao alterar senha:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro inesperado ao alterar a senha.";
+      
       toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado ao alterar a senha.",
+        title: "Erro ao alterar senha",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -88,8 +96,8 @@ export const ChangePasswordForm = () => {
 
             <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-[#00FF88] to-[#39FF14] hover:from-[#00FF88]/80 hover:to-[#39FF14]/80 text-slate-900 font-semibold transition-all duration-300 growave-neon-text"
+              disabled={isLoading || !form.formState.isValid}
+              className="w-full bg-gradient-to-r from-[#00FF88] to-[#39FF14] hover:from-[#00FF88]/80 hover:to-[#39FF14]/80 text-slate-900 font-semibold transition-all duration-300 growave-neon-text disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>

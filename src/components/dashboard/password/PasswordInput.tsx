@@ -22,6 +22,10 @@ export const PasswordInput = <T extends FieldValues>({
 }: PasswordInputProps<T>) => {
   const [showPassword, setShowPassword] = useState(false);
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <FormField
       control={control}
@@ -39,10 +43,15 @@ export const PasswordInput = <T extends FieldValues>({
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00FF88] transition-colors"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#00FF88] transition-colors focus:outline-none"
+                tabIndex={-1}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </FormControl>
