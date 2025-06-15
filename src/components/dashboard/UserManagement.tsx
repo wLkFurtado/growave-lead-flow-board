@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,14 +10,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, UserPlus, Shield, Building } from 'lucide-react';
+import { UserPlus, Shield, Building, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Profile {
   id: string;
   email: string;
   name: string | null;
-  role: string; // Changed from 'admin' | 'client' to string to fix typing error
+  role: string;
   created_at: string;
 }
 
@@ -97,17 +98,34 @@ export const UserManagement = () => {
     setIsCreating(true);
 
     try {
-      // Criar usuário no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      console.log('Criando usuário com signUp...');
+      
+      // Criar usuário usando o fluxo normal de signup
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        user_metadata: { name: name || email },
-        email_confirm: true
+        options: {
+          data: {
+            name: name || email
+          }
+        }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Erro no signup:', authError);
+        throw authError;
+      }
 
-      // Atualizar perfil
+      if (!authData.user) {
+        throw new Error('Usuário não foi criado corretamente');
+      }
+
+      console.log('Usuário criado, ID:', authData.user.id);
+
+      // Aguardar um pouco para que o trigger do banco seja executado
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Atualizar o perfil do usuário
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
@@ -116,7 +134,15 @@ export const UserManagement = () => {
         })
         .eq('id', authData.user.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Erro ao atualizar perfil:', profileError);
+        // Não vamos fazer throw aqui, pois o usuário já foi criado
+        toast({
+          title: "Aviso",
+          description: "Usuário criado, mas houve erro ao atualizar o perfil. Recarregue a página.",
+          variant: "default"
+        });
+      }
 
       // Se for cliente, associar aos clientes selecionados
       if (role === 'client' && selectedClients.length > 0) {
@@ -129,12 +155,19 @@ export const UserManagement = () => {
           .from('user_clients')
           .insert(clientAssociations);
 
-        if (clientsError) throw clientsError;
+        if (clientsError) {
+          console.error('Erro ao associar clientes:', clientsError);
+          toast({
+            title: "Aviso",
+            description: "Usuário criado, mas houve erro ao associar clientes.",
+            variant: "default"
+          });
+        }
       }
 
       toast({
         title: "Sucesso",
-        description: `Usuário ${email} criado com sucesso!`,
+        description: `Usuário ${email} criado com sucesso! ${authData.user.email_confirmed_at ? '' : 'Um email de confirmação foi enviado.'}`,
       });
 
       // Limpar formulário
@@ -145,39 +178,29 @@ export const UserManagement = () => {
       setSelectedClients([]);
       
       // Recarregar dados
-      fetchData();
+      await fetchData();
     } catch (error: any) {
       console.error('Erro ao criar usuário:', error);
+      
+      let errorMessage = "Erro ao criar usuário";
+      
+      if (error.message?.includes('User already registered')) {
+        errorMessage = "Este email já está cadastrado no sistema";
+      } else if (error.message?.includes('Invalid email')) {
+        errorMessage = "Email inválido";
+      } else if (error.message?.includes('Password')) {
+        errorMessage = "Senha deve ter pelo menos 6 caracteres";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro",
-        description: error.message || "Erro ao criar usuário",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setIsCreating(false);
-    }
-  };
-
-  const deleteUser = async (userId: string, email: string) => {
-    if (!confirm(`Tem certeza que deseja excluir o usuário ${email}?`)) return;
-
-    try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: `Usuário ${email} excluído com sucesso!`,
-      });
-
-      fetchData();
-    } catch (error: any) {
-      console.error('Erro ao excluir usuário:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao excluir usuário",
-        variant: "destructive"
-      });
     }
   };
 
@@ -215,6 +238,13 @@ export const UserManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-4 bg-blue-900/20 border-blue-500/50">
+            <AlertCircle className="h-4 w-4 text-blue-400" />
+            <AlertDescription className="text-blue-300">
+              O usuário receberá um email de confirmação para ativar a conta.
+            </AlertDescription>
+          </Alert>
+          
           <form onSubmit={createUser} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -253,6 +283,7 @@ export const UserManagement = () => {
                   className="bg-slate-700 border-slate-600 text-white"
                   required
                   minLength={6}
+                  placeholder="Mínimo 6 caracteres"
                 />
               </div>
               
@@ -311,7 +342,7 @@ export const UserManagement = () => {
         <CardHeader>
           <CardTitle className="text-white">Usuários do Sistema</CardTitle>
           <CardDescription className="text-slate-400">
-            Gerencie todos os usuários cadastrados
+            Visualize todos os usuários cadastrados
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -322,7 +353,6 @@ export const UserManagement = () => {
                 <TableHead className="text-slate-300">Tipo</TableHead>
                 <TableHead className="text-slate-300">Clientes</TableHead>
                 <TableHead className="text-slate-300">Criado em</TableHead>
-                <TableHead className="text-slate-300">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -370,16 +400,6 @@ export const UserManagement = () => {
                   <TableCell className="text-slate-400">
                     {new Date(profile.created_at).toLocaleDateString('pt-BR')}
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteUser(profile.id, profile.email)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -389,7 +409,7 @@ export const UserManagement = () => {
             <div className="text-center py-8">
               <p className="text-slate-400">Nenhum usuário encontrado.</p>
             </div>
-          )}
+            )}
         </CardContent>
       </Card>
     </div>
