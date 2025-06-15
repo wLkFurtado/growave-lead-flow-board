@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Download, Eye, Calendar, Phone, Mail, Target } from 'lucide-react';
+import { Search, Filter, Download, Eye, Calendar, Phone, Mail, Target, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +32,7 @@ interface Contact {
   nome_anuncio?: string;
   nome_campanha?: string;
   nome_conjunto?: string;
-  status?: string;
+  source_url?: string;
   cidade?: string;
   estado?: string;
   mensagem?: string;
@@ -48,7 +48,6 @@ interface ContactsTableProps {
 
 export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<keyof Contact>('data_criacao');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -60,9 +59,8 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
     let filtered = contactsData.filter(contact => {
       const searchString = `${contact.nome || ''} ${contact.sobrenome || ''} ${contact.telefone} ${contact.email || ''}`.toLowerCase();
       const matchesSearch = searchString.includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || contact.status === statusFilter;
       
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
 
     // Ordenação
@@ -83,7 +81,7 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
     });
 
     return filtered;
-  }, [contactsData, searchTerm, statusFilter, sortField, sortDirection]);
+  }, [contactsData, searchTerm, sortField, sortDirection]);
 
   // Paginação
   const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
@@ -119,19 +117,23 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
     return phone;
   };
 
-  const getStatusBadge = (status?: string) => {
-    if (!status) return <Badge variant="secondary" className="bg-transparent border-slate-500 text-slate-400">Não definido</Badge>;
+  const formatUrl = (url?: string) => {
+    if (!url || url.trim() === '') return null;
     
-    const statusMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string, color: string }> = {
-      'novo': { variant: 'outline', label: 'Novo', color: 'border-[#00FF88] text-[#00FF88]' },
-      'contatado': { variant: 'outline', label: 'Contatado', color: 'border-blue-400 text-blue-400' },
-      'qualificado': { variant: 'outline', label: 'Qualificado', color: 'border-purple-400 text-purple-400' },
-      'convertido': { variant: 'outline', label: 'Convertido', color: 'border-[#39FF14] text-[#39FF14]' },
-      'perdido': { variant: 'outline', label: 'Perdido', color: 'border-red-400 text-red-400' }
-    };
+    // Se a URL não começar com http, adiciona https
+    const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
     
-    const statusInfo = statusMap[status.toLowerCase()] || { variant: 'outline' as const, label: status, color: 'border-slate-500 text-slate-400' };
-    return <Badge variant={statusInfo.variant} className={`bg-transparent ${statusInfo.color}`}>{statusInfo.label}</Badge>;
+    return (
+      <a 
+        href={formattedUrl} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex items-center space-x-1 text-[#00FF88] hover:text-[#39FF14] transition-colors"
+      >
+        <ExternalLink className="h-3 w-3" />
+        <span className="text-xs">Ver anúncio</span>
+      </a>
+    );
   };
 
   if (contactsData.length === 0) {
@@ -231,19 +233,6 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-transparent border-[#00FF88]/30 text-white focus:border-[#00FF88] focus:ring-[#00FF88]/20">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-900/95 border-[#00FF88]/30 backdrop-blur-sm">
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="novo">Novo</SelectItem>
-                <SelectItem value="contatado">Contatado</SelectItem>
-                <SelectItem value="qualificado">Qualificado</SelectItem>
-                <SelectItem value="convertido">Convertido</SelectItem>
-                <SelectItem value="perdido">Perdido</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Tabela */}
@@ -273,7 +262,7 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
                   >
                     Data
                   </TableHead>
-                  <TableHead className="text-[#00FF88]">Status</TableHead>
+                  <TableHead className="text-[#00FF88]">Link</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -313,7 +302,9 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
                       {format(new Date(contact.data_criacao), 'dd/MM/yyyy', { locale: ptBR })}
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(contact.status)}
+                      {formatUrl(contact.source_url) || (
+                        <span className="text-slate-500 text-xs">Sem link</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
