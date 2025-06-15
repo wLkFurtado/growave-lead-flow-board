@@ -18,6 +18,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   console.log('🔄 AuthProvider: Componente iniciado');
 
+  const loadUserProfile = async (user: User) => {
+    try {
+      console.log('🔄 AuthProvider: Carregando perfil do usuário...');
+      
+      const profileData = await fetchProfile(user.id, user);
+      setProfile(profileData);
+      
+      // Buscar clientes associados se não for admin
+      if (profileData.role !== 'admin') {
+        const { data: clientsData } = await supabase
+          .from('user_clients')
+          .select('cliente_nome')
+          .eq('user_id', user.id);
+        
+        const clients = clientsData?.map(item => item.cliente_nome) || [];
+        setUserClients(clients);
+      } else {
+        setUserClients([]);
+      }
+      
+      console.log('✅ AuthProvider: Perfil carregado:', profileData);
+    } catch (error) {
+      console.error('❌ AuthProvider: Erro ao carregar perfil:', error);
+    }
+  };
+
   useEffect(() => {
     console.log('🔄 AuthProvider: useEffect principal iniciado');
     
@@ -36,21 +62,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log('✅ AuthProvider: Session obtida:', !!session?.user);
 
         if (session?.user) {
-          console.log('🔄 AuthProvider: Usuário encontrado, definindo perfil...');
+          console.log('🔄 AuthProvider: Usuário encontrado, carregando perfil...');
           setUser(session.user);
-          
-          // Perfil admin padrão direto
-          const profileData: Profile = {
-            id: session.user.id,
-            nome_completo: session.user.email?.split('@')[0] || 'Admin',
-            email: session.user.email || 'admin@email.com',
-            role: 'admin',
-            clientes_associados: []
-          };
-          
-          setProfile(profileData);
-          setUserClients([]);
-          console.log('✅ AuthProvider: Profile admin definido');
+          await loadUserProfile(session.user);
         } else {
           console.log('⚠️ AuthProvider: Nenhum usuário logado');
           setUser(null);
@@ -80,18 +94,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsLoading(false);
         } else if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user);
-          
-          // Perfil admin padrão direto
-          const profileData: Profile = {
-            id: session.user.id,
-            nome_completo: session.user.email?.split('@')[0] || 'Admin',
-            email: session.user.email || 'admin@email.com',
-            role: 'admin',
-            clientes_associados: []
-          };
-          
-          setProfile(profileData);
-          setUserClients([]);
+          await loadUserProfile(session.user);
           setIsLoading(false);
         }
       }
@@ -116,6 +119,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   console.log('📊 AuthProvider: Estado final:', {
     user: !!user,
     profile: !!profile,
+    role: profile?.role,
     userClients: userClients.length,
     isLoading,
     isAdmin: profile?.role === 'admin'
