@@ -71,7 +71,14 @@ const Auth = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-[#00FF88]/5 via-transparent to-[#39FF14]/5"></div>
       
       <Card className="w-full max-w-md bg-slate-800/90 backdrop-blur-lg border-slate-700 relative z-10">
-        <CardHeader className="space-y-1">
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center mb-4">
+            <img
+              src="/lovable-uploads/2a4dbb23-a7cd-482e-8e82-47ffc420953b.png"
+              alt="Logo"
+              className="h-16 w-auto object-contain"
+            />
+          </div>
           <CardTitle className="text-2xl font-bold text-center text-white">
             Login
           </CardTitle>
