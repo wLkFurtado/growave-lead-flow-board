@@ -96,7 +96,7 @@ const Auth = () => {
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white"
+                className="bg-slate-700 border-slate-600 text-white placeholder:text-white/40"
                 required
               />
             </div>
@@ -108,7 +108,7 @@ const Auth = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white"
+                className="bg-slate-700 border-slate-600 text-white placeholder:text-white/40"
                 required
               />
             </div>
