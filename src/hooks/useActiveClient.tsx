@@ -12,7 +12,8 @@ export const useActiveClient = () => {
   console.log('🔄 useActiveClient: Hook iniciado', {
     authLoading,
     profile: !!profile,
-    isAdmin
+    isAdmin,
+    activeClient
   });
 
   useEffect(() => {
@@ -65,17 +66,18 @@ export const useActiveClient = () => {
 
         const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
         const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
-        const allClients = [...new Set([...fbClients, ...wppClients])];
+        const allClients = [...new Set([...fbClients, ...wppClients])].sort();
 
         console.log('✅ useActiveClient: Clientes únicos encontrados:', allClients);
 
         setAvailableClients(allClients);
         
-        if (allClients.length > 0) {
+        // Só definir cliente ativo se ainda não tiver um selecionado
+        if (allClients.length > 0 && !activeClient) {
           const firstClient = allClients[0];
+          console.log('✅ useActiveClient: Definindo primeiro cliente como ativo:', firstClient);
           setActiveClient(firstClient);
-          console.log('✅ useActiveClient: Cliente ativo definido:', firstClient);
-        } else {
+        } else if (allClients.length === 0) {
           console.log('⚠️ useActiveClient: Nenhum cliente encontrado');
           setActiveClient('');
         }
