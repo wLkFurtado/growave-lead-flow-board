@@ -67,8 +67,8 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
 
     // Ordenação
     filtered.sort((a, b) => {
-      let aValue = a[sortField] || '';
-      let bValue = b[sortField] || '';
+      let aValue: string | number = a[sortField] || '';
+      let bValue: string | number = b[sortField] || '';
       
       if (sortField === 'data_criacao') {
         aValue = new Date(aValue as string).getTime();
@@ -120,26 +120,26 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
   };
 
   const getStatusBadge = (status?: string) => {
-    if (!status) return <Badge variant="secondary">Não definido</Badge>;
+    if (!status) return <Badge variant="secondary" className="bg-transparent border-slate-500 text-slate-400">Não definido</Badge>;
     
-    const statusMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
-      'novo': { variant: 'default', label: 'Novo' },
-      'contatado': { variant: 'secondary', label: 'Contatado' },
-      'qualificado': { variant: 'outline', label: 'Qualificado' },
-      'convertido': { variant: 'default', label: 'Convertido' },
-      'perdido': { variant: 'destructive', label: 'Perdido' }
+    const statusMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string, color: string }> = {
+      'novo': { variant: 'outline', label: 'Novo', color: 'border-[#00FF88] text-[#00FF88]' },
+      'contatado': { variant: 'outline', label: 'Contatado', color: 'border-blue-400 text-blue-400' },
+      'qualificado': { variant: 'outline', label: 'Qualificado', color: 'border-purple-400 text-purple-400' },
+      'convertido': { variant: 'outline', label: 'Convertido', color: 'border-[#39FF14] text-[#39FF14]' },
+      'perdido': { variant: 'outline', label: 'Perdido', color: 'border-red-400 text-red-400' }
     };
     
-    const statusInfo = statusMap[status.toLowerCase()] || { variant: 'secondary' as const, label: status };
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+    const statusInfo = statusMap[status.toLowerCase()] || { variant: 'outline' as const, label: status, color: 'border-slate-500 text-slate-400' };
+    return <Badge variant={statusInfo.variant} className={`bg-transparent ${statusInfo.color}`}>{statusInfo.label}</Badge>;
   };
 
   if (contactsData.length === 0) {
     return (
-      <Card className="growave-glass border-slate-700/50">
+      <Card className="bg-transparent border-[#00FF88]/30 backdrop-blur-sm">
         <CardContent className="p-8 text-center">
           <div className="flex flex-col items-center space-y-4">
-            <Phone className="h-12 w-12 text-slate-400" />
+            <Phone className="h-12 w-12 text-[#00FF88]" />
             <div>
               <h3 className="text-lg font-medium text-white">Nenhum contato encontrado</h3>
               <p className="text-slate-400 mt-1">
@@ -156,10 +156,10 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
     <div className="space-y-6">
       {/* Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="growave-glass border-slate-700/50">
+        <Card className="bg-transparent border-[#00FF88]/30 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Phone className="h-4 w-4 text-green-400" />
+              <Phone className="h-4 w-4 text-[#00FF88]" />
               <div>
                 <p className="text-sm text-slate-400">Total de Contatos</p>
                 <p className="text-lg font-semibold text-white">{metrics.total}</p>
@@ -168,10 +168,10 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
           </CardContent>
         </Card>
         
-        <Card className="growave-glass border-slate-700/50">
+        <Card className="bg-transparent border-[#00FF88]/30 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Phone className="h-4 w-4 text-blue-400" />
+              <Phone className="h-4 w-4 text-[#39FF14]" />
               <div>
                 <p className="text-sm text-slate-400">Com Telefone</p>
                 <p className="text-lg font-semibold text-white">{metrics.withPhone}</p>
@@ -180,10 +180,10 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
           </CardContent>
         </Card>
         
-        <Card className="growave-glass border-slate-700/50">
+        <Card className="bg-transparent border-[#00FF88]/30 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Mail className="h-4 w-4 text-purple-400" />
+              <Mail className="h-4 w-4 text-[#00FF88]" />
               <div>
                 <p className="text-sm text-slate-400">Com Email</p>
                 <p className="text-lg font-semibold text-white">{metrics.withEmail}</p>
@@ -192,10 +192,10 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
           </CardContent>
         </Card>
         
-        <Card className="growave-glass border-slate-700/50">
+        <Card className="bg-transparent border-[#00FF88]/30 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Target className="h-4 w-4 text-orange-400" />
+              <Target className="h-4 w-4 text-[#39FF14]" />
               <div>
                 <p className="text-sm text-slate-400">Únicos</p>
                 <p className="text-lg font-semibold text-white">{metrics.uniquePhones}</p>
@@ -206,12 +206,12 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
       </div>
 
       {/* Filtros e busca */}
-      <Card className="growave-glass border-slate-700/50">
+      <Card className="bg-transparent border-[#00FF88]/30 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span className="text-white">Contatos</span>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" className="border-slate-600">
+              <Button variant="outline" size="sm" className="bg-transparent border-[#00FF88]/50 text-[#00FF88] hover:bg-[#00FF88]/10">
                 <Download className="h-4 w-4 mr-2" />
                 Exportar
               </Button>
@@ -222,20 +222,20 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#00FF88]" />
                 <Input
                   placeholder="Buscar por nome, telefone ou email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400"
+                  className="pl-10 bg-transparent border-[#00FF88]/30 text-white placeholder-slate-400 focus:border-[#00FF88] focus:ring-[#00FF88]/20"
                 />
               </div>
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-slate-800/50 border-slate-600 text-white">
+              <SelectTrigger className="w-[180px] bg-transparent border-[#00FF88]/30 text-white focus:border-[#00FF88] focus:ring-[#00FF88]/20">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-600">
+              <SelectContent className="bg-slate-900/95 border-[#00FF88]/30 backdrop-blur-sm">
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="novo">Novo</SelectItem>
                 <SelectItem value="contatado">Contatado</SelectItem>
@@ -247,38 +247,38 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
           </div>
 
           {/* Tabela */}
-          <div className="border border-slate-700/50 rounded-lg overflow-hidden">
+          <div className="border border-[#00FF88]/30 rounded-lg overflow-hidden bg-transparent backdrop-blur-sm">
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-700/50 hover:bg-slate-800/50">
+                <TableRow className="border-[#00FF88]/20 hover:bg-[#00FF88]/5">
                   <TableHead 
-                    className="text-slate-300 cursor-pointer hover:text-white"
+                    className="text-[#00FF88] cursor-pointer hover:text-[#39FF14] transition-colors"
                     onClick={() => handleSort('nome')}
                   >
                     Nome
                   </TableHead>
                   <TableHead 
-                    className="text-slate-300 cursor-pointer hover:text-white"
+                    className="text-[#00FF88] cursor-pointer hover:text-[#39FF14] transition-colors"
                     onClick={() => handleSort('telefone')}
                   >
                     Telefone
                   </TableHead>
-                  <TableHead className="text-slate-300">Email</TableHead>
-                  <TableHead className="text-slate-300">Anúncio</TableHead>
-                  <TableHead className="text-slate-300">Campanha</TableHead>
-                  <TableHead className="text-slate-300">Criativo</TableHead>
+                  <TableHead className="text-[#00FF88]">Email</TableHead>
+                  <TableHead className="text-[#00FF88]">Anúncio</TableHead>
+                  <TableHead className="text-[#00FF88]">Campanha</TableHead>
+                  <TableHead className="text-[#00FF88]">Criativo</TableHead>
                   <TableHead 
-                    className="text-slate-300 cursor-pointer hover:text-white"
+                    className="text-[#00FF88] cursor-pointer hover:text-[#39FF14] transition-colors"
                     onClick={() => handleSort('data_criacao')}
                   >
                     Data
                   </TableHead>
-                  <TableHead className="text-slate-300">Status</TableHead>
+                  <TableHead className="text-[#00FF88]">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedContacts.map((contact, index) => (
-                  <TableRow key={`${contact.telefone}-${index}`} className="border-slate-700/50 hover:bg-slate-800/30">
+                  <TableRow key={`${contact.telefone}-${index}`} className="border-[#00FF88]/10 hover:bg-[#00FF88]/5 transition-colors">
                     <TableCell className="text-white">
                       <div>
                         <div className="font-medium">
@@ -333,7 +333,7 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
                   size="sm"
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="border-slate-600 text-slate-300 hover:text-white"
+                  className="bg-transparent border-[#00FF88]/30 text-slate-300 hover:text-white hover:bg-[#00FF88]/10 disabled:opacity-50"
                 >
                   Anterior
                 </Button>
@@ -345,7 +345,7 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
                   size="sm"
                   onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="border-slate-600 text-slate-300 hover:text-white"
+                  className="bg-transparent border-[#00FF88]/30 text-slate-300 hover:text-white hover:bg-[#00FF88]/10 disabled:opacity-50"
                 >
                   Próxima
                 </Button>
