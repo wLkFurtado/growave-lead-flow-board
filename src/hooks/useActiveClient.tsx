@@ -8,12 +8,14 @@ export const useActiveClient = () => {
   const [activeClient, setActiveClient] = useState<string>('');
   const [availableClients, setAvailableClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   console.log('🔄 useActiveClient: Hook iniciado', {
     authLoading,
     profile: !!profile,
     isAdmin,
-    activeClient
+    activeClient,
+    hasInitialized
   });
 
   useEffect(() => {
@@ -29,6 +31,13 @@ export const useActiveClient = () => {
       setActiveClient('');
       setAvailableClients([]);
       setIsLoading(false);
+      setHasInitialized(true);
+      return;
+    }
+
+    // Evitar refetch desnecessário se já inicializou
+    if (hasInitialized && availableClients.length > 0) {
+      console.log('✅ useActiveClient: Já inicializado, pulando fetch');
       return;
     }
 
@@ -37,17 +46,31 @@ export const useActiveClient = () => {
         console.log('🔄 useActiveClient: Buscando clientes nas tabelas...');
         setIsLoading(true);
         
-        // Buscar clientes diretamente das tabelas de dados
-        const [fbResponse, wppResponse] = await Promise.all([
-          supabase
-            .from('facebook_ads')
-            .select('cliente_nome')
-            .not('cliente_nome', 'is', null),
-          supabase
-            .from('whatsapp_anuncio')
-            .select('cliente_nome')
-            .not('cliente_nome', 'is', null)
-        ]);
+        // Buscar clientes diretamente das tabelas de dados com retry
+        let fbResponse, wppResponse;
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+          try {
+            [fbResponse, wppResponse] = await Promise.all([
+              supabase
+                .from('facebook_ads')
+                .select('cliente_nome')
+                .not('cliente_nome', 'is', null),
+              supabase
+                .from('whatsapp_anuncio')
+                .select('cliente_nome')
+                .not('cliente_nome', 'is', null)
+            ]);
+            break;
+          } catch (error) {
+            retryCount++;
+            console.log(`⚠️ useActiveClient: Tentativa ${retryCount} falhou:`, error);
+            if (retryCount >= maxRetries) throw error;
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
+        }
 
         console.log('✅ useActiveClient: Respostas obtidas:', {
           fb: fbResponse.data?.length || 0,
@@ -72,31 +95,36 @@ export const useActiveClient = () => {
 
         setAvailableClients(allClients);
         
-        // Priorizar "Hospital do Cabelo" se estiver disponível
+        // Só definir cliente ativo se não tiver um já selecionado
         if (allClients.length > 0 && !activeClient) {
-          let clienteParaSelecionar = allClients[0]; // fallback para o primeiro
+          // Priorizar "Hospital do Cabelo" com busca mais flexível
+          const hospitalDoCabelo = allClients.find(cliente => {
+            const clienteLower = cliente.toLowerCase();
+            return (clienteLower.includes('hospital') && clienteLower.includes('cabelo')) ||
+                   clienteLower.includes('hospital do cabelo');
+          });
           
-          // Procurar especificamente por "Hospital do Cabelo"
-          const hospitalDoCabelo = allClients.find(cliente => 
-            cliente.toLowerCase().includes('hospital') && cliente.toLowerCase().includes('cabelo')
-          );
+          const clienteParaSelecionar = hospitalDoCabelo || allClients[0];
           
-          if (hospitalDoCabelo) {
-            clienteParaSelecionar = hospitalDoCabelo;
-            console.log('✅ useActiveClient: Hospital do Cabelo encontrado:', hospitalDoCabelo);
-          }
+          console.log('✅ useActiveClient: Selecionando cliente:', {
+            encontrouHospital: !!hospitalDoCabelo,
+            clienteSelecionado: clienteParaSelecionar,
+            todosClientes: allClients
+          });
           
-          console.log('✅ useActiveClient: Definindo cliente ativo:', clienteParaSelecionar);
           setActiveClient(clienteParaSelecionar);
         } else if (allClients.length === 0) {
           console.log('⚠️ useActiveClient: Nenhum cliente encontrado');
           setActiveClient('');
         }
         
+        setHasInitialized(true);
+        
       } catch (error) {
-        console.error('❌ useActiveClient: Erro ao buscar clientes:', error);
+        console.error('❌ useActiveClient: Erro fatal ao buscar clientes:', error);
         setAvailableClients([]);
         setActiveClient('');
+        setHasInitialized(true);
       } finally {
         console.log('✅ useActiveClient: Finalizando loading');
         setIsLoading(false);
@@ -104,7 +132,7 @@ export const useActiveClient = () => {
     };
 
     fetchClients();
-  }, [profile, isAdmin, authLoading]);
+  }, [profile, isAdmin, authLoading, hasInitialized]); // Removido activeClient da dependência
 
   const changeActiveClient = (clientName: string) => {
     console.log('🔄 useActiveClient: Mudando cliente para:', clientName);
@@ -114,7 +142,8 @@ export const useActiveClient = () => {
   console.log('📊 useActiveClient: Estado atual:', {
     activeClient,
     availableClients: availableClients.length,
-    isLoading: isLoading || authLoading
+    isLoading: isLoading || authLoading,
+    hasInitialized
   });
 
   return {

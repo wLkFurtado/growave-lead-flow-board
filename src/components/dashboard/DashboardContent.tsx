@@ -17,9 +17,9 @@ interface DateRange {
 export const DashboardContent = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  // Mudando período padrão para 3 meses para capturar mais dados históricos
+  // Usar período padrão de 6 meses para garantir que dados sejam encontrados
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: subMonths(new Date(), 3),
+    from: subMonths(new Date(), 6),
     to: new Date()
   });
   
