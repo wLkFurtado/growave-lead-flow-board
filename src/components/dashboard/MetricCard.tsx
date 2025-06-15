@@ -29,7 +29,7 @@ export const MetricCard = ({
   };
 
   return (
-    <div className={`group relative growave-glass border border-slate-700/50 rounded-2xl p-8 transition-all duration-500 hover:border-[#00FF88]/50 hover:shadow-2xl hover:shadow-[#00FF88]/10 hover:-translate-y-2 growave-card-hover ${className}`}>
+    <div className={`group relative growave-glass border border-slate-700/50 rounded-2xl p-6 transition-all duration-500 hover:border-[#00FF88]/50 hover:shadow-2xl hover:shadow-[#00FF88]/10 hover:-translate-y-2 growave-card-hover ${className}`}>
       {/* Gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#00FF88]/5 to-[#39FF14]/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       
@@ -37,7 +37,7 @@ export const MetricCard = ({
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#00FF88]/20 to-[#39FF14]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl"></div>
       
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             {icon && (
               <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center text-[#00FF88] group-hover:bg-[#00FF88]/10 transition-all duration-300">
@@ -61,7 +61,7 @@ export const MetricCard = ({
           )}
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-baseline space-x-2">
             <p className="text-3xl xl:text-4xl font-bold text-white group-hover:text-[#00FF88] transition-all duration-500 animate-fade-in">
               {formatValue(value)}{unit}
@@ -86,7 +86,7 @@ export const MetricCard = ({
         </div>
 
         {/* Mini sparkline placeholder */}
-        <div className="mt-6 h-8 flex items-end justify-between space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="mt-4 h-8 flex items-end justify-between space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
           {[...Array(12)].map((_, i) => (
             <div
               key={i}

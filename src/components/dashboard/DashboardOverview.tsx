@@ -47,8 +47,8 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
   }, [adsData, leadsData]);
 
   return (
-    <section className="space-y-8">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <section className="space-y-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Visão Geral do Desempenho</h2>
           <p className="text-slate-400 mt-1">Performance das suas campanhas no período selecionado</p>
@@ -62,7 +62,7 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <MetricCard title="Total Investido" value={metrics.totalInvestido} unit=" R$" trend="up" />
         <MetricCard title="Alcance" value={metrics.totalAlcance} trend="up" />
         <MetricCard title="Mensagens Iniciadas" value={metrics.totalMensagens} />
