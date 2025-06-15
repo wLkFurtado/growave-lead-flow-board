@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { User, Mail, Shield, Building, Calendar } from 'lucide-react';
+import { ChangePasswordForm } from './ChangePasswordForm';
 
 export const MyProfile = () => {
   const { profile, user, isAdmin } = useAuth();
@@ -145,6 +146,9 @@ export const MyProfile = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Seção de Alteração de Senha */}
+      <ChangePasswordForm />
 
       {/* Clientes Associados (se não for admin) */}
       {!isAdmin && profile.clientes_associados && profile.clientes_associados.length > 0 && (
