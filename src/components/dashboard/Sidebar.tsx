@@ -119,28 +119,13 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
     )}>
       {/* Header */}
       <div className="h-16 border-b border-slate-700/50 flex items-center justify-between px-4">
-        {!isCollapsed && (
-          <div className="flex items-center space-x-3 group">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center growave-logo-glow transition-transform duration-300 group-hover:scale-110 overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=32&h=32&fit=crop&crop=center" 
-                alt="GroWave Logo" 
-                className="w-full h-full object-cover rounded-lg"
-              />
-            </div>
-            <span className="font-bold text-white growave-neon-text text-lg">GroWave</span>
-          </div>
-        )}
-        
-        {isCollapsed && (
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center growave-logo-glow transition-transform duration-300 hover:scale-110 overflow-hidden">
-            <img 
-              src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=32&h=32&fit=crop&crop=center" 
-              alt="GroWave Logo" 
-              className="w-full h-full object-cover rounded-lg"
-            />
-          </div>
-        )}
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110 overflow-hidden">
+          <img 
+            src="/lovable-uploads/1fd9c182-3972-410a-8f61-cc365fe0c0df.png" 
+            alt="Logo" 
+            className="w-full h-full object-cover rounded-lg"
+          />
+        </div>
         
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
