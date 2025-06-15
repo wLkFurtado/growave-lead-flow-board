@@ -34,8 +34,7 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
         id: userId,
         nome_completo: user?.email?.split('@')[0] || 'Usuário',
         email: user?.email || 'email@example.com',
-        role: 'client', // Padrão é client, não admin
-        clientes_associados: []
+        role: 'client' // Padrão é client, não admin
       };
       return fallbackProfile;
     }
@@ -44,8 +43,7 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
       id: profileData.id,
       nome_completo: profileData.name || user?.email?.split('@')[0] || 'Usuário',
       email: profileData.email,
-      role: profileData.role || 'client',
-      clientes_associados: []
+      role: profileData.role || 'client'
     };
 
     console.log('✅ AuthUtils: Perfil encontrado no banco:', profile);
@@ -58,8 +56,7 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
       id: userId,
       nome_completo: user?.email?.split('@')[0] || 'Usuário',
       email: user?.email || 'email@example.com',
-      role: 'client',
-      clientes_associados: []
+      role: 'client'
     };
     
     return fallbackProfile;

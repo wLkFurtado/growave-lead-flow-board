@@ -149,31 +149,6 @@ export const MyProfile = () => {
 
       {/* Seção de Alteração de Senha */}
       <ChangePasswordForm />
-
-      {/* Clientes Associados (se não for admin) */}
-      {!isAdmin && profile.clientes_associados && profile.clientes_associados.length > 0 && (
-        <Card className="bg-transparent border-2 border-[#00FF88]/60 growave-neon-border growave-card-hover">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center space-x-2">
-              <Building className="w-5 h-5 text-[#00FF88]" />
-              <span>Clientes Associados</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {profile.clientes_associados.map((cliente, index) => (
-                <Badge 
-                  key={index}
-                  variant="outline" 
-                  className="border-[#00FF88]/50 text-[#00FF88] bg-[#00FF88]/5"
-                >
-                  {cliente}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
