@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { subDays } from 'date-fns';
 import { MainLayout } from './MainLayout';
@@ -44,6 +43,10 @@ export const DashboardContent = () => {
     setDateRange(newRange);
   };
 
+  const handleNavigateToProfile = (tab: string) => {
+    setActiveTab(tab);
+  };
+
   if (isLoading) {
     console.log('📊 DASHBOARD: Renderizando loading state');
     return (
@@ -85,6 +88,7 @@ export const DashboardContent = () => {
       setActiveTab={setActiveTab}
       isCollapsed={isCollapsed}
       setIsCollapsed={setIsCollapsed}
+      onNavigateToProfile={handleNavigateToProfile}
     >
       <TabContent
         activeTab={activeTab}

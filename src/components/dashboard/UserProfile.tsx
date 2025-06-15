@@ -12,7 +12,11 @@ import {
 } from '../ui/dropdown-menu';
 import { User, Settings, LogOut, Building, ChevronDown, Shield } from 'lucide-react';
 
-export const UserProfile = () => {
+interface UserProfileProps {
+  onNavigateToProfile?: () => void;
+}
+
+export const UserProfile = ({ onNavigateToProfile }: UserProfileProps) => {
   const { profile, signOut, isAdmin } = useAuth();
 
   if (!profile) return null;
@@ -29,6 +33,12 @@ export const UserProfile = () => {
       await signOut();
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  const handleProfileClick = () => {
+    if (onNavigateToProfile) {
+      onNavigateToProfile();
     }
   };
 
@@ -71,7 +81,10 @@ export const UserProfile = () => {
         
         <DropdownMenuSeparator className="bg-slate-700" />
         
-        <DropdownMenuItem className="text-slate-300 hover:bg-slate-700/50 hover:text-[#00FF88] focus:text-[#00FF88] transition-colors">
+        <DropdownMenuItem 
+          onClick={handleProfileClick}
+          className="text-slate-300 hover:bg-slate-700/50 hover:text-[#00FF88] focus:text-[#00FF88] transition-colors cursor-pointer"
+        >
           <User className="mr-2 h-4 w-4" />
           <span>Meu Perfil</span>
         </DropdownMenuItem>

@@ -9,6 +9,7 @@ interface MainLayoutProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
   children: React.ReactNode;
+  onNavigateToProfile?: (tab: string) => void;
 }
 
 export const MainLayout = ({ 
@@ -16,7 +17,8 @@ export const MainLayout = ({
   setActiveTab, 
   isCollapsed, 
   setIsCollapsed, 
-  children 
+  children,
+  onNavigateToProfile
 }: MainLayoutProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
@@ -37,6 +39,7 @@ export const MainLayout = ({
       <DashboardHeader 
         activeTab={activeTab}
         isCollapsed={isCollapsed}
+        onNavigateToProfile={onNavigateToProfile}
       />
       
       <main className={`pt-20 transition-all duration-300 ease-out ${

@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Calendar, Database } from 'lucide-react';
 import { DashboardOverview } from './DashboardOverview';
 import { AdAnalysisTable } from './AdAnalysisTable';
 import { LeadKanbanBoard } from './LeadKanbanBoard';
 import { UserManagement } from './UserManagement';
+import { MyProfile } from './MyProfile';
 import { EmptyState } from './LoadingStates';
 import { useAuth } from '../../hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -34,6 +34,10 @@ export const TabContent = ({
   handleDateRangeChange
 }: TabContentProps) => {
   const { isAdmin } = useAuth();
+
+  if (activeTab === 'profile') {
+    return <MyProfile />;
+  }
 
   if (activeTab === 'dashboard') {
     if (!hasData && activeClient) {
