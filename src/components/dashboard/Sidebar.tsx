@@ -119,15 +119,20 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
     )}>
       {/* Header */}
       <div className="h-16 border-b border-slate-700/50 flex items-center justify-between px-4">
-        <div className="w-12 h-12 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110 overflow-hidden bg-slate-800/30 p-1">
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110 overflow-hidden bg-white/10 backdrop-blur-sm border border-slate-600/30">
           <img 
             src="/lovable-uploads/1fd9c182-3972-410a-8f61-cc365fe0c0df.png" 
-            alt="Logo" 
-            className="w-full h-full object-contain rounded-lg"
+            alt="Logo da empresa" 
+            className="w-10 h-10 object-contain"
+            onLoad={() => console.log('Logo carregou com sucesso')}
             onError={(e) => {
-              console.log('Logo failed to load, using fallback');
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-[#00FF88] to-[#39FF14] rounded-lg flex items-center justify-center text-slate-900 font-bold text-xs">L</div>';
+              console.error('Erro ao carregar logo:', e);
+              const target = e.currentTarget;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                parent.innerHTML = '<div class="w-10 h-10 bg-gradient-to-br from-[#00FF88] to-[#39FF14] rounded-lg flex items-center justify-center text-slate-900 font-bold text-lg">L</div>';
+              }
             }}
           />
         </div>
@@ -167,7 +172,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
               </div>
             </div>
             <div className="text-xs text-slate-500 border-t border-slate-700/50 pt-2">
-              GroWave Analytics v2.0
+              Analytics v2.0
             </div>
           </div>
         </div>
