@@ -64,8 +64,8 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <MetricCard title="Total Investido" value={metrics.totalInvestido} unit=" R$" trend="up" />
         <MetricCard title="Alcance" value={metrics.totalAlcance} trend="up" />
-        <MetricCard title="Custo por Mensagem Iniciada" value={metrics.custoPorMensagemIniciada} unit=" R$" />
         <MetricCard title="Mensagens Iniciadas" value={metrics.totalMensagens} />
+        <MetricCard title="Custo por Mensagem Iniciada" value={metrics.custoPorMensagemIniciada} unit=" R$" />
         <MetricCard title="Leads com Telefone" value={metrics.totalLeadsTelefone} trend="up" />
         <MetricCard title="Custo Real por Mensagem" value={metrics.custoPorLeadTelefone} unit=" R$" />
         <MetricCard title="Custo por Lead" value={metrics.custoPorLeadTelefone} unit=" R$" />
