@@ -35,7 +35,7 @@ export const MyProfile = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="growave-glass rounded-xl p-6 border border-slate-700/50 growave-card-hover">
+      <div className="bg-transparent border-2 border-[#00FF88]/60 growave-neon-border rounded-xl p-6 growave-card-hover">
         <div className="flex items-center space-x-6">
           <Avatar className="h-20 w-20 border-4 border-[#00FF88]/30">
             <AvatarFallback className="bg-gradient-to-br from-[#00FF88] to-[#39FF14] text-slate-900 text-xl font-bold">
@@ -74,23 +74,23 @@ export const MyProfile = () => {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Informações Pessoais */}
-        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/30 growave-card-hover">
+        <Card className="bg-transparent border-2 border-[#00FF88]/60 growave-neon-border growave-card-hover">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
-              <User className="w-5 h-5 text-orange-400" />
+              <User className="w-5 h-5 text-[#00FF88]" />
               <span>Informações Pessoais</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm text-orange-300/80 font-medium">Nome Completo</label>
+              <label className="text-sm text-[#00FF88]/80 font-medium">Nome Completo</label>
               <div className="text-white font-semibold text-lg">
                 {profile.nome_completo || 'Não informado'}
               </div>
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm text-orange-300/80 font-medium flex items-center space-x-1">
+              <label className="text-sm text-[#00FF88]/80 font-medium flex items-center space-x-1">
                 <Mail className="w-4 h-4" />
                 <span>Email</span>
               </label>
@@ -100,7 +100,7 @@ export const MyProfile = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-orange-300/80 font-medium">Tipo de Usuário</label>
+              <label className="text-sm text-[#00FF88]/80 font-medium">Tipo de Usuário</label>
               <div className="text-white font-semibold">
                 {isAdmin ? 'Administrador' : 'Cliente'}
               </div>
@@ -109,7 +109,7 @@ export const MyProfile = () => {
         </Card>
 
         {/* Informações da Conta */}
-        <Card className="bg-gradient-to-br from-[#00FF88]/10 to-[#39FF14]/5 border border-[#00FF88]/30 growave-card-hover">
+        <Card className="bg-transparent border-2 border-[#00FF88]/60 growave-neon-border growave-card-hover">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
               <Shield className="w-5 h-5 text-[#00FF88]" />
@@ -148,7 +148,7 @@ export const MyProfile = () => {
 
       {/* Clientes Associados (se não for admin) */}
       {!isAdmin && profile.clientes_associados && profile.clientes_associados.length > 0 && (
-        <Card className="growave-glass border-slate-700/50 growave-card-hover">
+        <Card className="bg-transparent border-2 border-[#00FF88]/60 growave-neon-border growave-card-hover">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
               <Building className="w-5 h-5 text-[#00FF88]" />
