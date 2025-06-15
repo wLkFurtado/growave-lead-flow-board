@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChevronDown, Building2 } from 'lucide-react';
+import { ChevronDown, Building2, Loader2 } from 'lucide-react';
 import { useActiveClient } from '@/hooks/useActiveClient';
 
 export const ClientSelector = () => {
@@ -14,8 +14,8 @@ export const ClientSelector = () => {
   if (isLoading) {
     return (
       <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700">
-        <Building2 size={16} className="text-slate-400" />
-        <span className="text-slate-400 text-sm">Carregando...</span>
+        <Loader2 size={16} className="text-[#00FF88] animate-spin" />
+        <span className="text-slate-300 text-sm">Carregando clientes...</span>
       </div>
     );
   }
