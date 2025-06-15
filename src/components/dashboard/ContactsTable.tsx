@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Download, Eye, Calendar, Phone, Mail, Target, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -252,7 +253,6 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
                   >
                     Telefone
                   </TableHead>
-                  <TableHead className="text-[#00FF88]">Email</TableHead>
                   <TableHead className="text-[#00FF88]">Anúncio</TableHead>
                   <TableHead className="text-[#00FF88]">Campanha</TableHead>
                   <TableHead className="text-[#00FF88]">Criativo</TableHead>
@@ -285,9 +285,6 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
                     </TableCell>
                     <TableCell className="text-white font-mono">
                       {formatPhone(contact.telefone)}
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {contact.email || '-'}
                     </TableCell>
                     <TableCell className="text-slate-300 max-w-[200px] truncate">
                       {contact.nome_anuncio || '-'}
@@ -348,3 +345,4 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
     </div>
   );
 };
+
