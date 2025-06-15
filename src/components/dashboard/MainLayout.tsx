@@ -39,11 +39,11 @@ export const MainLayout = ({
         isCollapsed={isCollapsed}
       />
       
-      <main className={`pt-16 transition-all duration-300 ease-out ${
+      <main className={`pt-20 transition-all duration-300 ease-out ${
         isCollapsed ? 'ml-16' : 'ml-64'
       }`}>
-        <div className="p-4 md:p-8">
-          <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+        <div className="px-6 py-6 md:px-8 md:py-8">
+          <div className="max-w-full mx-auto space-y-8">
             {children}
           </div>
         </div>

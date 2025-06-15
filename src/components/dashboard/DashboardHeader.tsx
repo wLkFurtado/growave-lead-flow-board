@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { UserProfile } from './UserProfile';
 import { ClientSelector } from './ClientSelector';
 import { useAuth } from '@/hooks/useAuth';
-import { Bell, Search, Menu, X } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
 
 interface DashboardHeaderProps {
   activeTab: string;
@@ -40,8 +40,8 @@ export const DashboardHeader = ({ activeTab, isCollapsed }: DashboardHeaderProps
     <header className={`fixed top-0 right-0 h-16 growave-glass border-b border-slate-700/50 z-40 transition-all duration-300 ${
       isCollapsed ? 'left-16' : 'left-64'
     }`}>
-      <div className="h-full px-4 md:px-6 flex items-center justify-between">
-        <div className="flex items-center space-x-4 md:space-x-6">
+      <div className="h-full px-6 flex items-center justify-between">
+        <div className="flex items-center space-x-6">
           {/* Mobile menu button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -51,10 +51,10 @@ export const DashboardHeader = ({ activeTab, isCollapsed }: DashboardHeaderProps
           </button>
 
           <div className="hidden md:block">
-            <h1 className="text-lg md:text-xl font-bold text-white growave-neon-text">
+            <h1 className="text-xl font-bold text-white growave-neon-text">
               {getTitle()}
             </h1>
-            <p className="text-slate-400 text-xs md:text-sm">
+            <p className="text-slate-400 text-sm">
               {getSubtitle()}
             </p>
           </div>
@@ -62,24 +62,14 @@ export const DashboardHeader = ({ activeTab, isCollapsed }: DashboardHeaderProps
           {isAdmin && <div className="hidden lg:block"><ClientSelector /></div>}
           
           {!isAdmin && profile && (
-            <div className="hidden md:flex bg-slate-800/50 rounded-lg px-3 md:px-4 py-2 border border-slate-700 growave-card-hover">
-              <span className="text-xs md:text-sm text-slate-300">Cliente: </span>
-              <span className="text-xs md:text-sm font-medium text-white ml-1">{profile.nome_completo}</span>
+            <div className="hidden md:flex bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700 growave-card-hover">
+              <span className="text-sm text-slate-300">Cliente: </span>
+              <span className="text-sm font-medium text-white ml-1">{profile.nome_completo}</span>
             </div>
           )}
         </div>
         
-        <div className="flex items-center space-x-2 md:space-x-4">
-          {/* Search - hidden on mobile */}
-          <div className="hidden lg:flex items-center growave-glass rounded-lg px-4 py-2 border border-slate-700/50">
-            <Search size={16} className="text-slate-400 mr-2" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              className="bg-transparent text-white text-sm placeholder-slate-400 focus:outline-none w-32 xl:w-40"
-            />
-          </div>
-          
+        <div className="flex items-center space-x-4">
           {/* Notifications */}
           <button className="relative p-2 rounded-lg hover:bg-slate-800/50 text-slate-400 hover:text-white transition-all duration-200 growave-card-hover">
             <Bell size={20} />
@@ -103,15 +93,6 @@ export const DashboardHeader = ({ activeTab, isCollapsed }: DashboardHeaderProps
           </div>
           
           {isAdmin && <ClientSelector />}
-          
-          <div className="flex items-center growave-glass rounded-lg px-4 py-2 border border-slate-700/50">
-            <Search size={16} className="text-slate-400 mr-2" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              className="bg-transparent text-white text-sm placeholder-slate-400 focus:outline-none flex-1"
-            />
-          </div>
         </div>
       )}
     </header>

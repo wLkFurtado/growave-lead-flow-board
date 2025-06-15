@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { subDays } from 'date-fns';
 import { MetricCard } from './MetricCard';
@@ -46,11 +47,11 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
   }, [adsData, leadsData]);
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <section className="space-y-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h2 className="text-2xl font-bold text-white">Visão Geral do Desempenho</h2>
-          <p className="text-slate-400">Performance das suas campanhas no período selecionado</p>
+          <p className="text-slate-400 mt-1">Performance das suas campanhas no período selecionado</p>
         </div>
         
         <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 rounded-xl p-3">
@@ -61,7 +62,7 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         <MetricCard title="Total Investido" value={metrics.totalInvestido} unit=" R$" trend="up" />
         <MetricCard title="Alcance" value={metrics.totalAlcance} trend="up" />
         <MetricCard title="Mensagens Iniciadas" value={metrics.totalMensagens} />
