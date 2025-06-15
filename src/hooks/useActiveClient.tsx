@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +21,11 @@ export const useActiveClient = () => {
 
   useEffect(() => {
     console.log('🔄 useActiveClient: useEffect iniciado');
+
+    if (hasInitialized) {
+      console.log('✅ useActiveClient: Já inicializado, pulando.');
+      return;
+    }
 
     if (authLoading) {
       console.log('⏳ useActiveClient: Auth ainda carregando...');
