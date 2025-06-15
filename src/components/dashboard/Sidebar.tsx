@@ -22,14 +22,14 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
       label: 'Dashboard',
       icon: BarChart3,
       description: 'Visão geral dos dados',
-      color: 'text-blue-400'
+      color: 'text-blue-500 dark:text-blue-400'
     },
     {
       id: 'kanban',
       label: 'Pipeline',
       icon: Kanban,
       description: 'Acompanhe os leads',
-      color: 'text-purple-400'
+      color: 'text-purple-500 dark:text-purple-400'
     }
   ];
 
@@ -40,7 +40,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
       label: 'Usuários',
       icon: Users,
       description: 'Gerenciar usuários',
-      color: 'text-orange-400'
+      color: 'text-orange-500 dark:text-orange-400'
     });
   }
 
@@ -54,13 +54,13 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
         className={cn(
           "w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-300 text-left group relative overflow-hidden",
           isActive 
-            ? "bg-gradient-to-r from-[#00FF88]/20 to-[#39FF14]/20 text-[#00FF88] growave-neon-border shadow-lg shadow-[#00FF88]/20" 
-            : "text-slate-400 dark:text-slate-400 text-slate-600 hover:text-white dark:hover:text-white hover:text-slate-900 hover:bg-slate-800/50 dark:hover:bg-slate-800/50 hover:bg-slate-200/50 hover:shadow-lg hover:shadow-slate-900/20 dark:hover:shadow-slate-900/20 hover:shadow-slate-300/20"
+            ? "bg-gradient-to-r from-emerald-500/15 to-green-500/15 dark:from-[#00FF88]/20 dark:to-[#39FF14]/20 text-emerald-600 dark:text-[#00FF88] border border-emerald-200 dark:border-[#00FF88]/30 shadow-lg shadow-emerald-500/10 dark:shadow-[#00FF88]/20" 
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-slate-900/20"
         )}
       >
         {/* Animated background */}
         <div className={cn(
-          "absolute inset-0 bg-gradient-to-r from-[#00FF88]/5 to-[#39FF14]/5 rounded-xl opacity-0 transition-opacity duration-300",
+          "absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-green-500/5 dark:from-[#00FF88]/5 dark:to-[#39FF14]/5 rounded-xl opacity-0 transition-opacity duration-300",
           isActive ? "opacity-100" : "group-hover:opacity-50"
         )}></div>
         
@@ -68,18 +68,18 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
           size={20} 
           className={cn(
             "flex-shrink-0 transition-all duration-300 relative z-10",
-            isActive ? "text-[#00FF88] growave-icon-glow scale-110" : `${item.color} group-hover:scale-105`
+            isActive ? "text-emerald-600 dark:text-[#00FF88] growave-icon-glow scale-110" : `${item.color} group-hover:scale-105`
           )} 
         />
         {!isCollapsed && (
           <div className="flex-1 relative z-10">
             <div className={cn(
               "font-medium transition-colors duration-300",
-              isActive ? "text-[#00FF88]" : "group-hover:text-white dark:group-hover:text-white group-hover:text-slate-900"
+              isActive ? "text-emerald-600 dark:text-[#00FF88]" : "group-hover:text-slate-900 dark:group-hover:text-white"
             )}>
               {item.label}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-500 text-slate-400 group-hover:text-slate-400 dark:group-hover:text-slate-400 group-hover:text-slate-600 transition-colors duration-300">
+            <div className="text-xs text-slate-500 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors duration-300">
               {item.description}
             </div>
           </div>
@@ -87,7 +87,7 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
         
         {/* Active indicator */}
         {isActive && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#00FF88] rounded-r-full growave-logo-glow"></div>
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-emerald-500 dark:bg-[#00FF88] rounded-r-full growave-logo-glow"></div>
         )}
       </button>
     );
@@ -99,10 +99,10 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
             <TooltipTrigger asChild>
               {button}
             </TooltipTrigger>
-            <TooltipContent side="right" className="growave-glass border-slate-700 dark:border-slate-700 border-slate-300">
+            <TooltipContent side="right" className="growave-glass border-slate-200 dark:border-slate-700">
               <div>
                 <p className="font-medium">{item.label}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-400 text-slate-600">{item.description}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{item.description}</p>
               </div>
             </TooltipContent>
           </Tooltip>
@@ -115,16 +115,16 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-full growave-glass border-r border-slate-700/50 dark:border-slate-700/50 border-slate-300/50 z-50 transition-all duration-300 ease-out",
+      "fixed left-0 top-0 h-full growave-glass border-r border-slate-200 dark:border-slate-700/50 z-50 transition-all duration-300 ease-out",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
-      <div className="h-16 border-b border-slate-700/50 dark:border-slate-700/50 border-slate-300/50 flex items-center justify-between px-4">
+      <div className="h-16 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between px-4">
         <AppLogo />
         
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 hover:bg-slate-200/50 text-slate-400 dark:text-slate-400 text-slate-600 hover:text-white dark:hover:text-white hover:text-slate-900 transition-all duration-200 growave-card-hover"
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all duration-200 growave-card-hover"
         >
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
@@ -140,23 +140,23 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
       {/* Footer */}
       {!isCollapsed && (
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="growave-glass rounded-xl p-4 border border-slate-700/50 dark:border-slate-700/50 border-slate-300/50 growave-card-hover">
+          <div className="growave-glass rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 growave-card-hover">
             <div className="flex items-center space-x-3 mb-3">
               {profile && (
-                <div className="w-8 h-8 bg-gradient-to-br from-[#00FF88] to-[#39FF14] rounded-full flex items-center justify-center text-slate-900 font-semibold text-sm">
+                <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-500 dark:from-[#00FF88] dark:to-[#39FF14] rounded-full flex items-center justify-center text-white font-semibold text-sm">
                   {profile.nome_completo?.charAt(0).toUpperCase() || 'U'}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-white dark:text-white text-slate-900 truncate">
+                <div className="text-xs font-medium text-slate-900 dark:text-white truncate">
                   {profile?.nome_completo || 'Usuário'}
                 </div>
-                <div className="text-xs text-slate-400 dark:text-slate-400 text-slate-600">
+                <div className="text-xs text-slate-600 dark:text-slate-400">
                   {isAdmin ? 'Administrador' : 'Cliente'}
                 </div>
               </div>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-500 text-slate-400 border-t border-slate-700/50 dark:border-slate-700/50 border-slate-300/50 pt-2">
+            <div className="text-xs text-slate-500 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700/50 pt-2">
               Analytics v2.0
             </div>
           </div>
