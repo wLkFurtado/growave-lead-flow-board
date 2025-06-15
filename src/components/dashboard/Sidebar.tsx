@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { BarChart3, Kanban, Users, ChevronLeft, ChevronRight, User } from 'lucide-react';
@@ -30,13 +29,6 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
       icon: Kanban,
       description: 'Acompanhe os leads',
       color: 'text-purple-400'
-    },
-    {
-      id: 'profile',
-      label: 'Meu Perfil',
-      icon: User,
-      description: 'Minhas informações',
-      color: 'text-green-400'
     }
   ];
 
