@@ -98,7 +98,7 @@ export const UserManagement = () => {
     setIsCreating(true);
 
     try {
-      console.log('Criando usuário com signUp...');
+      console.log('Criando usuário com role:', role);
       
       // Criar usuário usando o fluxo normal de signup
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -106,7 +106,8 @@ export const UserManagement = () => {
         password,
         options: {
           data: {
-            name: name || email
+            name: name || email,
+            role: role // Passar o role nos metadados
           }
         }
       });
@@ -120,28 +121,33 @@ export const UserManagement = () => {
         throw new Error('Usuário não foi criado corretamente');
       }
 
-      console.log('Usuário criado, ID:', authData.user.id);
+      console.log('Usuário criado, ID:', authData.user.id, 'Role solicitado:', role);
 
-      // Aguardar um pouco para que o trigger do banco seja executado
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Aguardar um momento para que o trigger do banco seja executado
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Atualizar o perfil do usuário
-      const { error: profileError } = await supabase
+      // Forçar atualização do perfil com o role correto
+      console.log('Atualizando perfil com role:', role);
+      const { data: updateData, error: profileError } = await supabase
         .from('profiles')
         .update({ 
           name: name || email, 
-          role 
+          role: role 
         })
-        .eq('id', authData.user.id);
+        .eq('id', authData.user.id)
+        .select();
+
+      console.log('Resultado da atualização do perfil:', updateData, profileError);
 
       if (profileError) {
         console.error('Erro ao atualizar perfil:', profileError);
-        // Não vamos fazer throw aqui, pois o usuário já foi criado
         toast({
           title: "Aviso",
-          description: "Usuário criado, mas houve erro ao atualizar o perfil. Recarregue a página.",
+          description: "Usuário criado, mas houve erro ao definir o role. Verifique na lista de usuários.",
           variant: "default"
         });
+      } else {
+        console.log('Perfil atualizado com sucesso:', updateData);
       }
 
       // Se for cliente, associar aos clientes selecionados
@@ -167,7 +173,7 @@ export const UserManagement = () => {
 
       toast({
         title: "Sucesso",
-        description: `Usuário ${email} criado com sucesso! ${authData.user.email_confirmed_at ? '' : 'Um email de confirmação foi enviado.'}`,
+        description: `Usuário ${email} criado com sucesso como ${role}!`,
       });
 
       // Limpar formulário
@@ -177,8 +183,11 @@ export const UserManagement = () => {
       setRole('client');
       setSelectedClients([]);
       
-      // Recarregar dados
-      await fetchData();
+      // Recarregar dados após um delay para garantir que as mudanças foram aplicadas
+      setTimeout(() => {
+        fetchData();
+      }, 1000);
+      
     } catch (error: any) {
       console.error('Erro ao criar usuário:', error);
       
@@ -238,13 +247,6 @@ export const UserManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert className="mb-4 bg-blue-900/20 border-blue-500/50">
-            <AlertCircle className="h-4 w-4 text-blue-400" />
-            <AlertDescription className="text-blue-300">
-              O usuário receberá um email de confirmação para ativar a conta.
-            </AlertDescription>
-          </Alert>
-          
           <form onSubmit={createUser} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
