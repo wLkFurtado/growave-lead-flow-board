@@ -37,12 +37,29 @@ export const TabContent = ({
 }: TabContentProps) => {
   const { isAdmin } = useAuth();
 
+  // Calcular se temos dados, mesmo que fora do período atual
+  const hasFacebookData = facebookAds.length > 0;
+  const hasWhatsappData = whatsappLeads.length > 0;
+  const hasAnyData = hasFacebookData || hasWhatsappData;
+
+  console.log('=== TAB CONTENT DEBUG ===');
+  console.log('activeTab:', activeTab);
+  console.log('activeClient:', `"${activeClient}"`);
+  console.log('hasData:', hasData);
+  console.log('hasAnyData:', hasAnyData);
+  console.log('facebookAds.length:', facebookAds.length);
+  console.log('whatsappLeads.length:', whatsappLeads.length);
+  console.log('dateRange:', {
+    from: dateRange.from.toISOString().split('T')[0],
+    to: dateRange.to.toISOString().split('T')[0]
+  });
+
   if (activeTab === 'profile') {
     return <MyProfile />;
   }
 
   if (activeTab === 'contacts') {
-    if (!hasData && activeClient) {
+    if (!hasWhatsappData && activeClient) {
       return (
         <div className="space-y-4">
           <EmptyState
@@ -80,7 +97,7 @@ export const TabContent = ({
   }
 
   if (activeTab === 'dashboard') {
-    if (!hasData && activeClient) {
+    if (!hasAnyData && activeClient) {
       return (
         <div className="space-y-4">
           <Alert className="bg-amber-900/20 border-amber-500/50 text-amber-400">
@@ -120,8 +137,17 @@ export const TabContent = ({
       );
     }
 
+    // Mostrar dashboard mesmo se não há dados no período atual, mas há dados no cliente
     return (
       <>
+        {!hasAnyData && (
+          <Alert className="bg-blue-900/20 border-blue-500/50 text-blue-400 mb-6">
+            <Calendar className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Período selecionado sem dados.</strong> Ajuste o período acima para ver os dados do cliente "{activeClient}".
+            </AlertDescription>
+          </Alert>
+        )}
         <DashboardOverview 
           adsData={facebookAds} 
           leadsData={whatsappLeads}
@@ -139,7 +165,7 @@ export const TabContent = ({
   }
 
   if (activeTab === 'kanban') {
-    if (!hasData && activeClient) {
+    if (!hasWhatsappData && activeClient) {
       return (
         <EmptyState
           title="Nenhum lead encontrado"

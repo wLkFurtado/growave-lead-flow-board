@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { subDays } from 'date-fns';
+import { subDays, subMonths } from 'date-fns';
 import { MainLayout } from './MainLayout';
 import { TabContent } from './TabContent';
 import { DashboardSkeleton } from './LoadingStates';
@@ -17,8 +17,9 @@ interface DateRange {
 export const DashboardContent = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  // Mudando período padrão para 3 meses para capturar mais dados históricos
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: subDays(new Date(), 7),
+    from: subMonths(new Date(), 3),
     to: new Date()
   });
   
@@ -38,7 +39,7 @@ export const DashboardContent = () => {
 
   console.log('=== DASHBOARD CONTENT RENDER ===');
   console.log('activeTab:', activeTab);
-  console.log('activeClient:', activeClient);
+  console.log('activeClient:', `"${activeClient}"`);
   console.log('isLoading:', isLoading);
   console.log('facebookAds.length:', facebookAds.length);
   console.log('whatsappLeads.length:', whatsappLeads.length);

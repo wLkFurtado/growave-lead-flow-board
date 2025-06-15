@@ -22,7 +22,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
   const [error, setError] = useState<string | null>(null);
 
   console.log('🔄 useClientData: Hook iniciado', {
-    activeClient,
+    activeClient: `"${activeClient}"`,
     clientLoading,
     dateRange,
     skipDateFilter
@@ -53,38 +53,14 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
       setError(null);
       
       try {
-        // Primeiro, verificar exatamente quais clientes existem no banco
-        console.log('🔍 DIAGNÓSTICO: Verificando clientes no banco...');
-        const [allFbClients, allWppClients] = await Promise.all([
-          supabase
-            .from('facebook_ads')
-            .select('cliente_nome')
-            .not('cliente_nome', 'is', null),
-          supabase
-            .from('whatsapp_anuncio')
-            .select('cliente_nome')
-            .not('cliente_nome', 'is', null)
-        ]);
-
-        const uniqueFbClients = [...new Set(allFbClients.data?.map(row => row.cliente_nome).filter(Boolean))];
-        const uniqueWppClients = [...new Set(allWppClients.data?.map(row => row.cliente_nome).filter(Boolean))];
-        
-        console.log('📊 DIAGNÓSTICO: Clientes únicos encontrados:', {
-          fb: uniqueFbClients,
-          wpp: uniqueWppClients,
-          activeClient: `"${activeClient}"`,
-          fbExactMatch: uniqueFbClients.find(c => c === activeClient),
-          wppExactMatch: uniqueWppClients.find(c => c === activeClient)
-        });
-
-        // Buscar dados do Facebook Ads com busca exata primeiro, depois case-insensitive
+        // Buscar dados do Facebook Ads
         let fbQuery = supabase
           .from('facebook_ads')
           .select('*')
           .eq('cliente_nome', activeClient)
           .order('data', { ascending: false });
           
-        // Buscar dados do WhatsApp com busca exata primeiro
+        // Buscar dados do WhatsApp
         let wppQuery = supabase
           .from('whatsapp_anuncio')
           .select('*')
@@ -110,10 +86,12 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
         const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
 
         console.log('📊 useClientData: Resultados das queries:', {
+          cliente: `"${activeClient}"`,
           fbCount: fbResponse.data?.length || 0,
           wppCount: wppResponse.data?.length || 0,
           fbError: fbResponse.error,
           wppError: wppResponse.error,
+          dateFilter: !skipDateFilter && dateRange ? 'Aplicado' : 'Sem filtro',
           fbSample: fbResponse.data?.slice(0, 2).map(row => ({ 
             cliente: row.cliente_nome, 
             campanha: row.campanha, 
@@ -122,7 +100,8 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
           wppSample: wppResponse.data?.slice(0, 2).map(row => ({ 
             cliente: row.cliente_nome, 
             nome: row.nome, 
-            telefone: row.telefone 
+            telefone: row.telefone,
+            data: row.data_criacao 
           }))
         });
 
@@ -176,6 +155,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
     };
   }, [activeClient, clientLoading, dateRange, skipDateFilter]);
 
+  // Melhorar o cálculo de hasData
   const hasData = facebookAds.length > 0 || whatsappLeads.length > 0;
 
   console.log('📊 useClientData: Estado final:', {
