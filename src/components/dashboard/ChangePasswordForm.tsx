@@ -120,7 +120,7 @@ export const ChangePasswordForm = () => {
                       <Input
                         {...field}
                         type={showCurrentPassword ? "text" : "password"}
-                        className="bg-slate-800/80 border-[#00FF88]/20 text-white pr-10 growave-neon-border"
+                        className="bg-slate-800/80 border-[#00FF88]/20 text-white pr-10 growave-neon-border placeholder:text-white/30"
                         placeholder="Digite sua senha atual"
                       />
                       <button
@@ -149,7 +149,7 @@ export const ChangePasswordForm = () => {
                       <Input
                         {...field}
                         type={showNewPassword ? "text" : "password"}
-                        className="bg-slate-800/80 border-[#00FF88]/20 text-white pr-10 growave-neon-border"
+                        className="bg-slate-800/80 border-[#00FF88]/20 text-white pr-10 growave-neon-border placeholder:text-white/30"
                         placeholder="Digite sua nova senha"
                       />
                       <button
@@ -199,7 +199,7 @@ export const ChangePasswordForm = () => {
                       <Input
                         {...field}
                         type={showConfirmPassword ? "text" : "password"}
-                        className="bg-slate-800/80 border-[#00FF88]/20 text-white pr-10 growave-neon-border"
+                        className="bg-slate-800/80 border-[#00FF88]/20 text-white pr-10 growave-neon-border placeholder:text-white/30"
                         placeholder="Confirme sua nova senha"
                       />
                       <button
