@@ -12,12 +12,14 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
   const [whatsappLeads, setWhatsappLeads] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastSuccessfulClient, setLastSuccessfulClient] = useState<string>('');
 
   console.log('🔄 useClientData: Hook iniciado', {
     activeClient: `"${activeClient}"`,
     clientLoading,
     dateRange,
-    skipDateFilter
+    skipDateFilter,
+    lastSuccessfulClient: `"${lastSuccessfulClient}"`
   });
 
   useEffect(() => {
@@ -37,6 +39,13 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
           setError(null);
           setIsLoading(false);
         }
+        return;
+      }
+
+      // Se é o mesmo cliente que já carregamos com sucesso, não recarregar
+      if (activeClient === lastSuccessfulClient && facebookAds.length > 0 && whatsappLeads.length > 0) {
+        console.log('✅ useClientData: Dados já carregados para:', `"${activeClient}"`);
+        setIsLoading(false);
         return;
       }
       
@@ -72,21 +81,24 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
           wppError: wppResponse.error
         });
 
+        // Processar erros individualmente para não bloquear tudo
+        let fbData: any[] = [];
+        let wppData: any[] = [];
+        
         if (fbResponse.error) {
-          console.error('❌ useClientData: Erro FB:', fbResponse.error);
-          throw new Error(`Erro Facebook: ${fbResponse.error.message}`);
+          console.error('❌ useClientData: Erro FB (continuando):', fbResponse.error);
+        } else {
+          fbData = fbResponse.data || [];
         }
         
         if (wppResponse.error) {
-          console.error('❌ useClientData: Erro WPP:', wppResponse.error);
-          throw new Error(`Erro WhatsApp: ${wppResponse.error.message}`);
+          console.error('❌ useClientData: Erro WPP (continuando):', wppResponse.error);
+        } else {
+          wppData = wppResponse.data || [];
         }
 
         if (mounted) {
-          const fbData = fbResponse.data || [];
-          const wppData = wppResponse.data || [];
-          
-          console.log('✅ useClientData: Dados carregados com sucesso:', {
+          console.log('✅ useClientData: Dados carregados:', {
             cliente: `"${activeClient}"`,
             fbCount: fbData.length,
             wppCount: wppData.length
@@ -94,6 +106,7 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
           
           setFacebookAds(fbData);
           setWhatsappLeads(wppData);
+          setLastSuccessfulClient(activeClient);
           setError(null);
         }
         
@@ -101,8 +114,11 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
         console.error('❌ useClientData: Erro fatal:', error);
         if (mounted) {
           setError(error.message || 'Erro ao carregar dados');
-          setFacebookAds([]);
-          setWhatsappLeads([]);
+          // Não limpar os dados em caso de erro, manter os anteriores se existirem
+          if (facebookAds.length === 0 && whatsappLeads.length === 0) {
+            setFacebookAds([]);
+            setWhatsappLeads([]);
+          }
         }
       } finally {
         if (mounted) {

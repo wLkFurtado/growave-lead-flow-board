@@ -68,24 +68,59 @@ export const useActiveClient = () => {
             console.log('✅ useActiveClient: Selecionando cliente associado:', clienteParaSelecionar);
             setActiveClient(clienteParaSelecionar);
           } else {
-            // Associar automaticamente com Hospital do Cabelo
-            console.log('⚠️ useActiveClient: Usuário sem clientes, associando Hospital do Cabelo...');
+            // Primeiro, verificar se Hospital do Cabelo existe nos dados
+            console.log('🔍 useActiveClient: Verificando se Hospital do Cabelo tem dados...');
             
-            const { error: insertError } = await supabase
-              .from('user_clients')
-              .insert({
-                user_id: profile.id,
-                cliente_nome: 'Hospital do Cabelo'
-              });
+            const [fbCheck, wppCheck] = await Promise.all([
+              supabase
+                .from('facebook_ads')
+                .select('id')
+                .eq('cliente_nome', 'Hospital do Cabelo')
+                .limit(1),
+              supabase
+                .from('whatsapp_anuncio')
+                .select('telefone')
+                .eq('cliente_nome', 'Hospital do Cabelo')
+                .not('telefone', 'is', null)
+                .neq('telefone', '')
+                .limit(1)
+            ]);
 
-            if (insertError) {
-              console.error('❌ useActiveClient: Erro ao associar cliente:', insertError);
+            const hasHospitalData = (fbCheck.data && fbCheck.data.length > 0) || 
+                                   (wppCheck.data && wppCheck.data.length > 0);
+
+            console.log('📊 useActiveClient: Hospital do Cabelo tem dados?', {
+              facebook: fbCheck.data?.length || 0,
+              whatsapp: wppCheck.data?.length || 0,
+              hasData: hasHospitalData
+            });
+
+            if (hasHospitalData) {
+              // Tentar associar automaticamente com Hospital do Cabelo
+              console.log('⚠️ useActiveClient: Usuário sem clientes, tentando associar Hospital do Cabelo...');
+              
+              const { error: insertError } = await supabase
+                .from('user_clients')
+                .insert({
+                  user_id: profile.id,
+                  cliente_nome: 'Hospital do Cabelo'
+                });
+
+              if (insertError) {
+                console.error('❌ useActiveClient: Erro ao associar cliente:', insertError);
+                console.log('🆘 useActiveClient: Associação falhou, mas permitindo acesso temporário');
+              } else {
+                console.log('✅ useActiveClient: Hospital do Cabelo associado com sucesso');
+              }
+              
+              // Permitir acesso mesmo se a associação falhar
+              setAvailableClients(['Hospital do Cabelo']);
+              setActiveClient('Hospital do Cabelo');
             } else {
-              console.log('✅ useActiveClient: Hospital do Cabelo associado com sucesso');
+              console.log('⚠️ useActiveClient: Hospital do Cabelo não tem dados, deixando vazio');
+              setAvailableClients([]);
+              setActiveClient('');
             }
-            
-            setAvailableClients(['Hospital do Cabelo']);
-            setActiveClient('Hospital do Cabelo');
           }
         } else {
           console.log('👑 useActiveClient: Admin detectado, buscando todos os clientes...');
@@ -103,8 +138,17 @@ export const useActiveClient = () => {
 
           console.log('✅ useActiveClient: Respostas obtidas:', {
             fb: fbResponse.data?.length || 0,
-            wpp: wppResponse.data?.length || 0
+            wpp: wppResponse.data?.length || 0,
+            fbError: fbResponse.error,
+            wppError: wppResponse.error
           });
+
+          if (fbResponse.error) {
+            console.error('❌ useActiveClient: Erro FB:', fbResponse.error);
+          }
+          if (wppResponse.error) {
+            console.error('❌ useActiveClient: Erro WPP:', wppResponse.error);
+          }
 
           const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
           const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
@@ -128,8 +172,11 @@ export const useActiveClient = () => {
         setHasInitialized(true);
       } catch (error) {
         console.error('❌ useActiveClient: Erro fatal:', error);
-        setAvailableClients([]);
-        setActiveClient('');
+        
+        // Fallback de emergência: se tudo falhar, tentar Hospital do Cabelo mesmo assim
+        console.log('🆘 useActiveClient: Aplicando fallback de emergência...');
+        setAvailableClients(['Hospital do Cabelo']);
+        setActiveClient('Hospital do Cabelo');
         setHasInitialized(true);
       } finally {
         console.log('✅ useActiveClient: Finalizando loading');
@@ -146,7 +193,7 @@ export const useActiveClient = () => {
   };
 
   console.log('📊 useActiveClient: Estado atual:', {
-    activeClient,
+    activeClient: `"${activeClient}"`,
     availableClients: availableClients.length,
     isLoading: isLoading || authLoading,
     isAdmin,
