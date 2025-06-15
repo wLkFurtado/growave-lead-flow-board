@@ -1,20 +1,11 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useActiveClient } from './useActiveClient';
-import { subMonths } from 'date-fns';
+import { UseClientDataOptions, ClientDataResult } from '@/types/clientData';
+import { getEffectiveDateRange } from '@/utils/dateRangeUtils';
+import { fetchFacebookAds, fetchWhatsappLeads } from '@/services/clientDataService';
 
-interface DateRange {
-  from: Date;
-  to: Date;
-}
-
-interface UseClientDataOptions {
-  dateRange?: DateRange;
-  skipDateFilter?: boolean;
-}
-
-export const useClientData = (options: UseClientDataOptions = {}) => {
+export const useClientData = (options: UseClientDataOptions = {}): ClientDataResult => {
   const { dateRange, skipDateFilter = false } = options;
   const { activeClient, isLoading: clientLoading } = useActiveClient();
   const [facebookAds, setFacebookAds] = useState<any[]>([]);
@@ -54,47 +45,24 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
       setError(null);
       
       try {
-        // Usar período padrão mais amplo se não especificado
-        let effectiveDateRange = dateRange;
-        if (!skipDateFilter && !dateRange) {
-          effectiveDateRange = {
-            from: subMonths(new Date(), 12),
-            to: new Date()
-          };
-        }
+        const effectiveDateRange = getEffectiveDateRange(dateRange, skipDateFilter);
 
-        // Buscar dados do Facebook Ads
-        let fbQuery = supabase
-          .from('facebook_ads')
-          .select('*')
-          .eq('cliente_nome', activeClient)
-          .order('data', { ascending: false });
-          
-        // Buscar dados do WhatsApp
-        let wppQuery = supabase
-          .from('whatsapp_anuncio')
-          .select('*')
-          .eq('cliente_nome', activeClient)
-          .not('telefone', 'is', null)
-          .neq('telefone', '')
-          .order('data_criacao', { ascending: false });
-
-        // Aplicar filtro de data se necessário
-        if (!skipDateFilter && effectiveDateRange) {
-          const fromDate = effectiveDateRange.from.toISOString().split('T')[0];
-          const toDate = effectiveDateRange.to.toISOString().split('T')[0];
-          
-          console.log('📅 useClientData: Aplicando filtro de data:', fromDate, 'até', toDate);
-          
-          fbQuery = fbQuery.gte('data', fromDate).lte('data', toDate);
-          wppQuery = wppQuery.gte('data_criacao', fromDate).lte('data_criacao', toDate);
+        if (effectiveDateRange) {
+          console.log('📅 useClientData: Aplicando filtro de data:', 
+            effectiveDateRange.from.toISOString().split('T')[0], 
+            'até', 
+            effectiveDateRange.to.toISOString().split('T')[0]
+          );
         } else {
           console.log('📅 useClientData: Buscando TODOS os dados (sem filtro de data)');
         }
 
         console.log('🔄 useClientData: Executando queries para:', `"${activeClient}"`);
         
-        const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
+        const [fbResponse, wppResponse] = await Promise.all([
+          fetchFacebookAds(activeClient, effectiveDateRange),
+          fetchWhatsappLeads(activeClient, effectiveDateRange)
+        ]);
 
         console.log('📊 useClientData: Resultados das queries:', {
           cliente: `"${activeClient}"`,
