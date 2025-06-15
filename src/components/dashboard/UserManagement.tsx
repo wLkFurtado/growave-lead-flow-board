@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, Shield, Building, AlertCircle } from 'lucide-react';
+import { UserPlus, Shield, Building, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Profile {
@@ -42,6 +42,7 @@ export const UserManagement = () => {
   const [role, setRole] = useState<'admin' | 'client'>('client');
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [creationStep, setCreationStep] = useState('');
 
   useEffect(() => {
     if (isAdmin) {
@@ -96,18 +97,19 @@ export const UserManagement = () => {
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
+    setCreationStep('Criando conta do usuário...');
 
     try {
-      console.log('Criando usuário com role:', role);
+      console.log('Iniciando criação de usuário com role:', role);
       
-      // Criar usuário usando o fluxo normal de signup
+      // Passo 1: Criar usuário no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name: name || email,
-            role: role // Passar o role nos metadados
+            role: role // Crucial: passar o role nos metadados
           }
         }
       });
@@ -121,37 +123,74 @@ export const UserManagement = () => {
         throw new Error('Usuário não foi criado corretamente');
       }
 
-      console.log('Usuário criado, ID:', authData.user.id, 'Role solicitado:', role);
+      console.log('✅ Usuário criado no Auth, ID:', authData.user.id, 'Role enviado:', role);
+      setCreationStep('Configurando perfil do usuário...');
 
-      // Aguardar um momento para que o trigger do banco seja executado
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Passo 2: Aguardar o trigger criar o perfil (com delay maior)
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // Forçar atualização do perfil com o role correto
-      console.log('Atualizando perfil com role:', role);
-      const { data: updateData, error: profileError } = await supabase
+      // Passo 3: Verificar se o perfil foi criado corretamente
+      setCreationStep('Verificando perfil criado...');
+      const { data: profileCheck, error: profileCheckError } = await supabase
         .from('profiles')
-        .update({ 
-          name: name || email, 
-          role: role 
-        })
+        .select('*')
         .eq('id', authData.user.id)
-        .select();
+        .single();
 
-      console.log('Resultado da atualização do perfil:', updateData, profileError);
+      console.log('📋 Perfil encontrado:', profileCheck);
 
-      if (profileError) {
-        console.error('Erro ao atualizar perfil:', profileError);
-        toast({
-          title: "Aviso",
-          description: "Usuário criado, mas houve erro ao definir o role. Verifique na lista de usuários.",
-          variant: "default"
-        });
+      if (profileCheckError || !profileCheck) {
+        console.warn('⚠️ Perfil não encontrado, tentando criar manualmente...');
+        
+        // Criar perfil manualmente se o trigger falhou
+        const { data: manualProfile, error: manualError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: email,
+            name: name || email,
+            role: role
+          })
+          .select()
+          .single();
+
+        if (manualError) {
+          console.error('❌ Erro ao criar perfil manualmente:', manualError);
+          throw manualError;
+        }
+
+        console.log('✅ Perfil criado manualmente:', manualProfile);
       } else {
-        console.log('Perfil atualizado com sucesso:', updateData);
+        // Verificar se o role está correto
+        if (profileCheck.role !== role) {
+          console.log(`🔄 Role incorreto (${profileCheck.role}), corrigindo para ${role}...`);
+          setCreationStep('Corrigindo role do usuário...');
+          
+          const { data: updateData, error: updateError } = await supabase
+            .from('profiles')
+            .update({ role: role })
+            .eq('id', authData.user.id)
+            .select();
+
+          if (updateError) {
+            console.error('❌ Erro ao corrigir role:', updateError);
+            toast({
+              title: "Aviso",
+              description: `Usuário criado, mas role pode estar incorreto. Verifique na lista.`,
+              variant: "default"
+            });
+          } else {
+            console.log('✅ Role corrigido com sucesso:', updateData);
+          }
+        } else {
+          console.log('✅ Role está correto:', profileCheck.role);
+        }
       }
 
-      // Se for cliente, associar aos clientes selecionados
+      // Passo 4: Associar clientes se for um cliente
       if (role === 'client' && selectedClients.length > 0) {
+        setCreationStep('Associando clientes...');
+        
         const clientAssociations = selectedClients.map(clientName => ({
           user_id: authData.user.id,
           cliente_nome: clientName
@@ -168,8 +207,12 @@ export const UserManagement = () => {
             description: "Usuário criado, mas houve erro ao associar clientes.",
             variant: "default"
           });
+        } else {
+          console.log('✅ Clientes associados com sucesso');
         }
       }
+
+      setCreationStep('Finalizando...');
 
       toast({
         title: "Sucesso",
@@ -183,13 +226,14 @@ export const UserManagement = () => {
       setRole('client');
       setSelectedClients([]);
       
-      // Recarregar dados após um delay para garantir que as mudanças foram aplicadas
+      // Recarregar dados com delay maior para garantir consistência
       setTimeout(() => {
+        console.log('🔄 Recarregando dados...');
         fetchData();
-      }, 1000);
+      }, 2000);
       
     } catch (error: any) {
-      console.error('Erro ao criar usuário:', error);
+      console.error('❌ Erro ao criar usuário:', error);
       
       let errorMessage = "Erro ao criar usuário";
       
@@ -210,6 +254,7 @@ export const UserManagement = () => {
       });
     } finally {
       setIsCreating(false);
+      setCreationStep('');
     }
   };
 
@@ -243,10 +288,20 @@ export const UserManagement = () => {
             Criar Novo Usuário
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Adicione novos usuários ao sistema
+            Adicione novos usuários ao sistema com controle de role
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Status da criação */}
+          {isCreating && (
+            <Alert className="mb-4 bg-blue-900/20 border-blue-500/50">
+              <Clock className="h-4 w-4 text-blue-400 animate-spin" />
+              <AlertDescription className="text-blue-300">
+                <strong>Criando usuário:</strong> {creationStep}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={createUser} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -258,6 +313,7 @@ export const UserManagement = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-slate-700 border-slate-600 text-white"
                   required
+                  disabled={isCreating}
                 />
               </div>
               
@@ -270,6 +326,7 @@ export const UserManagement = () => {
                   onChange={(e) => setName(e.target.value)}
                   className="bg-slate-700 border-slate-600 text-white"
                   placeholder="Nome do usuário"
+                  disabled={isCreating}
                 />
               </div>
             </div>
@@ -286,12 +343,17 @@ export const UserManagement = () => {
                   required
                   minLength={6}
                   placeholder="Mínimo 6 caracteres"
+                  disabled={isCreating}
                 />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="role" className="text-slate-300">Tipo de Usuário *</Label>
-                <Select value={role} onValueChange={(value: 'admin' | 'client') => setRole(value)}>
+                <Select 
+                  value={role} 
+                  onValueChange={(value: 'admin' | 'client') => setRole(value)}
+                  disabled={isCreating}
+                >
                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -320,6 +382,7 @@ export const UserManagement = () => {
                           }
                         }}
                         className="rounded"
+                        disabled={isCreating}
                       />
                       <span className="text-sm">{client}</span>
                     </label>
@@ -333,7 +396,14 @@ export const UserManagement = () => {
               disabled={isCreating}
               className="bg-gradient-to-r from-[#00FF88] to-[#39FF14] text-slate-900 font-bold hover:from-[#00FF88]/90 hover:to-[#39FF14]/90"
             >
-              {isCreating ? 'Criando...' : 'Criar Usuário'}
+              {isCreating ? (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 animate-spin" />
+                  Criando...
+                </div>
+              ) : (
+                'Criar Usuário'
+              )}
             </Button>
           </form>
         </CardContent>
@@ -344,7 +414,7 @@ export const UserManagement = () => {
         <CardHeader>
           <CardTitle className="text-white">Usuários do Sistema</CardTitle>
           <CardDescription className="text-slate-400">
-            Visualize todos os usuários cadastrados
+            Visualize todos os usuários cadastrados (atualizado automaticamente)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -411,7 +481,7 @@ export const UserManagement = () => {
             <div className="text-center py-8">
               <p className="text-slate-400">Nenhum usuário encontrado.</p>
             </div>
-            )}
+          )}
         </CardContent>
       </Card>
     </div>
