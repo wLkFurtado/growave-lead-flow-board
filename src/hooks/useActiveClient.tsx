@@ -8,13 +8,15 @@ export const useActiveClient = () => {
   const [activeClient, setActiveClient] = useState<string>('');
   const [availableClients, setAvailableClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   console.log('🔄 useActiveClient: Estado atual', {
     authLoading,
     profile: !!profile,
     isAdmin,
     activeClient: `"${activeClient}"`,
-    availableClients: availableClients.length
+    availableClients: availableClients.length,
+    error
   });
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export const useActiveClient = () => {
         if (mounted) {
           setActiveClient('');
           setAvailableClients([]);
+          setError(null);
           setIsLoading(false);
         }
         return;
@@ -40,18 +43,20 @@ export const useActiveClient = () => {
 
       try {
         setIsLoading(true);
+        setError(null);
         
         if (!isAdmin) {
-          console.log('👤 useActiveClient: Usuário não-admin');
+          console.log('👤 useActiveClient: Usuário não-admin, verificando clientes...');
           
           // Buscar clientes associados
-          const { data: userClientsData, error } = await supabase
+          const { data: userClientsData, error: fetchError } = await supabase
             .from('user_clients')
             .select('cliente_nome')
             .eq('user_id', profile.id);
 
-          if (error) {
-            console.error('❌ useActiveClient: Erro ao buscar clientes:', error);
+          if (fetchError) {
+            console.error('❌ useActiveClient: Erro ao buscar clientes:', fetchError);
+            setError(`Erro ao buscar clientes: ${fetchError.message}`);
           }
 
           const userClients = userClientsData?.map(item => item.cliente_nome) || [];
@@ -59,14 +64,15 @@ export const useActiveClient = () => {
 
           if (userClients.length > 0) {
             // Usuário já tem clientes associados
+            console.log('✅ useActiveClient: Clientes encontrados');
             if (mounted) {
               setAvailableClients(userClients);
               setActiveClient(userClients[0]);
               setIsLoading(false);
             }
           } else {
-            // Associar automaticamente com Hospital do Cabelo
-            console.log('🏥 useActiveClient: Associando Hospital do Cabelo...');
+            // Tentar associar automaticamente com Hospital do Cabelo
+            console.log('🏥 useActiveClient: Tentando associar Hospital do Cabelo...');
             
             const { error: insertError } = await supabase
               .from('user_clients')
@@ -77,9 +83,12 @@ export const useActiveClient = () => {
 
             if (insertError) {
               console.error('❌ useActiveClient: Erro ao associar:', insertError);
+              setError(`Erro ao configurar cliente: ${insertError.message}`);
+            } else {
+              console.log('✅ useActiveClient: Hospital do Cabelo associado com sucesso');
             }
             
-            // Permitir acesso mesmo se a associação falhar
+            // Definir cliente mesmo se a inserção falhar (fallback)
             if (mounted) {
               setAvailableClients(['Hospital do Cabelo']);
               setActiveClient('Hospital do Cabelo');
@@ -99,7 +108,7 @@ export const useActiveClient = () => {
           const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
           const allClients = [...new Set([...fbClients, ...wppClients])].sort();
 
-          console.log('✅ useActiveClient: Clientes encontrados:', allClients);
+          console.log('✅ useActiveClient: Clientes encontrados para admin:', allClients);
 
           if (mounted) {
             setAvailableClients(allClients);
@@ -111,9 +120,10 @@ export const useActiveClient = () => {
           }
         }
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ useActiveClient: Erro fatal:', error);
         if (mounted) {
+          setError(`Erro inesperado: ${error.message}`);
           // Fallback: sempre permitir Hospital do Cabelo
           setAvailableClients(['Hospital do Cabelo']);
           setActiveClient('Hospital do Cabelo');
@@ -138,6 +148,7 @@ export const useActiveClient = () => {
     activeClient,
     availableClients,
     isLoading: isLoading || authLoading,
+    error,
     changeActiveClient
   };
 };

@@ -7,7 +7,7 @@ import { fetchFacebookAds, fetchWhatsappLeads } from '@/services/clientDataServi
 
 export const useClientData = (options: UseClientDataOptions = {}): ClientDataResult => {
   const { dateRange, skipDateFilter = false } = options;
-  const { activeClient, isLoading: clientLoading } = useActiveClient();
+  const { activeClient, isLoading: clientLoading, error: clientError } = useActiveClient();
   const [facebookAds, setFacebookAds] = useState<any[]>([]);
   const [whatsappLeads, setWhatsappLeads] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,6 +16,7 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
   console.log('🔄 useClientData: Estado atual', {
     activeClient: `"${activeClient}"`,
     clientLoading,
+    clientError,
     isLoading,
     fbCount: facebookAds.length,
     wppCount: whatsappLeads.length
@@ -27,6 +28,15 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
     const fetchData = async () => {
       if (clientLoading) {
         console.log('⏳ useClientData: Cliente carregando...');
+        return;
+      }
+
+      if (clientError) {
+        console.log('❌ useClientData: Erro no cliente:', clientError);
+        if (mounted) {
+          setError(clientError);
+          setIsLoading(false);
+        }
         return;
       }
 
@@ -84,7 +94,7 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
     return () => {
       mounted = false;
     };
-  }, [activeClient, clientLoading, dateRange, skipDateFilter]);
+  }, [activeClient, clientLoading, clientError, dateRange, skipDateFilter]);
 
   const hasData = facebookAds.length > 0 || whatsappLeads.length > 0;
 
@@ -92,7 +102,7 @@ export const useClientData = (options: UseClientDataOptions = {}): ClientDataRes
     facebookAds,
     whatsappLeads,
     isLoading: isLoading || clientLoading,
-    error,
+    error: error || clientError,
     activeClient,
     hasData
   };

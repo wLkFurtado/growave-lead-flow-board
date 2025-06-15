@@ -4,18 +4,28 @@ import { ChevronDown, Building2, Loader2, AlertCircle } from 'lucide-react';
 import { useActiveClient } from '@/hooks/useActiveClient';
 
 export const ClientSelector = () => {
-  const { activeClient, availableClients, isLoading, changeActiveClient } = useActiveClient();
+  const { activeClient, availableClients, isLoading, error, changeActiveClient } = useActiveClient();
 
   console.log('=== ClientSelector Render ===');
   console.log('activeClient:', `"${activeClient}"`);
   console.log('availableClients:', availableClients);
   console.log('isLoading:', isLoading);
+  console.log('error:', error);
 
   if (isLoading) {
     return (
       <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700">
         <Loader2 size={16} className="text-[#00FF88] animate-spin" />
         <span className="text-slate-300 text-sm">Carregando clientes...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center space-x-2 bg-red-800/50 rounded-lg px-4 py-2 border border-red-700">
+        <AlertCircle size={16} className="text-red-400" />
+        <span className="text-red-400 text-sm">Erro: {error}</span>
       </div>
     );
   }
