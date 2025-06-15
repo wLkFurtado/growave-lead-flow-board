@@ -72,11 +72,22 @@ export const useActiveClient = () => {
 
         setAvailableClients(allClients);
         
-        // Só definir cliente ativo se ainda não tiver um selecionado
+        // Priorizar "Hospital do Cabelo" se estiver disponível
         if (allClients.length > 0 && !activeClient) {
-          const firstClient = allClients[0];
-          console.log('✅ useActiveClient: Definindo primeiro cliente como ativo:', firstClient);
-          setActiveClient(firstClient);
+          let clienteParaSelecionar = allClients[0]; // fallback para o primeiro
+          
+          // Procurar especificamente por "Hospital do Cabelo"
+          const hospitalDoCabelo = allClients.find(cliente => 
+            cliente.toLowerCase().includes('hospital') && cliente.toLowerCase().includes('cabelo')
+          );
+          
+          if (hospitalDoCabelo) {
+            clienteParaSelecionar = hospitalDoCabelo;
+            console.log('✅ useActiveClient: Hospital do Cabelo encontrado:', hospitalDoCabelo);
+          }
+          
+          console.log('✅ useActiveClient: Definindo cliente ativo:', clienteParaSelecionar);
+          setActiveClient(clienteParaSelecionar);
         } else if (allClients.length === 0) {
           console.log('⚠️ useActiveClient: Nenhum cliente encontrado');
           setActiveClient('');
