@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Calendar, Database } from 'lucide-react';
 import { DashboardOverview } from './DashboardOverview';
 import { AdAnalysisTable } from './AdAnalysisTable';
 import { LeadKanbanBoard } from './LeadKanbanBoard';
+import { ContactsTable } from './ContactsTable';
 import { UserManagement } from './UserManagement';
 import { MyProfile } from './MyProfile';
 import { EmptyState } from './LoadingStates';
@@ -37,6 +39,50 @@ export const TabContent = ({
 
   if (activeTab === 'profile') {
     return <MyProfile />;
+  }
+
+  if (activeTab === 'contacts') {
+    if (!hasData && activeClient) {
+      return (
+        <div className="space-y-4">
+          <Alert className="bg-amber-900/20 border-amber-500/50 text-amber-400">
+            <Calendar className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Nenhum contato encontrado no período:</strong> {dateRange.from.toISOString().split('T')[0]} até {dateRange.to.toISOString().split('T')[0]}
+            </AlertDescription>
+          </Alert>
+          <EmptyState
+            title="Experimente ampliar o período"
+            description={`Tente selecionar um período maior ou diferente para ver os contatos do cliente "${activeClient}". Os dados podem estar em meses anteriores ao período atual selecionado.`}
+            action={
+              <div className="text-sm text-slate-400 space-y-2">
+                <div>
+                  <Calendar className="inline-block w-4 h-4 mr-1" />
+                  Sugestão: Use o filtro de período acima para selecionar "Últimos 30 dias", "Este mês" ou "Mês passado"
+                </div>
+                {isAdmin && (
+                  <div>
+                    <Database className="inline-block w-4 h-4 mr-1" />
+                    Como admin, você pode verificar a importação de dados no Supabase.
+                  </div>
+                )}
+              </div>
+            }
+          />
+        </div>
+      );
+    }
+
+    if (!activeClient) {
+      return (
+        <EmptyState
+          title="Nenhum cliente selecionado"
+          description="Selecione um cliente para visualizar os contatos."
+        />
+      );
+    }
+
+    return <ContactsTable contactsData={whatsappLeads} dateRange={dateRange} />;
   }
 
   if (activeTab === 'dashboard') {
