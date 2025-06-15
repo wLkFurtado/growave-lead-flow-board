@@ -119,11 +119,16 @@ export const Sidebar = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }
     )}>
       {/* Header */}
       <div className="h-16 border-b border-slate-700/50 flex items-center justify-between px-4">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110 overflow-hidden">
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110 overflow-hidden bg-slate-800/30 p-1">
           <img 
             src="/lovable-uploads/1fd9c182-3972-410a-8f61-cc365fe0c0df.png" 
             alt="Logo" 
-            className="w-full h-full object-cover rounded-lg"
+            className="w-full h-full object-contain rounded-lg"
+            onError={(e) => {
+              console.log('Logo failed to load, using fallback');
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-[#00FF88] to-[#39FF14] rounded-lg flex items-center justify-center text-slate-900 font-bold text-xs">L</div>';
+            }}
           />
         </div>
         
