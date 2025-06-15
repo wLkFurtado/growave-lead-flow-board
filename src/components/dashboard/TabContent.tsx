@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Database } from 'lucide-react';
+import { Calendar, Database, Phone } from 'lucide-react';
 import { DashboardOverview } from './DashboardOverview';
 import { AdAnalysisTable } from './AdAnalysisTable';
 import { LeadKanbanBoard } from './LeadKanbanBoard';
@@ -45,20 +45,14 @@ export const TabContent = ({
     if (!hasData && activeClient) {
       return (
         <div className="space-y-4">
-          <Alert className="bg-amber-900/20 border-amber-500/50 text-amber-400">
-            <Calendar className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Nenhum contato encontrado no período:</strong> {dateRange.from.toISOString().split('T')[0]} até {dateRange.to.toISOString().split('T')[0]}
-            </AlertDescription>
-          </Alert>
           <EmptyState
-            title="Experimente ampliar o período"
-            description={`Tente selecionar um período maior ou diferente para ver os contatos do cliente "${activeClient}". Os dados podem estar em meses anteriores ao período atual selecionado.`}
+            title="Nenhum contato com telefone encontrado"
+            description={`Não foram encontrados contatos com telefone válido para o cliente "${activeClient}".`}
             action={
               <div className="text-sm text-slate-400 space-y-2">
                 <div>
-                  <Calendar className="inline-block w-4 h-4 mr-1" />
-                  Sugestão: Use o filtro de período acima para selecionar "Últimos 30 dias", "Este mês" ou "Mês passado"
+                  <Phone className="inline-block w-4 h-4 mr-1" />
+                  Verifique se os dados foram importados corretamente no sistema.
                 </div>
                 {isAdmin && (
                   <div>
@@ -77,7 +71,7 @@ export const TabContent = ({
       return (
         <EmptyState
           title="Nenhum cliente selecionado"
-          description="Selecione um cliente para visualizar os contatos."
+          description="Selecione um cliente para visualizar todos os contatos com telefone."
         />
       );
     }

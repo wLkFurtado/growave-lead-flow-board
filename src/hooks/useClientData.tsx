@@ -8,7 +8,13 @@ interface DateRange {
   to: Date;
 }
 
-export const useClientData = (dateRange?: DateRange) => {
+interface UseClientDataOptions {
+  dateRange?: DateRange;
+  skipDateFilter?: boolean;
+}
+
+export const useClientData = (options: UseClientDataOptions = {}) => {
+  const { dateRange, skipDateFilter = false } = options;
   const { activeClient, isLoading: clientLoading } = useActiveClient();
   const [facebookAds, setFacebookAds] = useState<any[]>([]);
   const [whatsappLeads, setWhatsappLeads] = useState<any[]>([]);
@@ -18,7 +24,8 @@ export const useClientData = (dateRange?: DateRange) => {
   console.log('🔄 useClientData: Hook iniciado', {
     activeClient,
     clientLoading,
-    dateRange
+    dateRange,
+    skipDateFilter
   });
 
   useEffect(() => {
@@ -82,22 +89,12 @@ export const useClientData = (dateRange?: DateRange) => {
           .from('whatsapp_anuncio')
           .select('*')
           .ilike('cliente_nome', activeClient)
+          .not('telefone', 'is', null)
+          .neq('telefone', '')
           .order('data_criacao', { ascending: false });
 
-        // Teste sem filtro de data primeiro
-        console.log('🔄 useClientData: Buscando dados SEM filtro de data...');
-        const [fbResponseNoFilter, wppResponseNoFilter] = await Promise.all([fbQuery, wppQuery]);
-
-        console.log('📊 useClientData: Dados SEM filtro:', {
-          fbCount: fbResponseNoFilter.data?.length || 0,
-          wppCount: wppResponseNoFilter.data?.length || 0,
-          fbError: fbResponseNoFilter.error,
-          wppError: wppResponseNoFilter.error,
-          wppSample: wppResponseNoFilter.data?.slice(0, 3)
-        });
-
-        // Agora aplicar filtro de data se fornecido
-        if (dateRange) {
+        // Aplicar filtro de data apenas se não for skipDateFilter e se dateRange for fornecido
+        if (!skipDateFilter && dateRange) {
           const fromDate = dateRange.from.toISOString().split('T')[0];
           const toDate = dateRange.to.toISOString().split('T')[0];
           
@@ -105,59 +102,46 @@ export const useClientData = (dateRange?: DateRange) => {
           
           fbQuery = fbQuery.gte('data', fromDate).lte('data', toDate);
           wppQuery = wppQuery.gte('data_criacao', fromDate).lte('data_criacao', toDate);
-
-          const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
-
-          console.log('📊 useClientData: Dados COM filtro de data:', {
-            fbCount: fbResponse.data?.length || 0,
-            wppCount: wppResponse.data?.length || 0,
-            fbError: fbResponse.error,
-            wppError: wppResponse.error,
-            wppWithPhone: wppResponse.data?.filter(lead => lead.telefone && lead.telefone.trim() !== '').length || 0,
-            wppSample: wppResponse.data?.slice(0, 3)
-          });
-
-          if (fbResponse.error) {
-            console.error('❌ useClientData: Erro FB:', fbResponse.error);
-            throw new Error(`Erro Facebook: ${fbResponse.error.message}`);
-          }
-          
-          if (wppResponse.error) {
-            console.error('❌ useClientData: Erro WPP:', wppResponse.error);
-            throw new Error(`Erro WhatsApp: ${wppResponse.error.message}`);
-          }
-
-          if (mounted) {
-            const fbData = fbResponse.data || [];
-            const wppData = wppResponse.data || [];
-            
-            console.log('✅ useClientData: Definindo dados FINAIS:', {
-              fbCount: fbData.length,
-              wppCount: wppData.length,
-              wppWithPhoneCount: wppData.filter(lead => lead.telefone && lead.telefone.trim() !== '').length
-            });
-            
-            setFacebookAds(fbData);
-            setWhatsappLeads(wppData);
-            setError(null);
-          }
         } else {
-          // Sem filtro de data
-          console.log('📅 useClientData: Sem filtro de data - usando dados completos');
-          if (mounted) {
-            const fbData = fbResponseNoFilter.data || [];
-            const wppData = wppResponseNoFilter.data || [];
-            
-            console.log('✅ useClientData: Definindo dados SEM FILTRO:', {
-              fbCount: fbData.length,
-              wppCount: wppData.length,
-              wppWithPhoneCount: wppData.filter(lead => lead.telefone && lead.telefone.trim() !== '').length
-            });
-            
-            setFacebookAds(fbData);
-            setWhatsappLeads(wppData);
-            setError(null);
-          }
+          console.log('📅 useClientData: Buscando TODOS os dados (sem filtro de data)');
+        }
+
+        const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
+
+        console.log('📊 useClientData: Dados obtidos:', {
+          fbCount: fbResponse.data?.length || 0,
+          wppCount: wppResponse.data?.length || 0,
+          fbError: fbResponse.error,
+          wppError: wppResponse.error,
+          wppWithPhone: wppResponse.data?.filter(lead => lead.telefone && lead.telefone.trim() !== '').length || 0,
+          skipDateFilter,
+          wppSample: wppResponse.data?.slice(0, 3)
+        });
+
+        if (fbResponse.error) {
+          console.error('❌ useClientData: Erro FB:', fbResponse.error);
+          throw new Error(`Erro Facebook: ${fbResponse.error.message}`);
+        }
+        
+        if (wppResponse.error) {
+          console.error('❌ useClientData: Erro WPP:', wppResponse.error);
+          throw new Error(`Erro WhatsApp: ${wppResponse.error.message}`);
+        }
+
+        if (mounted) {
+          const fbData = fbResponse.data || [];
+          const wppData = wppResponse.data || [];
+          
+          console.log('✅ useClientData: Definindo dados FINAIS:', {
+            fbCount: fbData.length,
+            wppCount: wppData.length,
+            wppWithPhoneCount: wppData.filter(lead => lead.telefone && lead.telefone.trim() !== '').length,
+            skipDateFilter
+          });
+          
+          setFacebookAds(fbData);
+          setWhatsappLeads(wppData);
+          setError(null);
         }
         
       } catch (error: any) {
@@ -181,7 +165,7 @@ export const useClientData = (dateRange?: DateRange) => {
       console.log('🧹 useClientData: Cleanup');
       mounted = false;
     };
-  }, [activeClient, clientLoading, dateRange]);
+  }, [activeClient, clientLoading, dateRange, skipDateFilter]);
 
   const hasData = facebookAds.length > 0 || whatsappLeads.length > 0;
 
@@ -191,7 +175,8 @@ export const useClientData = (dateRange?: DateRange) => {
     fbCount: facebookAds.length,
     wppCount: whatsappLeads.length,
     hasData,
-    error
+    error,
+    skipDateFilter
   });
 
   return {

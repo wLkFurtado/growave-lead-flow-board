@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { subDays } from 'date-fns';
 import { MainLayout } from './MainLayout';
@@ -21,9 +22,22 @@ export const DashboardContent = () => {
     to: new Date()
   });
   
-  const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = useClientData(dateRange);
+  // Para aba de contatos: buscar todos os dados sem filtro de data
+  const contactsData = useClientData({ 
+    skipDateFilter: true 
+  });
+  
+  // Para outras abas: usar filtro de data normal
+  const regularData = useClientData({ 
+    dateRange 
+  });
+
+  // Escolher qual dataset usar baseado na aba ativa
+  const currentData = activeTab === 'contacts' ? contactsData : regularData;
+  const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = currentData;
 
   console.log('=== DASHBOARD CONTENT RENDER ===');
+  console.log('activeTab:', activeTab);
   console.log('activeClient:', activeClient);
   console.log('isLoading:', isLoading);
   console.log('facebookAds.length:', facebookAds.length);
