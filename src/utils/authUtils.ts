@@ -27,33 +27,25 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
       .eq('id', userId)
       .single();
 
-    console.log('🔍 AuthUtils: Resposta da query profiles:', { profileData, error });
-
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('❌ AuthUtils: Erro ao buscar perfil:', error);
-      throw error;
-    }
-
-    // Se não encontrou o perfil, criar um padrão
-    if (!profileData || error?.code === 'PGRST116') {
-      console.log('⚠️ AuthUtils: Perfil não encontrado, criando perfil padrão');
-      
+      // Se não encontrar o perfil, criar um padrão baseado no email
       const fallbackProfile: Profile = {
         id: userId,
-        nome_completo: user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário',
+        nome_completo: user?.email?.split('@')[0] || 'Usuário',
         email: user?.email || 'email@example.com',
-        role: 'client'
+        role: 'client', // Padrão é client, não admin
+        clientes_associados: []
       };
-      
-      console.log('📝 AuthUtils: Perfil padrão criado:', fallbackProfile);
       return fallbackProfile;
     }
 
     const profile: Profile = {
       id: profileData.id,
-      nome_completo: profileData.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário',
-      email: profileData.email || user?.email,
-      role: profileData.role || 'client'
+      nome_completo: profileData.name || user?.email?.split('@')[0] || 'Usuário',
+      email: profileData.email,
+      role: profileData.role || 'client',
+      clientes_associados: []
     };
 
     console.log('✅ AuthUtils: Perfil encontrado no banco:', profile);
@@ -64,12 +56,12 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
     // Fallback em caso de erro
     const fallbackProfile: Profile = {
       id: userId,
-      nome_completo: user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário',
+      nome_completo: user?.email?.split('@')[0] || 'Usuário',
       email: user?.email || 'email@example.com',
-      role: 'client'
+      role: 'client',
+      clientes_associados: []
     };
     
-    console.log('🆘 AuthUtils: Usando perfil de emergência:', fallbackProfile);
     return fallbackProfile;
   }
 };

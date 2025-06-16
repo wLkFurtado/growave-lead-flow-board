@@ -4,6 +4,7 @@ export interface Profile {
   nome_completo: string;
   email: string;
   role: string;
+  clientes_associados: string[];
 }
 
 export interface AuthContextType {
