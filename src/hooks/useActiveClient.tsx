@@ -43,77 +43,92 @@ export const useActiveClient = () => {
 
     const fetchClients = async () => {
       try {
-        console.log('🔄 useActiveClient: Buscando clientes nas tabelas...');
+        console.log('🔄 useActiveClient: Buscando clientes...');
         setIsLoading(true);
         
-        // Buscar clientes diretamente das tabelas de dados com retry
-        let fbResponse, wppResponse;
-        let retryCount = 0;
-        const maxRetries = 3;
+        let clientsToShow: string[] = [];
 
-        while (retryCount < maxRetries) {
-          try {
-            [fbResponse, wppResponse] = await Promise.all([
-              supabase
-                .from('facebook_ads')
-                .select('cliente_nome')
-                .not('cliente_nome', 'is', null),
-              supabase
-                .from('whatsapp_anuncio')
-                .select('cliente_nome')
-                .not('cliente_nome', 'is', null)
-            ]);
-            break;
-          } catch (error) {
-            retryCount++;
-            console.log(`⚠️ useActiveClient: Tentativa ${retryCount} falhou:`, error);
-            if (retryCount >= maxRetries) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        if (isAdmin) {
+          console.log('👑 useActiveClient: Usuário é admin, buscando todos os clientes');
+          
+          // Admin: buscar todos os clientes únicos das tabelas de dados
+          let fbResponse, wppResponse;
+          let retryCount = 0;
+          const maxRetries = 3;
+
+          while (retryCount < maxRetries) {
+            try {
+              [fbResponse, wppResponse] = await Promise.all([
+                supabase
+                  .from('facebook_ads')
+                  .select('cliente_nome')
+                  .not('cliente_nome', 'is', null),
+                supabase
+                  .from('whatsapp_anuncio')
+                  .select('cliente_nome')
+                  .not('cliente_nome', 'is', null)
+              ]);
+              break;
+            } catch (error) {
+              retryCount++;
+              console.log(`⚠️ useActiveClient: Tentativa ${retryCount} falhou:`, error);
+              if (retryCount >= maxRetries) throw error;
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+            }
           }
+
+          if (fbResponse.error) {
+            console.error('❌ useActiveClient: Erro FB:', fbResponse.error);
+          }
+          
+          if (wppResponse.error) {
+            console.error('❌ useActiveClient: Erro WPP:', wppResponse.error);
+          }
+
+          const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
+          const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
+          clientsToShow = [...new Set([...fbClients, ...wppClients])].sort();
+
+        } else {
+          console.log('👤 useActiveClient: Usuário não é admin, buscando clientes associados');
+          
+          // Cliente: buscar apenas clientes associados na tabela user_clients
+          const { data: userClientsData, error: userClientsError } = await supabase
+            .from('user_clients')
+            .select('cliente_nome')
+            .eq('user_id', profile.id);
+
+          if (userClientsError) {
+            console.error('❌ useActiveClient: Erro ao buscar user_clients:', userClientsError);
+            throw userClientsError;
+          }
+
+          clientsToShow = userClientsData?.map(row => row.cliente_nome).filter(Boolean).sort() || [];
+          console.log('👤 useActiveClient: Clientes associados encontrados:', clientsToShow);
         }
 
-        console.log('✅ useActiveClient: Respostas obtidas:', {
-          fb: fbResponse.data?.length || 0,
-          wpp: wppResponse.data?.length || 0,
-          fbError: fbResponse.error,
-          wppError: wppResponse.error
-        });
-
-        if (fbResponse.error) {
-          console.error('❌ useActiveClient: Erro FB:', fbResponse.error);
-        }
-        
-        if (wppResponse.error) {
-          console.error('❌ useActiveClient: Erro WPP:', wppResponse.error);
-        }
-
-        const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
-        const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
-        const allClients = [...new Set([...fbClients, ...wppClients])].sort();
-
-        console.log('✅ useActiveClient: Clientes únicos encontrados:', allClients);
-
-        setAvailableClients(allClients);
+        console.log('✅ useActiveClient: Clientes finais para mostrar:', clientsToShow);
+        setAvailableClients(clientsToShow);
         
         // Só definir cliente ativo se não tiver um já selecionado
-        if (allClients.length > 0 && !activeClient) {
+        if (clientsToShow.length > 0 && !activeClient) {
           // Priorizar "Hospital do Cabelo" com busca mais flexível
-          const hospitalDoCabelo = allClients.find(cliente => {
+          const hospitalDoCabelo = clientsToShow.find(cliente => {
             const clienteLower = cliente.toLowerCase();
             return (clienteLower.includes('hospital') && clienteLower.includes('cabelo')) ||
                    clienteLower.includes('hospital do cabelo');
           });
           
-          const clienteParaSelecionar = hospitalDoCabelo || allClients[0];
+          const clienteParaSelecionar = hospitalDoCabelo || clientsToShow[0];
           
           console.log('✅ useActiveClient: Selecionando cliente:', {
             encontrouHospital: !!hospitalDoCabelo,
             clienteSelecionado: clienteParaSelecionar,
-            todosClientes: allClients
+            todosClientes: clientsToShow
           });
           
           setActiveClient(clienteParaSelecionar);
-        } else if (allClients.length === 0) {
+        } else if (clientsToShow.length === 0) {
           console.log('⚠️ useActiveClient: Nenhum cliente encontrado');
           setActiveClient('');
         }
@@ -132,10 +147,17 @@ export const useActiveClient = () => {
     };
 
     fetchClients();
-  }, [profile, isAdmin, authLoading, hasInitialized]); // Removido activeClient da dependência
+  }, [profile, isAdmin, authLoading, hasInitialized]);
 
   const changeActiveClient = (clientName: string) => {
     console.log('🔄 useActiveClient: Mudando cliente para:', clientName);
+    
+    // Verificar se o usuário tem permissão para acessar este cliente
+    if (!isAdmin && !availableClients.includes(clientName)) {
+      console.error('❌ useActiveClient: Usuário não tem permissão para cliente:', clientName);
+      return;
+    }
+    
     setActiveClient(clientName);
   };
 
@@ -143,7 +165,8 @@ export const useActiveClient = () => {
     activeClient,
     availableClients: availableClients.length,
     isLoading: isLoading || authLoading,
-    hasInitialized
+    hasInitialized,
+    isAdmin
   });
 
   return {

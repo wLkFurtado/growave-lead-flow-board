@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveClient } from './useActiveClient';
+import { useAuth } from './useAuth';
 import { subMonths } from 'date-fns';
 
 interface DateRange {
@@ -17,6 +18,7 @@ interface UseClientDataOptions {
 export const useClientData = (options: UseClientDataOptions = {}) => {
   const { dateRange, skipDateFilter = false } = options;
   const { activeClient, isLoading: clientLoading } = useActiveClient();
+  const { isAdmin, profile } = useAuth();
   const [facebookAds, setFacebookAds] = useState<any[]>([]);
   const [whatsappLeads, setWhatsappLeads] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +30,8 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
     clientLoading,
     dateRange,
     skipDateFilter,
-    lastFetchedClient
+    lastFetchedClient,
+    isAdmin
   });
 
   useEffect(() => {
@@ -48,6 +51,15 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
           setError(null);
           setIsLoading(false);
           setLastFetchedClient('');
+        }
+        return;
+      }
+
+      if (!profile) {
+        console.log('⚠️ useClientData: Sem perfil de usuário');
+        if (mounted) {
+          setError('Usuário não autenticado');
+          setIsLoading(false);
         }
         return;
       }
@@ -103,22 +115,9 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
 
         console.log('🔄 useClientData: Executando queries para:', `"${activeClient}"`);
         
-        // Executar queries com retry
-        let fbResponse, wppResponse;
-        let retryCount = 0;
-        const maxRetries = 3;
-
-        while (retryCount < maxRetries) {
-          try {
-            [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
-            break;
-          } catch (queryError) {
-            retryCount++;
-            console.log(`⚠️ useClientData: Tentativa ${retryCount} falhou:`, queryError);
-            if (retryCount >= maxRetries) throw queryError;
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-          }
-        }
+        // As queries agora respeitam automaticamente as políticas RLS
+        // Usuários só verão dados dos clientes aos quais têm acesso
+        const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
 
         console.log('📊 useClientData: Resultados das queries:', {
           cliente: `"${activeClient}"`,
@@ -127,17 +126,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
           fbError: fbResponse.error,
           wppError: wppResponse.error,
           dateFilter: !skipDateFilter && effectiveDateRange ? 'Aplicado' : 'Sem filtro',
-          fbSample: fbResponse.data?.slice(0, 2).map(row => ({ 
-            cliente: row.cliente_nome, 
-            campanha: row.campanha, 
-            data: row.data 
-          })),
-          wppSample: wppResponse.data?.slice(0, 2).map(row => ({ 
-            cliente: row.cliente_nome, 
-            nome: row.nome, 
-            telefone: row.telefone,
-            data: row.data_criacao 
-          }))
+          isAdmin
         });
 
         if (fbResponse.error) {
@@ -189,7 +178,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
       console.log('🧹 useClientData: Cleanup');
       mounted = false;
     };
-  }, [activeClient, clientLoading, dateRange, skipDateFilter]);
+  }, [activeClient, clientLoading, dateRange, skipDateFilter, profile, isAdmin]);
 
   // Melhorar o cálculo de hasData
   const hasData = facebookAds.length > 0 || whatsappLeads.length > 0;
@@ -202,7 +191,8 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
     hasData,
     error,
     skipDateFilter,
-    lastFetchedClient
+    lastFetchedClient,
+    isAdmin
   });
 
   return {
