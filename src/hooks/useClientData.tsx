@@ -23,79 +23,65 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
   const [whatsappLeads, setWhatsappLeads] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastFetchedClient, setLastFetchedClient] = useState<string>('');
 
   console.log('🔄 useClientData: Hook iniciado', {
     activeClient: `"${activeClient}"`,
     clientLoading,
-    dateRange,
-    skipDateFilter,
-    lastFetchedClient,
-    isAdmin
+    isAdmin,
+    userId: profile?.id
   });
 
   useEffect(() => {
     let mounted = true;
 
     const fetchData = async () => {
-      if (clientLoading) {
-        console.log('⏳ useClientData: Cliente carregando...');
+      if (clientLoading || !profile) {
+        console.log('⏳ useClientData: Aguardando cliente ou sem perfil');
         return;
       }
 
       if (!activeClient || activeClient.trim() === '') {
-        console.log('⚠️ useClientData: Nenhum cliente ativo ou cliente vazio');
+        console.log('⚠️ useClientData: Nenhum cliente ativo');
         if (mounted) {
           setFacebookAds([]);
           setWhatsappLeads([]);
           setError(null);
           setIsLoading(false);
-          setLastFetchedClient('');
         }
-        return;
-      }
-
-      if (!profile) {
-        console.log('⚠️ useClientData: Sem perfil de usuário');
-        if (mounted) {
-          setError('Usuário não autenticado');
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      // Evitar refetch desnecessário para o mesmo cliente
-      if (activeClient === lastFetchedClient && !skipDateFilter && dateRange) {
-        console.log('📊 useClientData: Mesma consulta, pulando refetch');
         return;
       }
       
-      console.log('🔄 useClientData: Buscando dados para cliente:', `"${activeClient}"`);
+      console.log('🚀 useClientData: BUSCANDO DADOS PARA:', {
+        cliente: `"${activeClient}"`,
+        isAdmin,
+        userId: profile.id,
+        skipDateFilter
+      });
+      
       setIsLoading(true);
       setError(null);
       
       try {
-        // Usar período mais amplo por padrão se não especificado
+        // Período de data
         let effectiveDateRange = dateRange;
         if (!skipDateFilter && !dateRange) {
           effectiveDateRange = {
-            from: subMonths(new Date(), 12), // 12 meses por padrão
+            from: subMonths(new Date(), 12),
             to: new Date()
           };
         }
 
-        // Buscar dados do Facebook Ads
+        // Queries com filtro por cliente_nome (RLS vai aplicar controle adicional)
         let fbQuery = supabase
           .from('facebook_ads')
           .select('*')
-          .eq('cliente_nome', activeClient)
+          .eq('cliente_nome', activeClient) // FILTRO PRINCIPAL: só dados deste cliente
           .order('data', { ascending: false });
           
-        // Buscar dados do WhatsApp
         let wppQuery = supabase
           .from('whatsapp_anuncio')
           .select('*')
-          .eq('cliente_nome', activeClient)
+          .eq('cliente_nome', activeClient) // FILTRO PRINCIPAL: só dados deste cliente
           .not('telefone', 'is', null)
           .neq('telefone', '')
           .order('data_criacao', { ascending: false });
@@ -105,28 +91,29 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
           const fromDate = effectiveDateRange.from.toISOString().split('T')[0];
           const toDate = effectiveDateRange.to.toISOString().split('T')[0];
           
-          console.log('🔄 useClientData: Aplicando filtro de data:', fromDate, 'até', toDate);
+          console.log('📅 useClientData: Aplicando filtro de data:', fromDate, 'até', toDate);
           
           fbQuery = fbQuery.gte('data', fromDate).lte('data', toDate);
           wppQuery = wppQuery.gte('data_criacao', fromDate).lte('data_criacao', toDate);
-        } else {
-          console.log('📅 useClientData: Buscando TODOS os dados (sem filtro de data)');
         }
 
-        console.log('🔄 useClientData: Executando queries para:', `"${activeClient}"`);
-        
-        // As queries agora respeitam automaticamente as políticas RLS
-        // Usuários só verão dados dos clientes aos quais têm acesso
+        console.log('🔄 useClientData: Executando queries com RLS para:', {
+          cliente: `"${activeClient}"`,
+          isAdmin,
+          aplicaFiltroData: !skipDateFilter && !!effectiveDateRange
+        });
+
+        // Executar queries (RLS vai garantir que só veja dados permitidos)
         const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
 
-        console.log('📊 useClientData: Resultados das queries:', {
+        console.log('📊 useClientData: RESULTADOS DAS QUERIES:', {
           cliente: `"${activeClient}"`,
           fbCount: fbResponse.data?.length || 0,
           wppCount: wppResponse.data?.length || 0,
-          fbError: fbResponse.error,
-          wppError: wppResponse.error,
-          dateFilter: !skipDateFilter && effectiveDateRange ? 'Aplicado' : 'Sem filtro',
-          isAdmin
+          fbError: fbResponse.error?.message || 'OK',
+          wppError: wppResponse.error?.message || 'OK',
+          isAdmin,
+          userId: profile.id
         });
 
         if (fbResponse.error) {
@@ -143,18 +130,28 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
           const fbData = fbResponse.data || [];
           const wppData = wppResponse.data || [];
           
-          console.log('✅ useClientData: Definindo dados FINAIS:', {
+          // VERIFICAÇÃO ADICIONAL: garantir que todos os dados são realmente do cliente correto
+          const fbInvalidos = fbData.filter(row => row.cliente_nome !== activeClient);
+          const wppInvalidos = wppData.filter(row => row.cliente_nome !== activeClient);
+          
+          if (fbInvalidos.length > 0 || wppInvalidos.length > 0) {
+            console.error('🚨 VAZAMENTO DE DADOS DETECTADO:', {
+              fbInvalidos: fbInvalidos.length,
+              wppInvalidos: wppInvalidos.length,
+              clienteEsperado: activeClient
+            });
+          }
+          
+          console.log('✅ useClientData: DADOS FINAIS DEFINIDOS:', {
             cliente: `"${activeClient}"`,
             fbCount: fbData.length,
             wppCount: wppData.length,
-            wppWithPhoneCount: wppData.filter(lead => lead.telefone && lead.telefone.trim() !== '').length,
-            skipDateFilter
+            todosDoClienteCorreto: fbInvalidos.length === 0 && wppInvalidos.length === 0
           });
           
           setFacebookAds(fbData);
           setWhatsappLeads(wppData);
           setError(null);
-          setLastFetchedClient(activeClient);
         }
         
       } catch (error: any) {
@@ -166,7 +163,6 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
         }
       } finally {
         if (mounted) {
-          console.log('✅ useClientData: Finalizando loading');
           setIsLoading(false);
         }
       }
@@ -175,12 +171,10 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
     fetchData();
 
     return () => {
-      console.log('🧹 useClientData: Cleanup');
       mounted = false;
     };
   }, [activeClient, clientLoading, dateRange, skipDateFilter, profile, isAdmin]);
 
-  // Melhorar o cálculo de hasData
   const hasData = facebookAds.length > 0 || whatsappLeads.length > 0;
 
   console.log('📊 useClientData: Estado final:', {
@@ -189,10 +183,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
     fbCount: facebookAds.length,
     wppCount: whatsappLeads.length,
     hasData,
-    error,
-    skipDateFilter,
-    lastFetchedClient,
-    isAdmin
+    error
   });
 
   return {

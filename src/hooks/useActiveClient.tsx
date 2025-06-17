@@ -8,165 +8,122 @@ export const useActiveClient = () => {
   const [activeClient, setActiveClient] = useState<string>('');
   const [availableClients, setAvailableClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasInitialized, setHasInitialized] = useState(false);
 
   console.log('🔄 useActiveClient: Hook iniciado', {
     authLoading,
     profile: !!profile,
     isAdmin,
-    activeClient,
-    hasInitialized
+    activeClient
   });
 
   useEffect(() => {
-    console.log('🔄 useActiveClient: useEffect iniciado');
-
-    if (authLoading) {
-      console.log('⏳ useActiveClient: Auth ainda carregando...');
-      return;
-    }
-
-    if (!profile) {
-      console.log('⚠️ useActiveClient: Sem perfil, finalizando');
-      setActiveClient('');
-      setAvailableClients([]);
-      setIsLoading(false);
-      setHasInitialized(true);
-      return;
-    }
-
-    // Evitar refetch desnecessário se já inicializou
-    if (hasInitialized && availableClients.length > 0) {
-      console.log('✅ useActiveClient: Já inicializado, pulando fetch');
-      return;
-    }
-
     const fetchClients = async () => {
+      console.log('🔄 useActiveClient: Buscando clientes...');
+      
+      if (authLoading || !profile) {
+        console.log('⏳ useActiveClient: Aguardando auth ou sem perfil');
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        console.log('🔄 useActiveClient: Buscando clientes...');
         setIsLoading(true);
-        
         let clientsToShow: string[] = [];
 
         if (isAdmin) {
-          console.log('👑 useActiveClient: Usuário é admin, buscando todos os clientes');
+          console.log('👑 ADMIN: Buscando TODOS os clientes únicos');
           
-          // Admin: buscar todos os clientes únicos das tabelas de dados
-          let fbResponse, wppResponse;
-          let retryCount = 0;
-          const maxRetries = 3;
-
-          while (retryCount < maxRetries) {
-            try {
-              [fbResponse, wppResponse] = await Promise.all([
-                supabase
-                  .from('facebook_ads')
-                  .select('cliente_nome')
-                  .not('cliente_nome', 'is', null),
-                supabase
-                  .from('whatsapp_anuncio')
-                  .select('cliente_nome')
-                  .not('cliente_nome', 'is', null)
-              ]);
-              break;
-            } catch (error) {
-              retryCount++;
-              console.log(`⚠️ useActiveClient: Tentativa ${retryCount} falhou:`, error);
-              if (retryCount >= maxRetries) throw error;
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-            }
-          }
-
-          if (fbResponse.error) {
-            console.error('❌ useActiveClient: Erro FB:', fbResponse.error);
-          }
-          
-          if (wppResponse.error) {
-            console.error('❌ useActiveClient: Erro WPP:', wppResponse.error);
-          }
+          // Admin vê todos os clientes únicos das tabelas de dados
+          const [fbResponse, wppResponse] = await Promise.all([
+            supabase
+              .from('facebook_ads')
+              .select('cliente_nome')
+              .not('cliente_nome', 'is', null),
+            supabase
+              .from('whatsapp_anuncio')
+              .select('cliente_nome')
+              .not('cliente_nome', 'is', null)
+          ]);
 
           const fbClients = fbResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
           const wppClients = wppResponse.data?.map(row => row.cliente_nome).filter(Boolean) || [];
           clientsToShow = [...new Set([...fbClients, ...wppClients])].sort();
+          
+          console.log('👑 ADMIN: Todos os clientes encontrados:', clientsToShow);
 
         } else {
-          console.log('👤 useActiveClient: Usuário não é admin, buscando clientes associados');
+          console.log('👤 CLIENTE: Buscando APENAS clientes associados na user_clients');
           
-          // Cliente: buscar apenas clientes associados na tabela user_clients
-          const { data: userClientsData, error: userClientsError } = await supabase
+          // Cliente vê APENAS os clientes da tabela user_clients
+          const { data: userClientsData, error } = await supabase
             .from('user_clients')
             .select('cliente_nome')
             .eq('user_id', profile.id);
 
-          if (userClientsError) {
-            console.error('❌ useActiveClient: Erro ao buscar user_clients:', userClientsError);
-            throw userClientsError;
+          if (error) {
+            console.error('❌ Erro ao buscar user_clients:', error);
+            throw error;
           }
 
           clientsToShow = userClientsData?.map(row => row.cliente_nome).filter(Boolean).sort() || [];
-          console.log('👤 useActiveClient: Clientes associados encontrados:', clientsToShow);
+          
+          console.log('👤 CLIENTE: Clientes permitidos:', {
+            userId: profile.id,
+            clientesAssociados: clientsToShow,
+            totalClientes: clientsToShow.length
+          });
         }
 
-        console.log('✅ useActiveClient: Clientes finais para mostrar:', clientsToShow);
         setAvailableClients(clientsToShow);
         
-        // Só definir cliente ativo se não tiver um já selecionado
+        // Selecionar primeiro cliente automaticamente se houver
         if (clientsToShow.length > 0 && !activeClient) {
-          // Priorizar "Hospital do Cabelo" com busca mais flexível
-          const hospitalDoCabelo = clientsToShow.find(cliente => {
-            const clienteLower = cliente.toLowerCase();
-            return (clienteLower.includes('hospital') && clienteLower.includes('cabelo')) ||
-                   clienteLower.includes('hospital do cabelo');
-          });
+          // Priorizar "Hospital do Cabelo" se existir
+          const hospitalDoCabelo = clientsToShow.find(cliente => 
+            cliente.toLowerCase().includes('hospital') && cliente.toLowerCase().includes('cabelo')
+          );
           
           const clienteParaSelecionar = hospitalDoCabelo || clientsToShow[0];
-          
-          console.log('✅ useActiveClient: Selecionando cliente:', {
-            encontrouHospital: !!hospitalDoCabelo,
-            clienteSelecionado: clienteParaSelecionar,
-            todosClientes: clientsToShow
-          });
-          
+          console.log('✅ Selecionando cliente automaticamente:', clienteParaSelecionar);
           setActiveClient(clienteParaSelecionar);
         } else if (clientsToShow.length === 0) {
-          console.log('⚠️ useActiveClient: Nenhum cliente encontrado');
+          console.log('⚠️ Nenhum cliente disponível para este usuário');
           setActiveClient('');
         }
         
-        setHasInitialized(true);
-        
       } catch (error) {
-        console.error('❌ useActiveClient: Erro fatal ao buscar clientes:', error);
+        console.error('❌ Erro ao buscar clientes:', error);
         setAvailableClients([]);
         setActiveClient('');
-        setHasInitialized(true);
       } finally {
-        console.log('✅ useActiveClient: Finalizando loading');
         setIsLoading(false);
       }
     };
 
     fetchClients();
-  }, [profile, isAdmin, authLoading, hasInitialized]);
+  }, [profile, isAdmin, authLoading]);
 
   const changeActiveClient = (clientName: string) => {
-    console.log('🔄 useActiveClient: Mudando cliente para:', clientName);
+    console.log('🔄 Tentando mudar para cliente:', `"${clientName}"`);
     
-    // Verificar se o usuário tem permissão para acessar este cliente
+    // Verificar se o usuário tem permissão
     if (!isAdmin && !availableClients.includes(clientName)) {
-      console.error('❌ useActiveClient: Usuário não tem permissão para cliente:', clientName);
+      console.error('❌ ACESSO NEGADO: Usuário não tem permissão para cliente:', clientName);
+      console.error('❌ Clientes permitidos:', availableClients);
       return;
     }
     
     setActiveClient(clientName);
+    console.log('✅ Cliente alterado para:', `"${clientName}"`);
   };
 
-  console.log('📊 useActiveClient: Estado atual:', {
-    activeClient,
-    availableClients: availableClients.length,
+  console.log('📊 useActiveClient: Estado final:', {
+    activeClient: `"${activeClient}"`,
+    availableClients: availableClients,
+    totalClientes: availableClients.length,
     isLoading: isLoading || authLoading,
-    hasInitialized,
-    isAdmin
+    isAdmin,
+    userId: profile?.id
   });
 
   return {

@@ -1,18 +1,19 @@
 
 import React from 'react';
-import { ChevronDown, Building2, Lock } from 'lucide-react';
+import { ChevronDown, Building2, Lock, AlertTriangle } from 'lucide-react';
 import { useActiveClient } from '@/hooks/useActiveClient';
 import { useAuth } from '@/hooks/useAuth';
 
 export const ClientSelector = () => {
   const { activeClient, availableClients, isLoading, changeActiveClient } = useActiveClient();
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
 
   console.log('=== ClientSelector Render ===');
   console.log('activeClient:', `"${activeClient}"`);
   console.log('availableClients:', availableClients);
   console.log('isLoading:', isLoading);
   console.log('isAdmin:', isAdmin);
+  console.log('profile:', profile?.email);
 
   if (isLoading) {
     return (
@@ -26,9 +27,9 @@ export const ClientSelector = () => {
   if (!activeClient && availableClients.length === 0) {
     return (
       <div className="flex items-center space-x-2 bg-red-800/50 rounded-lg px-4 py-2 border border-red-700">
-        <Lock size={16} className="text-red-400" />
+        <AlertTriangle size={16} className="text-red-400" />
         <span className="text-red-400 text-sm">
-          {isAdmin ? 'Nenhum cliente encontrado' : 'Nenhum cliente associado'}
+          {isAdmin ? 'Nenhum cliente encontrado no sistema' : 'Você não tem clientes associados'}
         </span>
       </div>
     );
@@ -43,7 +44,7 @@ export const ClientSelector = () => {
             {activeClient || 'Selecionar Cliente'}
           </span>
           {!isAdmin && (
-            <div className="flex-shrink-0" title="Acesso restrito aos seus clientes">
+            <div className="flex-shrink-0" title={`Acesso restrito a ${availableClients.length} cliente(s)`}>
               <Lock size={12} className="text-slate-400" />
             </div>
           )}
@@ -53,6 +54,15 @@ export const ClientSelector = () => {
       
       <div className="absolute top-full left-0 mt-2 w-full min-w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
         <div className="p-2 space-y-1 max-h-60 overflow-y-auto">
+          {/* Header com info de acesso */}
+          <div className="px-3 py-2 text-xs text-slate-400 border-b border-slate-700">
+            {isAdmin ? (
+              <span>👑 Admin - Todos os clientes ({availableClients.length})</span>
+            ) : (
+              <span>🔒 Seus clientes ({availableClients.length})</span>
+            )}
+          </div>
+          
           {availableClients.length > 0 ? (
             availableClients.map((client) => (
               <button
@@ -69,7 +79,7 @@ export const ClientSelector = () => {
               >
                 <span className="truncate">{client}</span>
                 {!isAdmin && (
-                  <div className="flex-shrink-0 ml-2" title="Cliente associado">
+                  <div className="flex-shrink-0 ml-2" title="Cliente associado à sua conta">
                     <Lock size={10} className="text-slate-500" />
                   </div>
                 )}
@@ -77,7 +87,7 @@ export const ClientSelector = () => {
             ))
           ) : (
             <div className="px-3 py-2 text-slate-400 text-sm text-center">
-              {isAdmin ? 'Nenhum cliente disponível' : 'Nenhum cliente associado à sua conta'}
+              {isAdmin ? 'Nenhum cliente no sistema' : 'Nenhum cliente associado'}
             </div>
           )}
         </div>
