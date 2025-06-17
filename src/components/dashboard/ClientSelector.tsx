@@ -43,7 +43,9 @@ export const ClientSelector = () => {
             {activeClient || 'Selecionar Cliente'}
           </span>
           {!isAdmin && (
-            <Lock size={12} className="text-slate-400 flex-shrink-0" title="Acesso restrito aos seus clientes" />
+            <div className="flex-shrink-0" title="Acesso restrito aos seus clientes">
+              <Lock size={12} className="text-slate-400" />
+            </div>
           )}
         </div>
         <ChevronDown size={14} className="text-slate-400 group-hover:text-white transition-colors flex-shrink-0" />
@@ -66,7 +68,11 @@ export const ClientSelector = () => {
                 }`}
               >
                 <span className="truncate">{client}</span>
-                {!isAdmin && <Lock size={10} className="text-slate-500 flex-shrink-0 ml-2" />}
+                {!isAdmin && (
+                  <div className="flex-shrink-0 ml-2" title="Cliente associado">
+                    <Lock size={10} className="text-slate-500" />
+                  </div>
+                )}
               </button>
             ))
           ) : (
