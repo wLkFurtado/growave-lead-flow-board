@@ -29,7 +29,7 @@ export const AccessTestPanel = () => {
         <div className="flex items-center gap-2 p-3 bg-slate-700/30 rounded-lg">
           <User className="h-4 w-4 text-[#00FF88]" />
           <div>
-            <span className="text-white font-medium">{profile.name || profile.email}</span>
+            <span className="text-white font-medium">{profile.email}</span>
             <span className={`ml-2 px-2 py-1 rounded text-xs ${
               isAdmin ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'
             }`}>

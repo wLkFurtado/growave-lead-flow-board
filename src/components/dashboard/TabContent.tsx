@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { DateRange } from 'react-day-picker';
 import { DashboardOverview } from './DashboardOverview';
 import { ContactsOverview } from './ContactsOverview';
 import { EmptyState } from './EmptyState';
-import { DateRangePicker } from '../DateRangePicker';
+import { DateRangePicker } from './DateRangePicker';
 import { UserManagement } from './UserManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { AccessTestPanel } from './AccessTestPanel';
@@ -47,16 +48,17 @@ export const TabContent = ({
           
           <div className="flex justify-end mb-4">
             <DateRangePicker
-              dateRange={dateRange}
+              value={dateRange}
               onChange={handleDateRangeChange}
             />
           </div>
           
           {hasData ? (
             <DashboardOverview 
-              facebookAds={facebookAds}
-              whatsappLeads={whatsappLeads}
-              clientName={activeClient}
+              adsData={facebookAds}
+              leadsData={whatsappLeads}
+              onDateRangeChange={handleDateRangeChange}
+              dateRange={dateRange}
             />
           ) : (
             renderEmptyState()
@@ -90,6 +92,13 @@ export const TabContent = ({
       return <div>Perfil do usuário</div>;
       
     default:
-      return <DashboardOverview />;
+      return (
+        <DashboardOverview 
+          adsData={facebookAds}
+          leadsData={whatsappLeads}
+          onDateRangeChange={handleDateRangeChange}
+          dateRange={dateRange}
+        />
+      );
   }
 };
