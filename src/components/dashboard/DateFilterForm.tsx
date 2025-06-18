@@ -4,11 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-
-interface DateRange {
-  from: Date;
-  to: Date;
-}
+import { DateRange } from '@/types/common';
 
 interface DateFilterFormProps {
   value: DateRange;
@@ -21,7 +17,7 @@ export const DateFilterForm = ({ value, onChange, className }: DateFilterFormPro
     format(value.from, 'yyyy-MM-dd')
   );
   const [dataFim, setDataFim] = useState(
-    format(value.to, 'yyyy-MM-dd')
+    format(value.to || value.from, 'yyyy-MM-dd')
   );
 
   const handleSubmit = (e: React.FormEvent) => {

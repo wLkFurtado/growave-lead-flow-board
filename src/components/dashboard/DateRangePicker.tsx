@@ -6,11 +6,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DateSelectorModal } from './DateSelectorModal';
-
-interface DateRange {
-  from: Date;
-  to: Date;
-}
+import { DateRange } from '@/types/common';
 
 interface DateRangePickerProps {
   value: DateRange;
@@ -24,7 +20,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
   const formatDateRange = () => {
     try {
       const fromFormatted = format(value.from, 'dd/MM/yyyy', { locale: ptBR });
-      const toFormatted = format(value.to, 'dd/MM/yyyy', { locale: ptBR });
+      const toFormatted = format(value.to || value.from, 'dd/MM/yyyy', { locale: ptBR });
       
       if (fromFormatted === toFormatted) {
         return fromFormatted;

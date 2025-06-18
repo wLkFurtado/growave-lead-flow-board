@@ -1,10 +1,7 @@
+
 import React, { useState, useMemo } from 'react';
 import { DateRangePicker } from './DateRangePicker';
-
-interface DateRange {
-  from: Date;
-  to: Date;
-}
+import { DateRange } from '@/types/common';
 
 interface AdAnalysisTableProps {
   adsData: any[];

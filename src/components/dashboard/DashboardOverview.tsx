@@ -4,11 +4,7 @@ import { subDays } from 'date-fns';
 import { MetricCard } from './MetricCard';
 import { KanbanSummary } from './KanbanSummary';
 import { DateRangePicker } from './DateRangePicker';
-
-interface DateRange {
-  from: Date;
-  to: Date;
-}
+import { DateRange } from '@/types/common';
 
 interface DashboardOverviewProps {
   adsData: any[];
