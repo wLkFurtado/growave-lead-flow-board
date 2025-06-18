@@ -8,11 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DateFilterForm } from './DateFilterForm';
-
-interface DateRange {
-  from: Date;
-  to: Date;
-}
+import { DateRange } from '@/types/common';
 
 interface DateSelectorModalProps {
   open: boolean;
@@ -136,7 +132,7 @@ export const DateSelectorModal = ({ open, onOpenChange, value, onChange }: DateS
           <div className="bg-slate-700/50 rounded-lg p-4">
             <h4 className="text-sm font-medium text-slate-300 mb-2">Período Selecionado:</h4>
             <p className="text-white">
-              {format(tempRange.from, 'dd/MM/yyyy', { locale: ptBR })} - {format(tempRange.to, 'dd/MM/yyyy', { locale: ptBR })}
+              {format(tempRange.from, 'dd/MM/yyyy', { locale: ptBR })} - {format(tempRange.to || tempRange.from, 'dd/MM/yyyy', { locale: ptBR })}
             </p>
           </div>
 
