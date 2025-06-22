@@ -6,8 +6,8 @@ import { ContactsOverview } from './ContactsOverview';
 import { EmptyState } from './EmptyState';
 import { DateRangePicker } from './DateRangePicker';
 import { UserManagement } from './UserManagement';
+import { MyProfile } from './MyProfile';
 import { useAuth } from '@/hooks/useAuth';
-import { AccessTestPanel } from './AccessTestPanel';
 
 interface TabContentProps {
   activeTab: string;
@@ -41,11 +41,6 @@ export const TabContent = ({
     case 'dashboard':
       return (
         <div>
-          {/* Painel de teste de acesso - apenas para debug */}
-          {process.env.NODE_ENV === 'development' && (
-            <AccessTestPanel />
-          )}
-          
           <div className="flex justify-end mb-4">
             <DateRangePicker
               value={dateRange}
@@ -89,7 +84,7 @@ export const TabContent = ({
       );
     
     case 'profile':
-      return <div>Perfil do usuário</div>;
+      return <MyProfile />;
       
     default:
       return (
