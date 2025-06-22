@@ -4,11 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useActiveClient } from './useActiveClient';
 import { useAuth } from './useAuth';
 import { subMonths } from 'date-fns';
-
-interface DateRange {
-  from: Date;
-  to: Date;
-}
+import { DateRange } from '@/types/common';
 
 interface UseClientDataOptions {
   dateRange?: DateRange;
@@ -89,7 +85,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
         // Aplicar filtro de data se necessário
         if (!skipDateFilter && effectiveDateRange) {
           const fromDate = effectiveDateRange.from.toISOString().split('T')[0];
-          const toDate = effectiveDateRange.to.toISOString().split('T')[0];
+          const toDate = (effectiveDateRange.to || effectiveDateRange.from).toISOString().split('T')[0];
           
           console.log('📅 useClientData: Aplicando filtro de data:', fromDate, 'até', toDate);
           

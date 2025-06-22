@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { DateRange as ReactDayPickerDateRange } from 'react-day-picker';
 import { DateRange } from '@/types/common';
 import { DashboardOverview } from './DashboardOverview';
 import { ContactsOverview } from './ContactsOverview';
