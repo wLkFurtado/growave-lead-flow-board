@@ -5,14 +5,40 @@ import { useActiveClient } from '@/hooks/useActiveClient';
 import { useClientData } from '@/hooks/useClientData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Database, Building, CheckCircle } from 'lucide-react';
+import { Shield, Database, Building, CheckCircle, AlertCircle } from 'lucide-react';
 
 export const AccessControlSection = () => {
   const { profile, isAdmin } = useAuth();
-  const { activeClient, availableClients } = useActiveClient();
-  const { facebookAds, whatsappLeads } = useClientData({ skipDateFilter: true });
+  const { activeClient, availableClients, isLoading: clientLoading } = useActiveClient();
+  const { facebookAds, whatsappLeads, isLoading: dataLoading } = useClientData({ skipDateFilter: true });
 
-  if (!profile) return null;
+  // Não renderizar se não há perfil
+  if (!profile) {
+    return (
+      <Card className="bg-transparent border-2 border-red-500/60 growave-neon-border">
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-2 text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            <span>Erro ao carregar informações de acesso</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Loading state
+  if (clientLoading) {
+    return (
+      <Card className="bg-transparent border-2 border-[#00FF88]/60 growave-neon-border">
+        <CardHeader>
+          <CardTitle className="text-white">Controle de Acesso</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-slate-400">Carregando informações de acesso...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-transparent border-2 border-[#00FF88]/60 growave-neon-border growave-card-hover">
@@ -51,7 +77,7 @@ export const AccessControlSection = () => {
         {/* Clientes Disponíveis */}
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
-            <Building className="w-4 w-4 text-[#00FF88]" />
+            <Building className="w-4 h-4 text-[#00FF88]" />
             <h4 className="text-white font-medium">
               {isAdmin ? 'Todos os Clientes no Sistema' : 'Clientes Associados'}
             </h4>
@@ -100,25 +126,29 @@ export const AccessControlSection = () => {
               </h4>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
-                <div className="text-[#00FF88] font-semibold text-lg">
-                  {facebookAds.length}
+            {dataLoading ? (
+              <div className="text-slate-400">Carregando dados...</div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                  <div className="text-[#00FF88] font-semibold text-lg">
+                    {facebookAds.length}
+                  </div>
+                  <div className="text-slate-300 text-sm">
+                    Registros Facebook Ads
+                  </div>
                 </div>
-                <div className="text-slate-300 text-sm">
-                  Registros Facebook Ads
+                
+                <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
+                  <div className="text-[#00FF88] font-semibold text-lg">
+                    {whatsappLeads.length}
+                  </div>
+                  <div className="text-slate-300 text-sm">
+                    Leads WhatsApp
+                  </div>
                 </div>
               </div>
-              
-              <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600">
-                <div className="text-[#00FF88] font-semibold text-lg">
-                  {whatsappLeads.length}
-                </div>
-                <div className="text-slate-300 text-sm">
-                  Leads WhatsApp
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         )}
 

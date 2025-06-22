@@ -15,32 +15,54 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userClients, setUserClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   console.log('🔄 AuthProvider: Componente iniciado');
 
   const loadUserProfile = async (user: User) => {
     try {
-      console.log('🔄 AuthProvider: Carregando perfil do usuário...');
+      console.log('🔄 AuthProvider: Carregando perfil do usuário...', user.id);
+      setError(null);
       
       const profileData = await fetchProfile(user.id, user);
+      console.log('✅ AuthProvider: Perfil carregado:', profileData);
       setProfile(profileData);
       
       // Buscar clientes associados se não for admin
       if (profileData.role !== 'admin') {
-        const { data: clientsData } = await supabase
+        console.log('👤 AuthProvider: Buscando clientes para usuário não-admin');
+        const { data: clientsData, error: clientsError } = await supabase
           .from('user_clients')
           .select('cliente_nome')
           .eq('user_id', user.id);
         
+        if (clientsError) {
+          console.error('❌ AuthProvider: Erro ao buscar clientes:', clientsError);
+          throw clientsError;
+        }
+        
         const clients = clientsData?.map(item => item.cliente_nome) || [];
         setUserClients(clients);
+        console.log('✅ AuthProvider: Clientes carregados:', clients);
       } else {
+        console.log('👑 AuthProvider: Usuário admin - sem clientes específicos');
         setUserClients([]);
       }
       
-      console.log('✅ AuthProvider: Perfil carregado:', profileData);
     } catch (error) {
       console.error('❌ AuthProvider: Erro ao carregar perfil:', error);
+      setError(error instanceof Error ? error.message : 'Erro ao carregar perfil');
+      
+      // Criar perfil fallback em caso de erro
+      const fallbackProfile: Profile = {
+        id: user.id,
+        nome_completo: user.email?.split('@')[0] || 'Usuário',
+        email: user.email || 'email@example.com',
+        role: 'client',
+        clientes_associados: []
+      };
+      setProfile(fallbackProfile);
+      setUserClients([]);
     }
   };
 
@@ -50,11 +72,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const initializeAuth = async () => {
       try {
         console.log('🔄 AuthProvider: Verificando sessão existente...');
+        setIsLoading(true);
+        setError(null);
         
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
           console.error('❌ AuthProvider: Erro ao obter sessão:', error);
+          setError('Erro ao verificar autenticação');
           setIsLoading(false);
           return;
         }
@@ -72,10 +97,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setUserClients([]);
         }
 
-        console.log('✅ AuthProvider: Finalizando loading');
-        setIsLoading(false);
       } catch (error) {
         console.error('❌ AuthProvider: Erro na inicialização:', error);
+        setError('Erro inesperado na inicialização');
+      } finally {
+        console.log('✅ AuthProvider: Finalizando loading');
         setIsLoading(false);
       }
     };
@@ -87,14 +113,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       async (event, session) => {
         console.log('🔔 AuthProvider: Auth state changed:', event);
         
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setProfile(null);
-          setUserClients([]);
-          setIsLoading(false);
-        } else if (event === 'SIGNED_IN' && session?.user) {
-          setUser(session.user);
-          await loadUserProfile(session.user);
+        try {
+          if (event === 'SIGNED_OUT') {
+            setUser(null);
+            setProfile(null);
+            setUserClients([]);
+            setError(null);
+            setIsLoading(false);
+          } else if (event === 'SIGNED_IN' && session?.user) {
+            setUser(session.user);
+            setIsLoading(true);
+            await loadUserProfile(session.user);
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error('❌ AuthProvider: Erro no listener:', error);
+          setError('Erro ao processar mudança de autenticação');
           setIsLoading(false);
         }
       }
@@ -122,8 +156,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     role: profile?.role,
     userClients: userClients.length,
     isLoading,
-    isAdmin: profile?.role === 'admin'
+    isAdmin: profile?.role === 'admin',
+    error
   });
+
+  // Se houver erro crítico, mostrar tela de erro
+  if (error && !profile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-red-400 text-xl">Erro de autenticação</div>
+          <div className="text-slate-400">{error}</div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-[#00FF88] text-slate-900 rounded hover:bg-[#00FF88]/90"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
