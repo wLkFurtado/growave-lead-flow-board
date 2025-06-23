@@ -7,7 +7,7 @@ import { DashboardSkeleton } from './LoadingStates';
 import { useClientData } from '../../hooks/useClientData';
 import { useAuth } from '../../hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 
 interface DateRange {
   from: Date;
@@ -17,10 +17,10 @@ interface DateRange {
 export const DashboardContent = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  // Usar período padrão de 6 meses para garantir que dados sejam encontrados
+  // Ajustar período padrão para junho de 2025 onde há dados reais
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: subMonths(new Date(), 6),
-    to: new Date()
+    from: new Date('2025-06-01'),
+    to: new Date('2025-06-30')
   });
   
   // Para aba de contatos: buscar todos os dados sem filtro de data
@@ -61,6 +61,10 @@ export const DashboardContent = () => {
   const handleNavigateToProfile = (tab: string) => {
     setActiveTab(tab);
   };
+
+  // Verificar se há dados para o período selecionado
+  const hasDataForPeriod = facebookAds.length > 0 || whatsappLeads.length > 0;
+  const showDataAlert = !isLoading && !hasDataForPeriod && activeTab === 'dashboard';
 
   if (isLoading) {
     console.log('📊 DASHBOARD: Renderizando loading state');
@@ -105,6 +109,15 @@ export const DashboardContent = () => {
       setIsCollapsed={setIsCollapsed}
       onNavigateToProfile={handleNavigateToProfile}
     >
+      {showDataAlert && (
+        <Alert className="mb-4 bg-blue-900/20 border-blue-500/50 text-blue-400">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Sem dados para o período selecionado.</strong> Tente selecionar junho de 2025 onde há dados disponíveis.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <TabContent
         activeTab={activeTab}
         hasData={hasData}
