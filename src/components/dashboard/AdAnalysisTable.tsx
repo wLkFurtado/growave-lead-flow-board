@@ -13,20 +13,73 @@ interface AdAnalysisTableProps {
 export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRange }: AdAnalysisTableProps) => {
   const [filterCampaign, setFilterCampaign] = useState('');
 
+  console.log('📊 AdAnalysisTable: Dados recebidos:', {
+    adsCount: adsData.length,
+    leadsCount: leadsData.length,
+    periodo: {
+      from: dateRange.from.toISOString().split('T')[0],
+      to: dateRange.to?.toISOString().split('T')[0]
+    }
+  });
+
+  // Filtrar dados do Facebook Ads pelo período selecionado
+  const filteredAdsData = useMemo(() => {
+    const fromDate = dateRange.from.toISOString().split('T')[0];
+    const toDate = (dateRange.to || dateRange.from).toISOString().split('T')[0];
+    
+    const filtered = adsData.filter(ad => {
+      if (!ad.data) return false;
+      
+      const adDate = new Date(ad.data).toISOString().split('T')[0];
+      return adDate >= fromDate && adDate <= toDate;
+    });
+    
+    console.log('📅 AdAnalysisTable: Filtro Facebook Ads aplicado:', {
+      periodo: `${fromDate} até ${toDate}`,
+      totalOriginal: adsData.length,
+      totalFiltrado: filtered.length,
+      datasEncontradas: filtered.map(ad => ad.data).slice(0, 5)
+    });
+    
+    return filtered;
+  }, [adsData, dateRange]);
+
+  // Filtrar dados do WhatsApp pelo período selecionado
+  const filteredLeadsData = useMemo(() => {
+    const fromDate = dateRange.from.toISOString().split('T')[0];
+    const toDate = (dateRange.to || dateRange.from).toISOString().split('T')[0];
+    
+    const filtered = leadsData.filter(lead => {
+      if (!lead.data_criacao) return false;
+      
+      const leadDate = new Date(lead.data_criacao).toISOString().split('T')[0];
+      return leadDate >= fromDate && leadDate <= toDate;
+    });
+    
+    console.log('📅 AdAnalysisTable: Filtro WhatsApp Leads aplicado:', {
+      periodo: `${fromDate} até ${toDate}`,
+      totalOriginal: leadsData.length,
+      totalFiltrado: filtered.length,
+      datasEncontradas: filtered.map(lead => lead.data_criacao).slice(0, 5)
+    });
+    
+    return filtered;
+  }, [leadsData, dateRange]);
+
   const adsMap = useMemo(() => {
-    return adsData.reduce((acc, ad) => {
+    return filteredAdsData.reduce((acc, ad) => {
       acc[ad.source_id] = ad;
       return acc;
     }, {});
-  }, [adsData]);
+  }, [filteredAdsData]);
 
   const uniqueCampaigns = useMemo(() => {
-    const campaigns = new Set(adsData.map(ad => ad.campanha));
+    const campaigns = new Set(filteredAdsData.map(ad => ad.campanha));
     return ['', ...Array.from(campaigns)].sort();
-  }, [adsData]);
+  }, [filteredAdsData]);
 
   const processedLeadsForTable = useMemo(() => {
-    return leadsData
+    return filteredLeadsData
       .filter(lead => lead.telefone && lead.telefone.length > 0)
       .map(lead => {
         const ad = adsMap[lead.source_id];
@@ -43,7 +96,13 @@ export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRan
         const campaignMatch = filterCampaign ? lead.campanha === filterCampaign : true;
         return campaignMatch;
       });
-  }, [leadsData, adsMap, filterCampaign]);
+  }, [filteredLeadsData, adsMap, filterCampaign]);
+
+  console.log('📊 AdAnalysisTable: Dados processados:', {
+    leadsProcessados: processedLeadsForTable.length,
+    campanhasUnicas: uniqueCampaigns.length - 1, // -1 para remover opção vazia
+    campanhaFiltrada: filterCampaign || 'Todas'
+  });
 
   return (
     <section className="bg-slate-800/30 backdrop-blur-lg border border-slate-700 rounded-xl p-6">
@@ -72,6 +131,15 @@ export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRan
               ))}
             </select>
           </div>
+        </div>
+        
+        {/* Informações sobre os dados filtrados */}
+        <div className="mt-4 text-sm text-slate-400">
+          <span>
+            Exibindo {processedLeadsForTable.length} leads com telefone • 
+            {filteredAdsData.length} anúncios no período • 
+            Período: {dateRange.from.toISOString().split('T')[0]} até {(dateRange.to || dateRange.from).toISOString().split('T')[0]}
+          </span>
         </div>
       </div>
 
@@ -115,7 +183,10 @@ export const AdAnalysisTable = ({ adsData, leadsData, onDateRangeChange, dateRan
             ) : (
               <tr>
                 <td colSpan={6} className="px-6 py-4 text-center text-sm text-slate-400">
-                  Nenhum lead encontrado com os filtros selecionados.
+                  {filteredAdsData.length === 0 && filteredLeadsData.length === 0 
+                    ? 'Nenhum dado encontrado para o período selecionado.'
+                    : 'Nenhum lead encontrado com os filtros selecionados.'
+                  }
                 </td>
               </tr>
             )}
