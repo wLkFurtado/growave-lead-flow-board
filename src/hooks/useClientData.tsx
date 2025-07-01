@@ -41,7 +41,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
       }
 
       if (!activeClient || activeClient.trim() === '') {
-        console.log('⚠️ useClientData: Nenhum cliente ativo');
+        console.log('⚠️ useClientData: Nenhum cliente ativo - limpando dados');
         if (mounted) {
           setFacebookAds([]);
           setWhatsappLeads([]);
@@ -51,7 +51,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
         return;
       }
       
-      console.log('🚀 useClientData: BUSCANDO DADOS PARA:', {
+      console.log('🚀 useClientData: MUDANÇA DE CLIENTE DETECTADA - BUSCANDO DADOS PARA:', {
         cliente: `"${activeClient}"`,
         isAdmin,
         userId: profile.id,
@@ -66,6 +66,10 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
       setError(null);
       
       try {
+        // Limpar dados anteriores imediatamente ao trocar de cliente
+        setFacebookAds([]);
+        setWhatsappLeads([]);
+
         // Período de data melhorado
         let effectiveDateRange = dateRange;
         if (!skipDateFilter && !dateRange) {
@@ -106,22 +110,24 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
           wppQuery = wppQuery.gte('data_criacao', fromDate).lte('data_criacao', toDate);
         }
 
-        console.log('🔄 useClientData: Executando queries otimizadas...');
+        console.log('🔄 useClientData: Executando queries para cliente:', `"${activeClient}"`);
 
         // Executar queries com tratamento de erro melhorado
         const [fbResponse, wppResponse] = await Promise.all([fbQuery, wppQuery]);
 
-        console.log('📊 useClientData: RESULTADOS DETALHADOS:', {
+        console.log('📊 useClientData: RESULTADOS PARA CLIENTE:', {
           cliente: `"${activeClient}"`,
           facebook: {
             count: fbResponse.data?.length || 0,
             error: fbResponse.error?.message || 'OK',
-            sampleDate: fbResponse.data?.[0]?.data || 'N/A'
+            sampleDate: fbResponse.data?.[0]?.data || 'N/A',
+            sampleCampanha: fbResponse.data?.[0]?.campanha || 'N/A'
           },
           whatsapp: {
             count: wppResponse.data?.length || 0,
             error: wppResponse.error?.message || 'OK',
-            sampleDate: wppResponse.data?.[0]?.data_criacao || 'N/A'
+            sampleDate: wppResponse.data?.[0]?.data_criacao || 'N/A',
+            sampleNome: wppResponse.data?.[0]?.nome || 'N/A'
           },
           filtros: {
             periodo: !skipDateFilter && effectiveDateRange ? {
@@ -164,17 +170,21 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
           const fbComInvestimento = fbData.filter(row => row.investimento > 0);
           const wppComVenda = wppData.filter(row => row.valor_venda > 0);
           
-          console.log('✅ useClientData: DADOS FINAIS VALIDADOS:', {
-            cliente: `"${activeClient}"`,
+          console.log('✅ useClientData: DADOS FINAIS VALIDADOS PARA CLIENTE:', `"${activeClient}"`, {
             facebook: {
               total: fbData.length,
               comInvestimento: fbComInvestimento.length,
-              investimentoTotal: fbComInvestimento.reduce((sum, row) => sum + (row.investimento || 0), 0)
+              investimentoTotal: fbComInvestimento.reduce((sum, row) => sum + (row.investimento || 0), 0),
+              campanhas: [...new Set(fbData.map(row => row.campanha))].slice(0, 3)
             },
             whatsapp: {
               total: wppData.length,
               comVenda: wppComVenda.length,
-              faturamentoTotal: wppComVenda.reduce((sum, row) => sum + (row.valor_venda || 0), 0)
+              faturamentoTotal: wppComVenda.reduce((sum, row) => sum + (row.valor_venda || 0), 0),
+              statusDistribution: wppData.reduce((acc, row) => {
+                acc[row.status || 'sem_status'] = (acc[row.status || 'sem_status'] || 0) + 1;
+                return acc;
+              }, {})
             },
             validacao: {
               todosDadosCorretos: fbInvalidos.length === 0 && wppInvalidos.length === 0,
@@ -188,7 +198,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
         }
         
       } catch (error: any) {
-        console.error('❌ useClientData: Erro fatal:', error);
+        console.error('❌ useClientData: Erro fatal para cliente:', `"${activeClient}"`, error);
         if (mounted) {
           setError(error.message || 'Erro ao carregar dados');
           setFacebookAds([]);
@@ -210,8 +220,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
 
   const hasData = facebookAds.length > 0 || whatsappLeads.length > 0;
 
-  console.log('📊 useClientData: Estado final:', {
-    activeClient: `"${activeClient}"`,
+  console.log('📊 useClientData: Estado final para cliente:', `"${activeClient}"`, {
     isLoading: isLoading || clientLoading,
     fbCount: facebookAds.length,
     wppCount: whatsappLeads.length,

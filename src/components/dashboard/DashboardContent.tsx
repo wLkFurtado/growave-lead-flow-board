@@ -51,7 +51,7 @@ export const DashboardContent = () => {
   });
 
   const handleDateRangeChange = (newRange: DateRange) => {
-    console.log('📅 DASHBOARD: Mudando período:', {
+    console.log('📅 DASHBOARD: Mudando período para cliente:', `"${activeClient}"`, {
       from: newRange.from.toISOString().split('T')[0],
       to: newRange.to.toISOString().split('T')[0]
     });
@@ -64,10 +64,23 @@ export const DashboardContent = () => {
 
   // Verificar se há dados para o período selecionado
   const hasDataForPeriod = facebookAds.length > 0 || whatsappLeads.length > 0;
-  const showDataAlert = !isLoading && !hasDataForPeriod && activeTab === 'dashboard';
+  const showDataAlert = !isLoading && !hasDataForPeriod && activeTab === 'dashboard' && activeClient;
+
+  // Mensagem específica baseada no cliente e dados disponíveis
+  const getDataAlertMessage = () => {
+    if (!activeClient) return '';
+    
+    if (activeClient === 'Simone Mendes') {
+      return 'Dados de Simone Mendes estão disponíveis principalmente em junho de 2025 (dias 19, 23, 29). Ajuste o período para visualizar os dados.';
+    } else if (activeClient === 'Hospital do Cabelo') {
+      return 'Dados do Hospital do Cabelo estão disponíveis principalmente em junho de 2025. Ajuste o período para visualizar os dados.';
+    }
+    
+    return `Sem dados para ${activeClient} no período selecionado. Tente ajustar as datas ou verificar se há dados disponíveis para este cliente.`;
+  };
 
   if (isLoading) {
-    console.log('📊 DASHBOARD: Renderizando loading state');
+    console.log('📊 DASHBOARD: Renderizando loading state para cliente:', `"${activeClient}"`);
     return (
       <MainLayout 
         activeTab={activeTab}
@@ -81,7 +94,7 @@ export const DashboardContent = () => {
   }
 
   if (error) {
-    console.log('📊 DASHBOARD: Renderizando error state:', error);
+    console.log('📊 DASHBOARD: Renderizando error state para cliente:', `"${activeClient}"`, error);
     return (
       <MainLayout 
         activeTab={activeTab}
@@ -92,14 +105,14 @@ export const DashboardContent = () => {
         <Alert className="bg-red-900/20 border-red-500/50 text-red-400">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Erro ao carregar dados:</strong> {error}
+            <strong>Erro ao carregar dados para {activeClient}:</strong> {error}
           </AlertDescription>
         </Alert>
       </MainLayout>
     );
   }
 
-  console.log('📊 DASHBOARD: Renderizando dashboard normal');
+  console.log('📊 DASHBOARD: Renderizando dashboard normal para cliente:', `"${activeClient}"`);
 
   return (
     <MainLayout 
@@ -113,7 +126,7 @@ export const DashboardContent = () => {
         <Alert className="mb-4 bg-blue-900/20 border-blue-500/50 text-blue-400">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            <strong>Sem dados para o período selecionado.</strong> Tente selecionar junho de 2025 onde há dados disponíveis.
+            <strong>Atenção:</strong> {getDataAlertMessage()}
           </AlertDescription>
         </Alert>
       )}

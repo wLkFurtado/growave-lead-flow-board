@@ -19,7 +19,7 @@ export const ClientSelector = () => {
     return (
       <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700">
         <Building2 size={16} className="text-slate-400" />
-        <span className="text-slate-400 text-sm">Carregando...</span>
+        <span className="text-slate-400 text-sm">Carregando clientes...</span>
       </div>
     );
   }
@@ -34,6 +34,15 @@ export const ClientSelector = () => {
       </div>
     );
   }
+
+  const handleClientChange = (clientName: string) => {
+    console.log('🔄 ClientSelector: INICIANDO MUDANÇA DE CLIENTE:', {
+      de: `"${activeClient}"`,
+      para: `"${clientName}"`,
+      timestamp: new Date().toISOString()
+    });
+    changeActiveClient(clientName);
+  };
 
   return (
     <div className="relative group">
@@ -67,10 +76,7 @@ export const ClientSelector = () => {
             availableClients.map((client) => (
               <button
                 key={client}
-                onClick={() => {
-                  console.log('ClientSelector: Selecionando cliente:', `"${client}"`);
-                  changeActiveClient(client);
-                }}
+                onClick={() => handleClientChange(client)}
                 className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors duration-200 flex items-center justify-between ${
                   client === activeClient
                     ? 'bg-[#00FF88]/20 text-[#00FF88] font-medium'
@@ -78,6 +84,9 @@ export const ClientSelector = () => {
                 }`}
               >
                 <span className="truncate">{client}</span>
+                {client === activeClient && (
+                  <span className="flex-shrink-0 ml-2 text-xs text-[#00FF88]">✓</span>
+                )}
                 {!isAdmin && (
                   <div className="flex-shrink-0 ml-2" title="Cliente associado à sua conta">
                     <Lock size={10} className="text-slate-500" />
