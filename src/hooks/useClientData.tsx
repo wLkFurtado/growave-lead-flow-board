@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import { useFacebookAdsData } from './data/useFacebookAdsData';
 import { useWhatsAppLeadsData } from './data/useWhatsAppLeadsData';
 import { useDataValidation } from './data/useDataValidation';
-import { DateRange } from '@/types/common';
+import { DateRange } from '@/types/business';
 
 interface UseClientDataOptions {
   dateRange?: DateRange;
