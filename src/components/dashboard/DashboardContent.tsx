@@ -1,13 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { subDays, subMonths } from 'date-fns';
 import { MainLayout } from './MainLayout';
 import { TabContent } from './TabContent';
 import { DashboardSkeleton } from './LoadingStates';
 import { useClientData } from '../../hooks/useClientData';
+import { useClientDateRange } from '../../hooks/useClientDateRange';
 import { useAuth } from '../../hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, Info, Calendar, Database } from 'lucide-react';
 
 interface DateRange {
   from: Date;
@@ -17,10 +18,15 @@ interface DateRange {
 export const DashboardContent = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  // Período padrão mais amplo para incluir todos os dados
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date('2025-06-01'),
-    to: new Date('2025-07-31')
+  const [customDateRange, setCustomDateRange] = useState<DateRange | null>(null);
+  
+  // Primeiro buscar dados básicos para ter o activeClient
+  const basicData = useClientData({ skipDateFilter: true });
+  
+  // Sistema dinâmico: detectar período automático para cada cliente
+  const clientDateInfo = useClientDateRange({ 
+    activeClient: basicData.activeClient,
+    enabled: !!basicData.activeClient 
   });
   
   // Para aba de contatos: buscar todos os dados sem filtro de data
@@ -28,14 +34,25 @@ export const DashboardContent = () => {
     skipDateFilter: true 
   });
   
-  // Para outras abas: usar filtro de data normal  
+  // Para outras abas: usar sistema dinâmico
   const regularData = useClientData({ 
-    dateRange 
+    dateRange: customDateRange || clientDateInfo.dateRange || undefined
   });
 
   // Escolher qual dataset usar baseado na aba ativa
   const currentData = activeTab === 'contacts' ? contactsData : regularData;
   const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = currentData;
+  
+  // Atualizar o cliente no hook de detecção de período
+  useEffect(() => {
+    if (activeClient && clientDateInfo.dateRange && !customDateRange) {
+      console.log('🎯 Sistema Dinâmico: Período detectado para', activeClient, {
+        from: clientDateInfo.dateRange.from.toISOString().split('T')[0],
+        to: clientDateInfo.dateRange.to.toISOString().split('T')[0],
+        totalRecords: clientDateInfo.totalRecords
+      });
+    }
+  }, [activeClient, clientDateInfo.dateRange, customDateRange]);
   
   // Verificação de consistência dos dados - FORÇA NOVA BUSCA SE INCONSISTENTE
   const isDataConsistent = facebookAds.every(row => !row.cliente_nome || row.cliente_nome === activeClient) &&
@@ -66,17 +83,25 @@ export const DashboardContent = () => {
   console.log('whatsappLeads.length:', whatsappLeads.length);
   console.log('hasData:', hasData);
   console.log('error:', error);
-  console.log('dateRange:', {
-    from: dateRange.from.toISOString().split('T')[0],
-    to: dateRange.to.toISOString().split('T')[0]
-  });
+  const currentDateRange = customDateRange || clientDateInfo.dateRange;
+  console.log('dateRange:', currentDateRange ? {
+    from: currentDateRange.from.toISOString().split('T')[0],
+    to: currentDateRange.to.toISOString().split('T')[0],
+    isCustom: !!customDateRange,
+    totalRecords: clientDateInfo.totalRecords
+  } : 'sem período detectado');
 
   const handleDateRangeChange = (newRange: DateRange) => {
     console.log('📅 DASHBOARD: Mudando período para cliente:', `"${activeClient}"`, {
       from: newRange.from.toISOString().split('T')[0],
       to: newRange.to.toISOString().split('T')[0]
     });
-    setDateRange(newRange);
+    setCustomDateRange(newRange);
+  };
+
+  const clearCustomDateRange = () => {
+    console.log('🔄 DASHBOARD: Limpando filtro customizado, voltando ao período automático');
+    setCustomDateRange(null);
   };
 
   const handleNavigateToProfile = (tab: string) => {
@@ -152,11 +177,34 @@ export const DashboardContent = () => {
         </Alert>
       )}
       
+      {/* Indicadores dinâmicos do sistema */}
+      {clientDateInfo.hasData && activeTab === 'dashboard' && (
+        <Alert className="mb-4 bg-green-900/20 border-green-500/50 text-green-400">
+          <Database className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Dados disponíveis:</strong> {clientDateInfo.totalRecords.facebook} Facebook Ads + {clientDateInfo.totalRecords.whatsapp} WhatsApp Leads
+            {currentDateRange && (
+              <>
+                {' '}• Período: {currentDateRange.from.toISOString().split('T')[0]} até {currentDateRange.to.toISOString().split('T')[0]}
+                {customDateRange && (
+                  <button 
+                    onClick={clearCustomDateRange}
+                    className="ml-2 text-blue-400 hover:text-blue-300 underline"
+                  >
+                    [Mostrar todos os dados]
+                  </button>
+                )}
+              </>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <TabContent
         activeTab={activeTab}
         hasData={hasData}
         activeClient={activeClient}
-        dateRange={dateRange}
+        dateRange={currentDateRange}
         facebookAds={facebookAds}
         whatsappLeads={whatsappLeads}
         handleDateRangeChange={handleDateRangeChange}
