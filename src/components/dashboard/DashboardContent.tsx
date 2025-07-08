@@ -19,20 +19,12 @@ export const DashboardContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<DateRange | null>(null);
   
-  // Para aba de contatos: buscar todos os dados sem filtro de data
-  const contactsData = useClientData({ 
-    skipDateFilter: true 
-  });
-  
-  // Para outras abas: usar filtro customizado se houver, senão sem filtro
-  const regularData = useClientData({ 
-    dateRange: customDateRange || undefined,
-    skipDateFilter: !customDateRange
+  // Usar um único hook - sempre sem filtro para garantir que carregue dados
+  const clientData = useClientData({ 
+    skipDateFilter: true  // SEMPRE sem filtro para garantir dados
   });
 
-  // Escolher qual dataset usar baseado na aba ativa
-  const currentData = activeTab === 'contacts' ? contactsData : regularData;
-  const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = currentData;
+  const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = clientData;
   
   console.log('🔄 DashboardContent: RENDER COM DADOS:', {
     activeClient: `"${activeClient}"`,
