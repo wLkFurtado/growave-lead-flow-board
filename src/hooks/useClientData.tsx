@@ -19,11 +19,8 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
   console.log('🔄 useClientData: Hook iniciado com activeClient:', `"${activeClient}"`);
   console.log('🔄 useClientData: Timestamp:', new Date().toISOString());
 
-  // Determine effective date range
-  const effectiveDateRange = dateRange || (!skipDateFilter ? {
-    from: new Date('2025-06-01'),
-    to: new Date('2025-06-30')
-  } : undefined);
+  // Determine effective date range - sem filtro padrão para mostrar todos os dados
+  const effectiveDateRange = dateRange;
 
   // Criar uma chave única para forçar re-execução quando o cliente muda
   const clientKey = `${activeClient}_${Date.now()}`;

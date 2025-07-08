@@ -17,10 +17,10 @@ interface DateRange {
 export const DashboardContent = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  // Ajustar período padrão para junho de 2025 onde há dados reais
+  // Período padrão mais amplo para incluir todos os dados
   const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date('2025-06-01'),
-    to: new Date('2025-06-30')
+    to: new Date('2025-07-31')
   });
   
   // Para aba de contatos: buscar todos os dados sem filtro de data
@@ -92,7 +92,7 @@ export const DashboardContent = () => {
     if (!activeClient) return '';
     
     if (activeClient === 'Simone Mendes') {
-      return 'Dados de Simone Mendes estão disponíveis principalmente em junho de 2025 (dias 19, 23, 29). Ajuste o período para visualizar os dados.';
+      return 'Dados de Simone Mendes estão disponíveis principalmente em julho de 2025. Ajuste o período para visualizar os dados.';
     } else if (activeClient === 'Hospital do Cabelo') {
       return 'Dados do Hospital do Cabelo estão disponíveis principalmente em junho de 2025. Ajuste o período para visualizar os dados.';
     }
