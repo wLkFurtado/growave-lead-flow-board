@@ -9,7 +9,7 @@ export const ClientSelector = () => {
   const { isAdmin, profile } = useAuth();
 
   console.log('=== ClientSelector Render ===');
-  console.log('activeClient:', `"${activeClient}"`);
+  console.log('activeClient:', activeClient);
   console.log('availableClients:', availableClients);
   console.log('isLoading:', isLoading);
   console.log('isAdmin:', isAdmin);
@@ -37,8 +37,8 @@ export const ClientSelector = () => {
 
   const handleClientChange = (clientName: string) => {
     console.log('🔄 ClientSelector: INICIANDO MUDANÇA DE CLIENTE:', {
-      de: `"${activeClient}"`,
-      para: `"${clientName}"`,
+      de: activeClient,
+      para: clientName,
       timestamp: new Date().toISOString()
     });
     changeActiveClient(clientName);

@@ -84,10 +84,10 @@ export const useActiveClient = () => {
           );
           
           const clienteParaSelecionar = hospitalDoCabelo || clientsToShow[0];
-          console.log('✅ Selecionando cliente automaticamente:', clienteParaSelecionar);
+          console.log('✅ useActiveClient: Selecionando cliente automaticamente:', clienteParaSelecionar);
           setActiveClient(clienteParaSelecionar);
         } else if (clientsToShow.length === 0) {
-          console.log('⚠️ Nenhum cliente disponível para este usuário');
+          console.log('⚠️ useActiveClient: Nenhum cliente disponível para este usuário');
           setActiveClient('');
         }
         
@@ -104,7 +104,11 @@ export const useActiveClient = () => {
   }, [profile, isAdmin, authLoading]);
 
   const changeActiveClient = (clientName: string) => {
-    console.log('🔄 Tentando mudar para cliente:', `"${clientName}"`);
+    console.log('🔄 useActiveClient: MUDANDO CLIENTE:', {
+      de: activeClient,
+      para: clientName,
+      timestamp: new Date().toISOString()
+    });
     
     // Verificar se o usuário tem permissão
     if (!isAdmin && !availableClients.includes(clientName)) {
@@ -114,17 +118,17 @@ export const useActiveClient = () => {
     }
     
     setActiveClient(clientName);
-    console.log('✅ Cliente alterado para:', `"${clientName}"`);
+    console.log('✅ useActiveClient: Cliente alterado para:', clientName);
   };
 
-  console.log('📊 useActiveClient: Estado final:', {
-    activeClient: `"${activeClient}"`,
-    availableClients: availableClients,
-    totalClientes: availableClients.length,
-    isLoading: isLoading || authLoading,
-    isAdmin,
-    userId: profile?.id
-  });
+    console.log('📊 useActiveClient: Estado final:', {
+      activeClient: activeClient,
+      availableClients: availableClients,
+      totalClientes: availableClients.length,
+      isLoading: isLoading || authLoading,
+      isAdmin,
+      userId: profile?.id
+    });
 
   return {
     activeClient,

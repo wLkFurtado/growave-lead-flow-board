@@ -22,18 +22,21 @@ export const useFacebookAdsData = ({
 
   useEffect(() => {
     if (!enabled || !activeClient || activeClient.trim() === '') {
+      console.log('🔄 useFacebookAdsData: Limpando dados - cliente vazio ou disabled');
       setData([]);
       setIsLoading(false);
       setError(null);
       return;
     }
 
+    console.log('🔄 useFacebookAdsData: USEEFFECT TRIGGERED para cliente:', activeClient);
+
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        console.log('🔄 useFacebookAdsData: Buscando dados FB para:', `"${activeClient}"`);
+        console.log('🔄 useFacebookAdsData: Buscando dados FB para:', activeClient);
 
         let query = supabase
           .from('facebook_ads')
@@ -75,7 +78,7 @@ export const useFacebookAdsData = ({
         }
 
         console.log('✅ useFacebookAdsData: Dados FB validados:', {
-          cliente: `"${activeClient}"`,
+          cliente: activeClient,
           total: validatedData.length,
           comInvestimento: validatedData.filter(row => row.investimento > 0).length
         });

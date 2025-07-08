@@ -23,7 +23,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
   } : undefined);
 
   console.log('🔄 useClientData: Hook iniciado', {
-    activeClient: `"${activeClient}"`,
+    activeClient: activeClient,
     clientLoading,
     isAdmin,
     userId: profile?.id,
@@ -64,7 +64,7 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
   const isLoading = clientLoading || fbLoading || wppLoading;
   const error = fbError || wppError;
 
-  console.log('📊 useClientData: Estado final para cliente:', `"${activeClient}"`, {
+  console.log('📊 useClientData: Estado final para cliente:', activeClient, {
     isLoading,
     fbCount: facebookAds.length,
     wppCount: whatsappLeads.length,

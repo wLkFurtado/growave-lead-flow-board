@@ -22,18 +22,21 @@ export const useWhatsAppLeadsData = ({
 
   useEffect(() => {
     if (!enabled || !activeClient || activeClient.trim() === '') {
+      console.log('🔄 useWhatsAppLeadsData: Limpando dados - cliente vazio ou disabled');
       setData([]);
       setIsLoading(false);
       setError(null);
       return;
     }
 
+    console.log('🔄 useWhatsAppLeadsData: USEEFFECT TRIGGERED para cliente:', activeClient);
+
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        console.log('🔄 useWhatsAppLeadsData: Buscando dados WPP para:', `"${activeClient}"`);
+        console.log('🔄 useWhatsAppLeadsData: Buscando dados WPP para:', activeClient);
 
         let query = supabase
           .from('whatsapp_anuncio')
@@ -77,7 +80,7 @@ export const useWhatsAppLeadsData = ({
         }
 
         console.log('✅ useWhatsAppLeadsData: Dados WPP validados:', {
-          cliente: `"${activeClient}"`,
+          cliente: activeClient,
           total: validatedData.length,
           comVenda: validatedData.filter(row => row.valor_venda > 0).length
         });
