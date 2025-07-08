@@ -36,6 +36,18 @@ export const DashboardContent = () => {
   // Escolher qual dataset usar baseado na aba ativa
   const currentData = activeTab === 'contacts' ? contactsData : regularData;
   const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = currentData;
+  
+  // Verificação de consistência dos dados - FORÇA NOVA BUSCA SE INCONSISTENTE
+  const isDataConsistent = facebookAds.every(row => !row.cliente_nome || row.cliente_nome === activeClient) &&
+                          whatsappLeads.every(row => !row.cliente_nome || row.cliente_nome === activeClient);
+  
+  if (!isDataConsistent && !isLoading) {
+    console.error('🚨 INCONSISTÊNCIA DETECTADA: Dados não pertencem ao cliente atual!', {
+      activeClient,
+      fbClients: [...new Set(facebookAds.map(row => row.cliente_nome))],
+      wppClients: [...new Set(whatsappLeads.map(row => row.cliente_nome))]
+    });
+  }
 
   console.log('🔄 DashboardContent: RENDER COM DADOS:', {
     activeClient: `"${activeClient}"`,

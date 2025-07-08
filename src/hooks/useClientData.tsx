@@ -25,6 +25,11 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
     to: new Date('2025-06-30')
   } : undefined);
 
+  // Criar uma chave única para forçar re-execução quando o cliente muda
+  const clientKey = `${activeClient}_${Date.now()}`;
+  
+  console.log('🔑 useClientData: Client key gerada:', clientKey);
+
   console.log('🔄 useClientData: Hook iniciado', {
     activeClient: activeClient,
     clientLoading,

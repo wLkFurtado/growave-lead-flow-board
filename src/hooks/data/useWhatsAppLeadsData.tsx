@@ -35,6 +35,7 @@ export const useWhatsAppLeadsData = ({
     // FORÇAR LIMPEZA IMEDIATA DOS DADOS ANTERIORES
     setData([]);
     setError(null);
+    setIsLoading(true);
 
     const fetchData = async () => {
       setIsLoading(true);

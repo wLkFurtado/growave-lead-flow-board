@@ -120,10 +120,13 @@ export const useActiveClient = () => {
     // FORÇAR LIMPEZA DE DADOS ANTES DA MUDANÇA
     console.log('🧹 useActiveClient: LIMPANDO dados do cliente anterior:', activeClient);
     
-    setActiveClient(clientName);
-    
-    console.log('✅ useActiveClient: Cliente alterado para:', clientName);
-    console.log('🔄 useActiveClient: DADOS DEVEM SER RECARREGADOS AGORA para:', clientName);
+    // Força uma atualização para garantir que todos os hooks sejam re-executados
+    setActiveClient(''); // Primeiro limpa
+    setTimeout(() => {
+      setActiveClient(clientName); // Depois seta o novo cliente
+      console.log('✅ useActiveClient: Cliente alterado para:', clientName);
+      console.log('🔄 useActiveClient: DADOS DEVEM SER RECARREGADOS AGORA para:', clientName);
+    }, 10); // Pequeno delay para garantir re-render
   };
 
     console.log('📊 useActiveClient: Estado final:', {
