@@ -5,10 +5,9 @@ import { MainLayout } from './MainLayout';
 import { TabContent } from './TabContent';
 import { DashboardSkeleton } from './LoadingStates';
 import { useClientData } from '../../hooks/useClientData';
-import { useClientDateRange } from '../../hooks/useClientDateRange';
 import { useAuth } from '../../hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Info, Calendar, Database } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 
 interface DateRange {
   from: Date;
@@ -20,39 +19,30 @@ export const DashboardContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [customDateRange, setCustomDateRange] = useState<DateRange | null>(null);
   
-  // Primeiro buscar dados básicos para ter o activeClient
-  const basicData = useClientData({ skipDateFilter: true });
-  
-  // Sistema dinâmico: detectar período automático para cada cliente
-  const clientDateInfo = useClientDateRange({ 
-    activeClient: basicData.activeClient,
-    enabled: !!basicData.activeClient 
-  });
-  
   // Para aba de contatos: buscar todos os dados sem filtro de data
   const contactsData = useClientData({ 
     skipDateFilter: true 
   });
   
-  // Para outras abas: usar sistema dinâmico
+  // Para outras abas: usar filtro customizado se houver, senão sem filtro
   const regularData = useClientData({ 
-    dateRange: customDateRange || clientDateInfo.dateRange || undefined
+    dateRange: customDateRange || undefined,
+    skipDateFilter: !customDateRange
   });
 
   // Escolher qual dataset usar baseado na aba ativa
   const currentData = activeTab === 'contacts' ? contactsData : regularData;
   const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = currentData;
   
-  // Atualizar o cliente no hook de detecção de período
-  useEffect(() => {
-    if (activeClient && clientDateInfo.dateRange && !customDateRange) {
-      console.log('🎯 Sistema Dinâmico: Período detectado para', activeClient, {
-        from: clientDateInfo.dateRange.from.toISOString().split('T')[0],
-        to: clientDateInfo.dateRange.to.toISOString().split('T')[0],
-        totalRecords: clientDateInfo.totalRecords
-      });
-    }
-  }, [activeClient, clientDateInfo.dateRange, customDateRange]);
+  console.log('🔄 DashboardContent: RENDER COM DADOS:', {
+    activeClient: `"${activeClient}"`,
+    activeTab,
+    fbCount: facebookAds.length,
+    wppCount: whatsappLeads.length,
+    isLoading,
+    hasData,
+    customDateRange: customDateRange ? 'definido' : 'nenhum'
+  });
   
   // Verificação de consistência dos dados - FORÇA NOVA BUSCA SE INCONSISTENTE
   const isDataConsistent = facebookAds.every(row => !row.cliente_nome || row.cliente_nome === activeClient) &&
@@ -83,13 +73,12 @@ export const DashboardContent = () => {
   console.log('whatsappLeads.length:', whatsappLeads.length);
   console.log('hasData:', hasData);
   console.log('error:', error);
-  const currentDateRange = customDateRange || clientDateInfo.dateRange;
+  const currentDateRange = customDateRange;
   console.log('dateRange:', currentDateRange ? {
     from: currentDateRange.from.toISOString().split('T')[0],
     to: currentDateRange.to.toISOString().split('T')[0],
-    isCustom: !!customDateRange,
-    totalRecords: clientDateInfo.totalRecords
-  } : 'sem período detectado');
+    isCustom: !!customDateRange
+  } : 'sem período definido');
 
   const handleDateRangeChange = (newRange: DateRange) => {
     console.log('📅 DASHBOARD: Mudando período para cliente:', `"${activeClient}"`, {
@@ -177,28 +166,6 @@ export const DashboardContent = () => {
         </Alert>
       )}
       
-      {/* Indicadores dinâmicos do sistema */}
-      {clientDateInfo.hasData && activeTab === 'dashboard' && (
-        <Alert className="mb-4 bg-green-900/20 border-green-500/50 text-green-400">
-          <Database className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Dados disponíveis:</strong> {clientDateInfo.totalRecords.facebook} Facebook Ads + {clientDateInfo.totalRecords.whatsapp} WhatsApp Leads
-            {currentDateRange && (
-              <>
-                {' '}• Período: {currentDateRange.from.toISOString().split('T')[0]} até {currentDateRange.to.toISOString().split('T')[0]}
-                {customDateRange && (
-                  <button 
-                    onClick={clearCustomDateRange}
-                    className="ml-2 text-blue-400 hover:text-blue-300 underline"
-                  >
-                    [Mostrar todos os dados]
-                  </button>
-                )}
-              </>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
       
       <TabContent
         activeTab={activeTab}
