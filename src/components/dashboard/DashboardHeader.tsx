@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UserProfile } from './UserProfile';
 import { ClientSelector } from './ClientSelector';
 import { useAuth } from '@/hooks/useAuth';
+import { useActiveClient } from '@/hooks/useActiveClient';
 import { Bell, Menu, X } from 'lucide-react';
 
 interface DashboardHeaderProps {
@@ -19,6 +20,7 @@ export const DashboardHeader = ({
     isAdmin,
     profile
   } = useAuth();
+  const { activeClient } = useActiveClient();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getTitle = () => {
@@ -71,9 +73,9 @@ export const DashboardHeader = ({
           
           {isAdmin && <div className="hidden lg:block"><ClientSelector /></div>}
           
-          {!isAdmin && profile && <div className="hidden md:flex bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700 growave-card-hover">
+          {!isAdmin && activeClient && <div className="hidden md:flex bg-slate-800/50 rounded-lg px-4 py-2 border border-slate-700 growave-card-hover">
               <span className="text-sm text-slate-300">Cliente: </span>
-              <span className="text-sm font-medium text-white ml-1">{profile.nome_completo}</span>
+              <span className="text-sm font-medium text-white ml-1">{activeClient}</span>
             </div>}
         </div>
         
