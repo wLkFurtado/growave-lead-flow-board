@@ -29,7 +29,12 @@ export const useWhatsAppLeadsData = ({
       return;
     }
 
-    console.log('🔄 useWhatsAppLeadsData: USEEFFECT TRIGGERED para cliente:', activeClient);
+    console.log('🔄 useWhatsAppLeadsData: USEEFFECT TRIGGERED para cliente:', `"${activeClient}"`);
+    console.log('🔄 useWhatsAppLeadsData: LIMPANDO dados anteriores e iniciando busca...');
+    
+    // FORÇAR LIMPEZA IMEDIATA DOS DADOS ANTERIORES
+    setData([]);
+    setError(null);
 
     const fetchData = async () => {
       setIsLoading(true);

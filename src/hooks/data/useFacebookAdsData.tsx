@@ -29,7 +29,12 @@ export const useFacebookAdsData = ({
       return;
     }
 
-    console.log('🔄 useFacebookAdsData: USEEFFECT TRIGGERED para cliente:', activeClient);
+    console.log('🔄 useFacebookAdsData: USEEFFECT TRIGGERED para cliente:', `"${activeClient}"`);
+    console.log('🔄 useFacebookAdsData: LIMPANDO dados anteriores e iniciando busca...');
+    
+    // FORÇAR LIMPEZA IMEDIATA DOS DADOS ANTERIORES
+    setData([]);
+    setError(null);
 
     const fetchData = async () => {
       setIsLoading(true);

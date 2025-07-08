@@ -117,8 +117,13 @@ export const useActiveClient = () => {
       return;
     }
     
+    // FORÇAR LIMPEZA DE DADOS ANTES DA MUDANÇA
+    console.log('🧹 useActiveClient: LIMPANDO dados do cliente anterior:', activeClient);
+    
     setActiveClient(clientName);
+    
     console.log('✅ useActiveClient: Cliente alterado para:', clientName);
+    console.log('🔄 useActiveClient: DADOS DEVEM SER RECARREGADOS AGORA para:', clientName);
   };
 
     console.log('📊 useActiveClient: Estado final:', {

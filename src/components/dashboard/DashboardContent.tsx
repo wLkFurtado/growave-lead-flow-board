@@ -28,7 +28,7 @@ export const DashboardContent = () => {
     skipDateFilter: true 
   });
   
-  // Para outras abas: usar filtro de data normal
+  // Para outras abas: usar filtro de data normal  
   const regularData = useClientData({ 
     dateRange 
   });
@@ -36,6 +36,15 @@ export const DashboardContent = () => {
   // Escolher qual dataset usar baseado na aba ativa
   const currentData = activeTab === 'contacts' ? contactsData : regularData;
   const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = currentData;
+
+  console.log('🔄 DashboardContent: RENDER COM DADOS:', {
+    activeClient: `"${activeClient}"`,
+    activeTab,
+    fbCount: facebookAds.length,
+    wppCount: whatsappLeads.length,
+    isLoading,
+    hasData
+  });
 
   console.log('=== DASHBOARD CONTENT RENDER ===');
   console.log('activeTab:', activeTab);

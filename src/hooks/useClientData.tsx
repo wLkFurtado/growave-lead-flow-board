@@ -16,6 +16,9 @@ export const useClientData = (options: UseClientDataOptions = {}) => {
   const { activeClient, isLoading: clientLoading } = useActiveClient();
   const { isAdmin, profile } = useAuth();
 
+  console.log('🔄 useClientData: Hook iniciado com activeClient:', `"${activeClient}"`);
+  console.log('🔄 useClientData: Timestamp:', new Date().toISOString());
+
   // Determine effective date range
   const effectiveDateRange = dateRange || (!skipDateFilter ? {
     from: new Date('2025-06-01'),
