@@ -87,7 +87,7 @@ export const useWhatsAppLeadsQuery = ({
     enabled: enabled && !!activeClient && activeClient.trim() !== '',
     staleTime: 5 * 60 * 1000, // 5 minutos
     gcTime: 10 * 60 * 1000, // 10 minutos (era cacheTime)
-    refetchOnWindowFocus: false,
+    // ✅ Removido refetchOnWindowFocus: false para usar configuração global
     retry: (failureCount, error) => {
       // Não tentar novamente em caso de erro de segurança
       if (error.message.includes('segurança')) {
