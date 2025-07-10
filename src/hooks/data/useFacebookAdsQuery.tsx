@@ -30,6 +30,12 @@ export const useFacebookAdsQuery = ({
       }
 
       console.log('🔄 useFacebookAdsQuery: Buscando dados FB para:', activeClient);
+      console.log('📊 useFacebookAdsQuery: Query Key:', [
+        'facebook-ads', 
+        activeClient, 
+        skipDateFilter ? 'no-date-filter' : dateRange?.from?.toISOString(), 
+        skipDateFilter ? 'no-date-filter' : dateRange?.to?.toISOString()
+      ]);
 
       let query = supabase
         .from('facebook_ads')

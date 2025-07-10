@@ -30,6 +30,12 @@ export const useWhatsAppLeadsQuery = ({
       }
 
       console.log('🔄 useWhatsAppLeadsQuery: Buscando dados WA para:', activeClient);
+      console.log('📊 useWhatsAppLeadsQuery: Query Key:', [
+        'whatsapp-leads', 
+        activeClient, 
+        skipDateFilter ? 'no-date-filter' : dateRange?.from?.toISOString(), 
+        skipDateFilter ? 'no-date-filter' : dateRange?.to?.toISOString()
+      ]);
 
       let query = supabase
         .from('whatsapp_anuncio')

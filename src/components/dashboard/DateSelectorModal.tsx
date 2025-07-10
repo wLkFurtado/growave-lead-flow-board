@@ -19,6 +19,7 @@ interface DateSelectorModalProps {
 
 export const DateSelectorModal = ({ open, onOpenChange, value, onChange }: DateSelectorModalProps) => {
   const [tempRange, setTempRange] = useState<DateRange>(value || { from: new Date(), to: new Date() });
+  const [isApplying, setIsApplying] = useState(false);
   
   const presets = [
     {
@@ -37,8 +38,16 @@ export const DateSelectorModal = ({ open, onOpenChange, value, onChange }: DateS
       value: { from: subDays(new Date(), 7), to: new Date() }
     },
     {
-      label: 'Mês',
+      label: 'Últimos 30 dias',
+      value: { from: subDays(new Date(), 30), to: new Date() }
+    },
+    {
+      label: 'Mês Atual',
       value: { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
+    },
+    {
+      label: 'Últimos 90 dias',
+      value: { from: subDays(new Date(), 90), to: new Date() }
     }
   ];
 
@@ -58,8 +67,28 @@ export const DateSelectorModal = ({ open, onOpenChange, value, onChange }: DateS
     }
   };
 
-  const handleApply = () => {
-    onChange(tempRange);
+  const handleApply = async () => {
+    // Validação básica
+    if (tempRange.from > tempRange.to) {
+      return; // Poderia mostrar erro aqui
+    }
+    
+    setIsApplying(true);
+    try {
+      onChange(tempRange);
+      onOpenChange(false);
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const handleClearFilter = () => {
+    const defaultRange = { 
+      from: subDays(new Date(), 30), 
+      to: new Date() 
+    };
+    setTempRange(defaultRange);
+    onChange(defaultRange);
     onOpenChange(false);
   };
 
@@ -137,20 +166,31 @@ export const DateSelectorModal = ({ open, onOpenChange, value, onChange }: DateS
           </div>
 
           {/* Botões de Ação */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+          <div className="flex justify-between gap-3 pt-4 border-t border-slate-700">
             <Button
               variant="outline"
-              onClick={handleCancel}
+              onClick={handleClearFilter}
               className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
             >
-              Cancelar
+              Limpar Filtro
             </Button>
-            <Button
-              onClick={handleApply}
-              className="bg-[#00FF88] text-slate-900 hover:bg-[#00FF88]/90"
-            >
-              Aplicar
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                disabled={isApplying}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleApply}
+                className="bg-[#00FF88] text-slate-900 hover:bg-[#00FF88]/90"
+                disabled={isApplying || tempRange.from > tempRange.to}
+              >
+                {isApplying ? 'Aplicando...' : 'Aplicar'}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

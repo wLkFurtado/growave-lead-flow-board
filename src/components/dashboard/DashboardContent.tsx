@@ -30,9 +30,10 @@ export const DashboardContent = () => {
     };
   });
   
-  // Usar um único hook - sempre sem filtro para garantir que carregue dados
+  // Usar hook com filtro de data conectado
   const clientData = useClientDataQuery({ 
-    skipDateFilter: true  // SEMPRE sem filtro para garantir dados
+    dateRange: customDateRange,
+    skipDateFilter: false
   });
 
   const { facebookAds, whatsappLeads, isLoading, error, activeClient, stats } = clientData;
