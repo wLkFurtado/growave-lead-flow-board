@@ -1,19 +1,19 @@
 
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { ChevronDown, Building2, Lock, AlertTriangle } from 'lucide-react';
 import { useClientContext } from '@/contexts/ClientContext';
 import { useAuth } from '@/hooks/useAuth';
 
-export const ClientSelector = () => {
+export const ClientSelector = memo(() => {
   const { activeClient, availableClients, isLoading, changeActiveClient } = useClientContext();
   const { isAdmin, profile } = useAuth();
 
-  console.log('=== ClientSelector Render ===');
-  console.log('activeClient:', activeClient);
-  console.log('availableClients:', availableClients);
-  console.log('isLoading:', isLoading);
-  console.log('isAdmin:', isAdmin);
-  console.log('profile:', profile?.email);
+  const clientOptions = useMemo(() => {
+    return availableClients.map(client => ({
+      label: client,
+      value: client
+    }));
+  }, [availableClients]);
 
   if (isLoading) {
     return (
@@ -36,11 +36,6 @@ export const ClientSelector = () => {
   }
 
   const handleClientChange = (clientName: string) => {
-    console.log('🔄 ClientSelector: INICIANDO MUDANÇA DE CLIENTE:', {
-      de: activeClient,
-      para: clientName,
-      timestamp: new Date().toISOString()
-    });
     changeActiveClient(clientName);
   };
 
@@ -72,19 +67,19 @@ export const ClientSelector = () => {
             )}
           </div>
           
-          {availableClients.length > 0 ? (
-            availableClients.map((client) => (
+          {clientOptions.length > 0 ? (
+            clientOptions.map(({ label, value }) => (
               <button
-                key={client}
-                onClick={() => handleClientChange(client)}
+                key={value}
+                onClick={() => handleClientChange(value)}
                 className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors duration-200 flex items-center justify-between ${
-                  client === activeClient
+                  value === activeClient
                     ? 'bg-[#00FF88]/20 text-[#00FF88] font-medium'
                     : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                 }`}
               >
-                <span className="truncate">{client}</span>
-                {client === activeClient && (
+                <span className="truncate">{label}</span>
+                {value === activeClient && (
                   <span className="flex-shrink-0 ml-2 text-xs text-[#00FF88]">✓</span>
                 )}
                 {!isAdmin && (
@@ -103,4 +98,4 @@ export const ClientSelector = () => {
       </div>
     </div>
   );
-};
+});

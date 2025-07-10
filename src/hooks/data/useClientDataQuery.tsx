@@ -43,19 +43,15 @@ export const useClientDataQuery = (options: UseClientDataQueryOptions = {}) => {
   const isLoading = facebookQuery.isLoading || whatsappQuery.isLoading;
   const error = facebookQuery.error || whatsappQuery.error;
 
-  // Logs para debug
-  console.log('🔄 useClientDataQuery: Estado atual:', {
-    activeClient,
-    skipDateFilter,
-    dateRange: dateRange ? {
-      from: dateRange.from.toISOString().split('T')[0],
-      to: dateRange.to?.toISOString().split('T')[0]
-    } : null,
-    isLoading,
-    facebookCount: facebookAds.length,
-    whatsappCount: whatsappLeads.length,
-    hasError: !!error
-  });
+  // Debug apenas em desenvolvimento
+  if (import.meta.env.DEV && false) { // Desabilitado
+    console.log('🔄 useClientDataQuery: Estado atual:', {
+      activeClient,
+      isLoading,
+      facebookCount: facebookAds.length,
+      whatsappCount: whatsappLeads.length
+    });
+  }
 
   return {
     // Dados
