@@ -44,13 +44,6 @@ export const TabContent = ({
     case 'dashboard':
       return (
         <div>
-          <div className="flex justify-end mb-4">
-            <DateRangePicker
-              value={dateRange}
-              onChange={handleDateRangeChange}
-            />
-          </div>
-          
           {hasRealData ? (
             <DashboardOverview 
               adsData={facebookAds}
