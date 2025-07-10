@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from './MainLayout';
 import { TabContent } from './TabContent';
 import { DashboardSkeleton } from './LoadingStates';
+import { DebugOverlay } from './DebugOverlay';
 import { useClientDataQuery } from '@/hooks/data/useClientDataQuery';
 import { useClientContext } from '@/contexts/ClientContext';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Info } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface DateRange {
   from: Date;
@@ -13,9 +16,9 @@ interface DateRange {
 }
 
 export const DashboardContent = () => {
-  console.log('🔄 DashboardContent: Iniciando componente');
-  
   const { isLoading: clientLoading } = useClientContext();
+  const queryClient = useQueryClient();
+  const isPageVisible = usePageVisibility();
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -38,22 +41,22 @@ export const DashboardContent = () => {
 
   const { facebookAds, whatsappLeads, isLoading, error, activeClient, stats } = clientData;
   
-  console.log('🔄 DashboardContent: Estado atual', {
-    activeClient: `"${activeClient}"`,
-    activeTab,
-    fbCount: facebookAds?.length || 0,
-    wppCount: whatsappLeads?.length || 0,
-    isLoading,
-    clientLoading,
-    hasData: stats?.hasData,
-    error
-  });
+  // ✅ Invalidar queries quando página volta a ficar visível
+  useEffect(() => {
+    if (isPageVisible && activeClient) {
+      console.log('🔄 Página visível - invalidando queries para cliente:', activeClient);
+      queryClient.invalidateQueries({ 
+        queryKey: ['facebook-ads', activeClient],
+        refetchType: 'active'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['whatsapp-leads', activeClient],
+        refetchType: 'active'
+      });
+    }
+  }, [isPageVisible, activeClient, queryClient]);
 
   const handleDateRangeChange = (newRange: DateRange) => {
-    console.log('📅 DASHBOARD: Mudando período para cliente:', `"${activeClient}"`, {
-      from: newRange.from.toISOString().split('T')[0],
-      to: newRange.to.toISOString().split('T')[0]
-    });
     setCustomDateRange(newRange);
   };
 
@@ -63,7 +66,6 @@ export const DashboardContent = () => {
 
   // Se está carregando contexto do cliente ou dados, mostrar loading
   if (clientLoading || isLoading) {
-    console.log('📊 DASHBOARD: Renderizando loading state');
     return (
       <MainLayout 
         activeTab={activeTab}
@@ -78,7 +80,6 @@ export const DashboardContent = () => {
 
   // Se há erro, mostrar erro
   if (error) {
-    console.log('📊 DASHBOARD: Renderizando error state:', error);
     return (
       <MainLayout 
         activeTab={activeTab}
@@ -96,12 +97,6 @@ export const DashboardContent = () => {
     );
   }
 
-  console.log('📊 DASHBOARD: Renderizando dashboard normal:', {
-    activeClient,
-    fbCount: facebookAds.length,
-    wppCount: whatsappLeads.length
-  });
-
   return (
     <MainLayout 
       activeTab={activeTab}
@@ -118,6 +113,12 @@ export const DashboardContent = () => {
         facebookAds={facebookAds}
         whatsappLeads={whatsappLeads}
         handleDateRangeChange={handleDateRangeChange}
+      />
+      
+      {/* ✅ Debug overlay temporário para monitoramento */}
+      <DebugOverlay 
+        activeClient={activeClient}
+        isPageVisible={isPageVisible}
       />
     </MainLayout>
   );

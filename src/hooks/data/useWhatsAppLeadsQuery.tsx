@@ -23,7 +23,7 @@ export const useWhatsAppLeadsQuery = ({
       skipDateFilter ? 'no-date-filter' : dateRange?.from?.toISOString(), 
       skipDateFilter ? 'no-date-filter' : dateRange?.to?.toISOString()
     ],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!activeClient || activeClient.trim() === '') {
         console.log('🔄 useWhatsAppLeadsQuery: Cliente vazio, retornando array vazio');
         return [];
@@ -41,7 +41,8 @@ export const useWhatsAppLeadsQuery = ({
         .from('whatsapp_anuncio')
         .select('*')
         .eq('cliente_nome', activeClient)
-        .order('data_criacao', { ascending: false });
+        .order('data_criacao', { ascending: false })
+        .abortSignal(signal);
 
       // Apply date filter if needed
       if (!skipDateFilter && dateRange) {
@@ -85,7 +86,7 @@ export const useWhatsAppLeadsQuery = ({
       return validatedData;
     },
     enabled: enabled && !!activeClient && activeClient.trim() !== '',
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 30 * 1000, // ✅ 30 segundos (para debug - era 5 minutos)
     gcTime: 10 * 60 * 1000, // 10 minutos (era cacheTime)
     // ✅ Removido refetchOnWindowFocus: false para usar configuração global
     retry: (failureCount, error) => {

@@ -14,9 +14,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutos
+      staleTime: 30 * 1000, // ✅ 30 segundos (para debug - era 5 minutos)
       gcTime: 10 * 60 * 1000, // 10 minutos
-      refetchOnWindowFocus: true, // ✅ Corrigido: refetch ao voltar à aba
+      refetchOnWindowFocus: true, // ✅ Refetch ao voltar à aba
       refetchOnMount: true, // ✅ Refetch ao montar componente
       refetchOnReconnect: true, // ✅ Refetch ao reconectar à internet
       retry: 2

@@ -17,20 +17,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('🔄 AuthProvider: Componente iniciado');
+  // ✅ Log removido para melhor performance
 
   const loadUserProfile = async (user: User) => {
     try {
-      console.log('🔄 AuthProvider: Carregando perfil do usuário...', user.id);
       setError(null);
       
       const profileData = await fetchProfile(user.id, user);
-      console.log('✅ AuthProvider: Perfil carregado:', profileData);
       setProfile(profileData);
       
       // Buscar clientes associados se não for admin
       if (profileData.role !== 'admin') {
-        console.log('👤 AuthProvider: Buscando clientes para usuário não-admin');
         const { data: clientsData, error: clientsError } = await supabase
           .from('user_clients')
           .select('cliente_nome')
@@ -43,9 +40,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         const clients = clientsData?.map(item => item.cliente_nome) || [];
         setUserClients(clients);
-        console.log('✅ AuthProvider: Clientes carregados:', clients);
       } else {
-        console.log('👑 AuthProvider: Usuário admin - sem clientes específicos');
         setUserClients([]);
       }
       
@@ -67,11 +62,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    console.log('🔄 AuthProvider: useEffect principal iniciado');
-    
     const initializeAuth = async () => {
       try {
-        console.log('🔄 AuthProvider: Verificando sessão existente...');
         setIsLoading(true);
         setError(null);
         
@@ -84,14 +76,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           return;
         }
 
-        console.log('✅ AuthProvider: Session obtida:', !!session?.user);
-
         if (session?.user) {
-          console.log('🔄 AuthProvider: Usuário encontrado, carregando perfil...');
           setUser(session.user);
           await loadUserProfile(session.user);
         } else {
-          console.log('⚠️ AuthProvider: Nenhum usuário logado');
           setUser(null);
           setProfile(null);
           setUserClients([]);
@@ -101,7 +89,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.error('❌ AuthProvider: Erro na inicialização:', error);
         setError('Erro inesperado na inicialização');
       } finally {
-        console.log('✅ AuthProvider: Finalizando loading');
         setIsLoading(false);
       }
     };
@@ -111,8 +98,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Listener para mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔔 AuthProvider: Auth state changed:', event);
-        
         try {
           if (event === 'SIGNED_OUT') {
             setUser(null);
@@ -135,7 +120,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     );
 
     return () => {
-      console.log('🧹 AuthProvider: Cleanup');
       subscription.unsubscribe();
     };
   }, []);
@@ -150,15 +134,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signOut: authSignOut,
   };
 
-  console.log('📊 AuthProvider: Estado final:', {
-    user: !!user,
-    profile: !!profile,
-    role: profile?.role,
-    userClients: userClients.length,
-    isLoading,
-    isAdmin: profile?.role === 'admin',
-    error
-  });
+  // ✅ Log removido para melhor performance
 
   // Se houver erro crítico, mostrar tela de erro
   if (error && !profile) {

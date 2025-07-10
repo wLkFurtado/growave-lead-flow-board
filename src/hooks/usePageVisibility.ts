@@ -12,11 +12,10 @@ export const usePageVisibility = () => {
       const visible = !document.hidden;
       setIsVisible(visible);
       
-      // Log para debug
-      console.log('👁️ Visibilidade da página mudou:', {
-        visible,
-        timestamp: new Date().toLocaleTimeString()
-      });
+      // ✅ Log otimizado - apenas quando volta a ficar visível
+      if (visible) {
+        console.log('👁️ Página visível - trigger refetch:', new Date().toLocaleTimeString());
+      }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
