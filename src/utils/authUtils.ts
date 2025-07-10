@@ -25,48 +25,46 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('❌ AuthUtils: Erro ao buscar perfil:', error);
+      throw error;
+    }
+
+    if (!profileData) {
+      console.log('⚠️ AuthUtils: Perfil não encontrado, criando perfil padrão');
       
-      // Se for erro 406 (PGRST116), significa que não encontrou nenhum registro
-      if (error.code === 'PGRST116') {
-        console.log('⚠️ AuthUtils: Perfil não encontrado, criando perfil padrão');
-        
-        // Tentar criar um novo perfil
-        const newProfile = {
-          id: userId,
-          email: user?.email || 'email@example.com',
-          name: user?.email?.split('@')[0] || 'Usuário',
-          role: 'client'
-        };
-        
-        const { data: createdProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert(newProfile)
-          .select()
-          .single();
-        
-        if (createError) {
-          console.error('❌ AuthUtils: Erro ao criar perfil:', createError);
-          throw new Error('Não foi possível criar o perfil do usuário');
-        }
-        
-        console.log('✅ AuthUtils: Perfil criado com sucesso:', createdProfile);
-        
-        const profile: Profile = {
-          id: createdProfile.id,
-          nome_completo: createdProfile.name || user?.email?.split('@')[0] || 'Usuário',
-          email: createdProfile.email,
-          role: createdProfile.role || 'client',
-          clientes_associados: []
-        };
-        
-        return profile;
+      // Tentar criar um novo perfil
+      const newProfile = {
+        id: userId,
+        email: user?.email || 'email@example.com',
+        name: user?.email?.split('@')[0] || 'Usuário',
+        role: 'client'
+      };
+      
+      const { data: createdProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert(newProfile)
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error('❌ AuthUtils: Erro ao criar perfil:', createError);
+        throw new Error('Não foi possível criar o perfil do usuário');
       }
       
-      throw error;
+      console.log('✅ AuthUtils: Perfil criado com sucesso:', createdProfile);
+      
+      const profile: Profile = {
+        id: createdProfile.id,
+        nome_completo: createdProfile.name || user?.email?.split('@')[0] || 'Usuário',
+        email: createdProfile.email,
+        role: createdProfile.role || 'client',
+        clientes_associados: []
+      };
+      
+      return profile;
     }
 
     const profile: Profile = {
