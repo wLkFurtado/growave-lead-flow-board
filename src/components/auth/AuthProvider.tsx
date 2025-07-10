@@ -1,5 +1,5 @@
 
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, ReactNode, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContext } from '@/contexts/AuthContext';
@@ -16,6 +16,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userClients, setUserClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // ✅ Cache para evitar re-fetch desnecessário do perfil
+  const profileCacheRef = useRef<{ userId: string; profile: Profile; clients: string[] } | null>(null);
 
   // ✅ Log removido para melhor performance
 
@@ -23,8 +26,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setError(null);
       
+      // ✅ Verificar cache antes de buscar novamente
+      if (profileCacheRef.current?.userId === user.id) {
+        setProfile(profileCacheRef.current.profile);
+        setUserClients(profileCacheRef.current.clients);
+        return;
+      }
+      
       const profileData = await fetchProfile(user.id, user);
       setProfile(profileData);
+      
+      let clients: string[] = [];
       
       // Buscar clientes associados se não for admin
       if (profileData.role !== 'admin') {
@@ -38,11 +50,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           throw clientsError;
         }
         
-        const clients = clientsData?.map(item => item.cliente_nome) || [];
+        clients = clientsData?.map(item => item.cliente_nome) || [];
         setUserClients(clients);
       } else {
         setUserClients([]);
       }
+      
+      // ✅ Salvar no cache
+      profileCacheRef.current = {
+        userId: user.id,
+        profile: profileData,
+        clients: clients
+      };
       
     } catch (error) {
       console.error('❌ AuthProvider: Erro ao carregar perfil:', error);
@@ -105,11 +124,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setUserClients([]);
             setError(null);
             setIsLoading(false);
+            // ✅ Limpar cache ao fazer logout
+            profileCacheRef.current = null;
           } else if (event === 'SIGNED_IN' && session?.user) {
-            setUser(session.user);
-            setIsLoading(true);
-            await loadUserProfile(session.user);
-            setIsLoading(false);
+            // ✅ Só recarregar se mudou de usuário ou não tem cache
+            if (!profileCacheRef.current || profileCacheRef.current.userId !== session.user.id) {
+              setUser(session.user);
+              setIsLoading(true);
+              await loadUserProfile(session.user);
+              setIsLoading(false);
+            } else {
+              // ✅ Usar cache existente
+              setUser(session.user);
+              setProfile(profileCacheRef.current.profile);
+              setUserClients(profileCacheRef.current.clients);
+            }
           }
         } catch (error) {
           console.error('❌ AuthProvider: Erro no listener:', error);

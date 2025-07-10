@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/auth';
 
 export const signIn = async (email: string, password: string) => {
-  console.log('🔄 AuthUtils: Fazendo login...');
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -12,13 +11,10 @@ export const signIn = async (email: string, password: string) => {
 };
 
 export const signOut = async () => {
-  console.log('🔄 AuthUtils: Fazendo logout...');
   await supabase.auth.signOut();
 };
 
 export const fetchProfile = async (userId: string, user: any): Promise<Profile> => {
-  console.log('🔄 AuthUtils: Buscando perfil do usuário no banco:', userId);
-  
   try {
     // Buscar perfil da tabela profiles
     const { data: profileData, error } = await supabase
@@ -33,8 +29,6 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
     }
 
     if (!profileData) {
-      console.log('⚠️ AuthUtils: Perfil não encontrado, criando perfil padrão');
-      
       // Tentar criar um novo perfil
       const newProfile = {
         id: userId,
@@ -53,8 +47,6 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
         console.error('❌ AuthUtils: Erro ao criar perfil:', createError);
         throw new Error('Não foi possível criar o perfil do usuário');
       }
-      
-      console.log('✅ AuthUtils: Perfil criado com sucesso:', createdProfile);
       
       const profile: Profile = {
         id: createdProfile.id,
@@ -75,7 +67,6 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
       clientes_associados: []
     };
 
-    console.log('✅ AuthUtils: Perfil encontrado no banco:', profile);
     return profile;
     
   } catch (error) {
@@ -90,7 +81,6 @@ export const fetchProfile = async (userId: string, user: any): Promise<Profile> 
       clientes_associados: []
     };
     
-    console.log('🔄 AuthUtils: Usando perfil fallback:', fallbackProfile);
     return fallbackProfile;
   }
 };

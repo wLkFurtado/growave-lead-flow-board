@@ -1,53 +1,33 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useClientContext } from '@/contexts/ClientContext';
+import { useEffect, useState, useRef } from 'react';
 
 /**
- * Hook para monitorar visibilidade da página com debounce
+ * Hook otimizado para monitorar visibilidade da página
+ * APENAS retorna estado de visibilidade - sem invalidações automáticas
  */
 export const usePageVisibility = () => {
   const [isVisible, setIsVisible] = useState(!document.hidden);
-  const queryClient = useQueryClient();
-  const { activeClient } = useClientContext();
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  // Debounce para evitar spam de invalidações
-  const debouncedInvalidate = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      if (activeClient) {
-        queryClient.invalidateQueries({
-          queryKey: ['facebook-ads', activeClient]
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['whatsapp-leads', activeClient]
-        });
-      }
-    }, 300); // 300ms debounce
-  }, [queryClient, activeClient]);
+  const lastVisibilityChangeRef = useRef<number>(0);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       const visible = !document.hidden;
-      setIsVisible(visible);
+      const now = Date.now();
       
-      if (visible) {
-        debouncedInvalidate();
+      // ✅ Throttle para evitar spam de mudanças
+      if (now - lastVisibilityChangeRef.current < 1000) {
+        return;
       }
+      
+      lastVisibilityChangeRef.current = now;
+      setIsVisible(visible);
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
     };
-  }, [debouncedInvalidate]);
+  }, []);
 
   return isVisible;
 };

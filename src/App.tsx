@@ -14,11 +14,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30 * 1000, // ✅ 30 segundos (para debug - era 5 minutos)
+      staleTime: 2 * 60 * 1000, // ✅ 2 minutos (mais conservador)
       gcTime: 10 * 60 * 1000, // 10 minutos
-      refetchOnWindowFocus: true, // ✅ Refetch ao voltar à aba
-      refetchOnMount: true, // ✅ Refetch ao montar componente
-      refetchOnReconnect: true, // ✅ Refetch ao reconectar à internet
+      refetchOnWindowFocus: false, // ✅ Desabilitar refetch automático no foco
+      refetchOnMount: false, // ✅ Desabilitar refetch automático no mount
+      refetchOnReconnect: true, // ✅ Manter apenas refetch na reconexão
       retry: 2
     }
   }

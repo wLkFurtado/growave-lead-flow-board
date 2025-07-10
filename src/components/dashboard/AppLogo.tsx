@@ -6,11 +6,11 @@ interface AppLogoProps {
   logoUrl?: string;
 }
 
-export const AppLogo = ({ logoUrl = "/lovable-uploads/1fd9c182-3972-410a-8f61-cc365fe0c0df.png" }: AppLogoProps) => {
+export const AppLogo = ({ logoUrl = "/lovable-uploads/2a4dbb23-a7cd-482e-8e82-47ffc420953b.png" }: AppLogoProps) => {
   const [hasError, setHasError] = useState(false);
 
   const handleImageError = () => {
-    console.error(`Falha ao carregar o logo de ${logoUrl}. Usando fallback.`);
+    // ✅ Log removido para melhor performance
     setHasError(true);
   };
 

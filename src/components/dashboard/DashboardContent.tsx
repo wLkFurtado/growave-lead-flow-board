@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MainLayout } from './MainLayout';
 import { TabContent } from './TabContent';
 import { DashboardSkeleton } from './LoadingStates';
@@ -41,18 +41,29 @@ export const DashboardContent = () => {
 
   const { facebookAds, whatsappLeads, isLoading, error, activeClient, stats } = clientData;
   
-  // ✅ Invalidar queries quando página volta a ficar visível
+  // ✅ Invalidar queries quando página volta a ficar visível (com throttle)
+  const lastInvalidationRef = useRef<number>(0);
+  
   useEffect(() => {
     if (isPageVisible && activeClient) {
-      console.log('🔄 Página visível - invalidando queries para cliente:', activeClient);
-      queryClient.invalidateQueries({ 
-        queryKey: ['facebook-ads', activeClient],
-        refetchType: 'active'
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['whatsapp-leads', activeClient],
-        refetchType: 'active'
-      });
+      const now = Date.now();
+      const timeSinceLastInvalidation = now - lastInvalidationRef.current;
+      
+      // ✅ Só invalidar se passou mais de 30 segundos
+      if (timeSinceLastInvalidation > 30000) {
+        console.log('🔄 Página visível - invalidando queries para cliente:', activeClient);
+        
+        queryClient.invalidateQueries({ 
+          queryKey: ['facebook-ads', activeClient],
+          refetchType: 'active'
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ['whatsapp-leads', activeClient],
+          refetchType: 'active'
+        });
+        
+        lastInvalidationRef.current = now;
+      }
     }
   }, [isPageVisible, activeClient, queryClient]);
 
