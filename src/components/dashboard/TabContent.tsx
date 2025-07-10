@@ -66,17 +66,11 @@ export const TabContent = ({
     
     case 'contacts':
       return (
-        <div>
-          {hasRealData ? (
-            <ContactsOverview 
-              facebookAds={facebookAds}
-              whatsappLeads={whatsappLeads}
-              clientName={activeClient}
-            />
-          ) : (
-            renderEmptyState()
-          )}
-        </div>
+        <ContactsOverview 
+          facebookAds={facebookAds}
+          whatsappLeads={whatsappLeads}
+          clientName={activeClient}
+        />
       );
     
     case 'users':
