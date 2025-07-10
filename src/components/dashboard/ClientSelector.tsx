@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { ChevronDown, Building2, Lock, AlertTriangle } from 'lucide-react';
-import { useActiveClient } from '@/hooks/useActiveClient';
+import { useClientContext } from '@/contexts/ClientContext';
 import { useAuth } from '@/hooks/useAuth';
 
 export const ClientSelector = () => {
-  const { activeClient, availableClients, isLoading, changeActiveClient } = useActiveClient();
+  const { activeClient, availableClients, isLoading, changeActiveClient } = useClientContext();
   const { isAdmin, profile } = useAuth();
 
   console.log('=== ClientSelector Render ===');

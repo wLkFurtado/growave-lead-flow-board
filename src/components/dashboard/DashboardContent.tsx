@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { MainLayout } from './MainLayout';
 import { TabContent } from './TabContent';
 import { DashboardSkeleton } from './LoadingStates';
-import { useClientData } from '../../hooks/useClientData';
+import { useClientDataQuery } from '@/hooks/data/useClientDataQuery';
+import { useClientContext } from '@/contexts/ClientContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Info } from 'lucide-react';
 
@@ -13,6 +14,8 @@ interface DateRange {
 
 export const DashboardContent = () => {
   console.log('🔄 DashboardContent: Iniciando componente');
+  
+  const { isLoading: clientLoading } = useClientContext();
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -28,11 +31,11 @@ export const DashboardContent = () => {
   });
   
   // Usar um único hook - sempre sem filtro para garantir que carregue dados
-  const clientData = useClientData({ 
+  const clientData = useClientDataQuery({ 
     skipDateFilter: true  // SEMPRE sem filtro para garantir dados
   });
 
-  const { facebookAds, whatsappLeads, isLoading, error, activeClient, hasData } = clientData;
+  const { facebookAds, whatsappLeads, isLoading, error, activeClient, stats } = clientData;
   
   console.log('🔄 DashboardContent: Estado atual', {
     activeClient: `"${activeClient}"`,
@@ -40,7 +43,8 @@ export const DashboardContent = () => {
     fbCount: facebookAds?.length || 0,
     wppCount: whatsappLeads?.length || 0,
     isLoading,
-    hasData,
+    clientLoading,
+    hasData: stats?.hasData,
     error
   });
 
@@ -56,8 +60,8 @@ export const DashboardContent = () => {
     setActiveTab(tab);
   };
 
-  // Se está carregando, mostrar loading
-  if (isLoading) {
+  // Se está carregando contexto do cliente ou dados, mostrar loading
+  if (clientLoading || isLoading) {
     console.log('📊 DASHBOARD: Renderizando loading state');
     return (
       <MainLayout 
@@ -107,7 +111,7 @@ export const DashboardContent = () => {
     >
       <TabContent
         activeTab={activeTab}
-        hasData={hasData}
+        hasData={stats?.hasData || false}
         activeClient={activeClient}
         dateRange={customDateRange}
         facebookAds={facebookAds}
