@@ -13,7 +13,7 @@ interface TabContentProps {
   activeTab: string;
   hasData: boolean;
   activeClient: string;
-  dateRange: DateRange;
+  dateRange: DateRange | null;
   facebookAds: any[];
   whatsappLeads: any[];
   handleDateRangeChange: (range: DateRange) => void;
@@ -41,12 +41,14 @@ export const TabContent = ({
     case 'dashboard':
       return (
         <div>
-          <div className="flex justify-end mb-4">
-            <DateRangePicker
-              value={dateRange}
-              onChange={handleDateRangeChange}
-            />
-          </div>
+          {dateRange && (
+            <div className="flex justify-end mb-4">
+              <DateRangePicker
+                value={dateRange}
+                onChange={handleDateRangeChange}
+              />
+            </div>
+          )}
           
           {hasData ? (
             <DashboardOverview 

@@ -18,7 +18,7 @@ interface DateSelectorModalProps {
 }
 
 export const DateSelectorModal = ({ open, onOpenChange, value, onChange }: DateSelectorModalProps) => {
-  const [tempRange, setTempRange] = useState<DateRange>(value);
+  const [tempRange, setTempRange] = useState<DateRange>(value || { from: new Date(), to: new Date() });
   
   const presets = [
     {

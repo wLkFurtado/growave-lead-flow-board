@@ -18,6 +18,10 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
   const [modalOpen, setModalOpen] = useState(false);
 
   const formatDateRange = () => {
+    if (!value || !value.from) {
+      return 'Selecionar período';
+    }
+    
     try {
       const fromFormatted = format(value.from, 'dd/MM/yyyy', { locale: ptBR });
       const toFormatted = format(value.to || value.from, 'dd/MM/yyyy', { locale: ptBR });
