@@ -13,7 +13,7 @@ interface TabContentProps {
   activeTab: string;
   hasData: boolean;
   activeClient: string;
-  dateRange: DateRange | null;
+  dateRange: DateRange;
   facebookAds: any[];
   whatsappLeads: any[];
   handleDateRangeChange: (range: DateRange) => void;
@@ -37,20 +37,21 @@ export const TabContent = ({
     return <EmptyState type="no-data" clientName={activeClient} />;
   };
 
+  // Determinar se tem dados baseado no conteúdo real
+  const hasRealData = (facebookAds && facebookAds.length > 0) || (whatsappLeads && whatsappLeads.length > 0);
+
   switch (activeTab) {
     case 'dashboard':
       return (
         <div>
-          {dateRange && (
-            <div className="flex justify-end mb-4">
-              <DateRangePicker
-                value={dateRange}
-                onChange={handleDateRangeChange}
-              />
-            </div>
-          )}
+          <div className="flex justify-end mb-4">
+            <DateRangePicker
+              value={dateRange}
+              onChange={handleDateRangeChange}
+            />
+          </div>
           
-          {hasData ? (
+          {hasRealData ? (
             <DashboardOverview 
               adsData={facebookAds}
               leadsData={whatsappLeads}
@@ -66,7 +67,7 @@ export const TabContent = ({
     case 'contacts':
       return (
         <div>
-          {hasData ? (
+          {hasRealData ? (
             <ContactsOverview 
               facebookAds={facebookAds}
               whatsappLeads={whatsappLeads}

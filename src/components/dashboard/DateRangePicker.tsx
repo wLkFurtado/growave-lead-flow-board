@@ -18,7 +18,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
   const [modalOpen, setModalOpen] = useState(false);
 
   const formatDateRange = () => {
-    if (!value || !value.from) {
+    if (!value?.from) {
       return 'Selecionar período';
     }
     

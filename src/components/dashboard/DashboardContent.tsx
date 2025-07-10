@@ -16,7 +16,16 @@ export const DashboardContent = () => {
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [customDateRange, setCustomDateRange] = useState<DateRange | null>(null);
+  // Inicializar com período padrão (últimos 30 dias)
+  const [customDateRange, setCustomDateRange] = useState<DateRange>(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    return {
+      from: thirtyDaysAgo,
+      to: today
+    };
+  });
   
   // Usar um único hook - sempre sem filtro para garantir que carregue dados
   const clientData = useClientData({ 
