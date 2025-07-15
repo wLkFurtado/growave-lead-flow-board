@@ -21,8 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatDate } from '@/utils/data/formatters';
 
 interface Contact {
   telefone: string;
@@ -70,8 +69,10 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
       let bValue: string | number = b[sortField] || '';
       
       if (sortField === 'data_criacao') {
-        aValue = new Date(aValue as string).getTime();
-        bValue = new Date(bValue as string).getTime();
+        const dateA = new Date(aValue as string);
+        const dateB = new Date(bValue as string);
+        aValue = isNaN(dateA.getTime()) ? 0 : dateA.getTime();
+        bValue = isNaN(dateB.getTime()) ? 0 : dateB.getTime();
       }
       
       if (sortDirection === 'asc') {
@@ -296,7 +297,7 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
                       {contact.nome_conjunto || '-'}
                     </TableCell>
                     <TableCell className="text-slate-300">
-                      {format(new Date(contact.data_criacao), 'dd/MM/yyyy', { locale: ptBR })}
+                      {contact.data_criacao ? formatDate(contact.data_criacao) : '-'}
                     </TableCell>
                     <TableCell>
                       {formatUrl(contact.source_url) || (
