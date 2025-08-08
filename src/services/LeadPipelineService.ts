@@ -29,6 +29,7 @@ export const LeadPipelineService = {
     console.log('💰 LeadPipelineService.closeSale', { contactId, valorVenda, dataFechamento, observacoes });
 
     // 1) Atualiza o lead como fechado com valor_venda
+    // Observação: o histórico será registrado automaticamente pela trigger do banco (trg_log_lead_status_change).
     const { error: updError } = await supabase
       .from('whatsapp_anuncio')
       .update({
@@ -42,25 +43,9 @@ export const LeadPipelineService = {
       throw new Error(updError.message);
     }
 
-    // 2) Registra no histórico (inclui data_fechamento e observações)
-    const { error: histError } = await supabase
-      .from('lead_status_history')
-      .insert([{
-        contact_id: contactId,
-        status_anterior: 'Agendado',
-        status_novo: 'Tratamento Fechado',
-        valor_venda_anterior: null,
-        valor_venda_novo: valorVenda,
-        data_fechamento: dataFechamento ? new Date(dataFechamento) : null,
-        observacoes: observacoes || null,
-        // changed_by e changed_at são definidos via RLS/DEFAULTS e auth.uid() no trigger/policy
-      }]);
-
-    if (histError) {
-      console.error('❌ closeSale history insert error:', histError);
-      // Não desfaz o update, mas informa o erro do histórico
-      throw new Error(`Venda registrada, mas houve erro ao salvar histórico: ${histError.message}`);
-    }
+    // 2) Antes existia uma inserção manual em lead_status_history aqui.
+    //    Removida para evitar erros de tipagem, pois os tipos gerados do Supabase ainda não incluem essa tabela.
+    //    O log de histórico agora é responsabilidade da trigger criada no banco.
 
     return true;
   }
