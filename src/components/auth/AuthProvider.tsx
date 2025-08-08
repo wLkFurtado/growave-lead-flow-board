@@ -81,13 +81,64 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
+    // Watchdog: guarantee we don't get stuck loading forever
+    const watchdog = setTimeout(() => {
+      setIsLoading(false);
+    }, 8000);
 
+    // 1) Set up auth state listener FIRST (sync-only operations inside)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      try {
+        setError(null);
+
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setProfile(null);
+          setUserClients([]);
+          profileCacheRef.current = null; // clear cache on sign out
+          setIsLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          setUser(session.user);
+
+          // Use cache if available
+          if (profileCacheRef.current?.userId === session.user.id) {
+            setProfile(profileCacheRef.current.profile);
+            setUserClients(profileCacheRef.current.clients);
+            setIsLoading(false);
+          } else {
+            // Defer Supabase calls to avoid deadlocks
+            setIsLoading(true);
+            setTimeout(() => {
+              loadUserProfile(session.user!)
+                .catch((e) => {
+                  console.error('❌ AuthProvider: loadUserProfile (listener) error:', e);
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
+            }, 0);
+          }
+        } else {
+          // No session
+          setUser(null);
+          setProfile(null);
+          setUserClients([]);
+          setIsLoading(false);
+        }
+      } catch (e) {
+        console.error('❌ AuthProvider: onAuthStateChange error:', e);
+        setError('Erro ao processar mudança de autenticação');
+        setIsLoading(false);
+      }
+    });
+
+    // 2) THEN check for existing session
+    setIsLoading(true);
+    supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
         if (error) {
           console.error('❌ AuthProvider: Erro ao obter sessão:', error);
           setError('Erro ao verificar autenticação');
@@ -97,58 +148,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         if (session?.user) {
           setUser(session.user);
-          await loadUserProfile(session.user);
+
+          if (profileCacheRef.current?.userId === session.user.id) {
+            setProfile(profileCacheRef.current.profile);
+            setUserClients(profileCacheRef.current.clients);
+            setIsLoading(false);
+          } else {
+            setTimeout(() => {
+              loadUserProfile(session.user!)
+                .catch((e) => {
+                  console.error('❌ AuthProvider: loadUserProfile (init) error:', e);
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
+            }, 0);
+          }
         } else {
           setUser(null);
           setProfile(null);
           setUserClients([]);
-        }
-
-      } catch (error) {
-        console.error('❌ AuthProvider: Erro na inicialização:', error);
-        setError('Erro inesperado na inicialização');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Listener para mudanças de auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        try {
-          if (event === 'SIGNED_OUT') {
-            setUser(null);
-            setProfile(null);
-            setUserClients([]);
-            setError(null);
-            setIsLoading(false);
-            // ✅ Limpar cache ao fazer logout
-            profileCacheRef.current = null;
-          } else if (event === 'SIGNED_IN' && session?.user) {
-            // ✅ Só recarregar se mudou de usuário ou não tem cache
-            if (!profileCacheRef.current || profileCacheRef.current.userId !== session.user.id) {
-              setUser(session.user);
-              setIsLoading(true);
-              await loadUserProfile(session.user);
-              setIsLoading(false);
-            } else {
-              // ✅ Usar cache existente
-              setUser(session.user);
-              setProfile(profileCacheRef.current.profile);
-              setUserClients(profileCacheRef.current.clients);
-            }
-          }
-        } catch (error) {
-          console.error('❌ AuthProvider: Erro no listener:', error);
-          setError('Erro ao processar mudança de autenticação');
           setIsLoading(false);
         }
-      }
-    );
+      })
+      .catch((e) => {
+        console.error('❌ AuthProvider: getSession unexpected error:', e);
+        setError('Erro inesperado na inicialização');
+        setIsLoading(false);
+      });
 
     return () => {
+      clearTimeout(watchdog);
       subscription.unsubscribe();
     };
   }, []);
