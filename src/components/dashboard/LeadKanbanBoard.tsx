@@ -103,7 +103,7 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
     }
 
     const lead = leadsWithPhone.find(l => {
-      const identity = (l.contact_id && String(l.contact_id)) || String(l.telefone);
+      const identity = (l.id_transacao && String(l.id_transacao)) || String(l.telefone);
       return identity === String(active.id);
     });
 
@@ -128,20 +128,20 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
     }
 
     // Caso normal: atualizar status
-    const contactId: string | undefined = lead.contact_id || null;
-    if (!contactId) {
-      toast({ title: 'Contato sem ID', description: 'Não foi possível identificar o contato para atualizar o status.', variant: 'destructive' as any });
+    const idTransacao: string | undefined = lead.id_transacao || null;
+    if (!idTransacao) {
+      toast({ title: 'Lead sem ID', description: 'Não foi possível identificar o lead para atualizar o status.', variant: 'destructive' as any });
       return;
     }
 
     const newStatus = statusForColumn(toCol);
     try {
-      await LeadPipelineService.updateLeadStatus(contactId, newStatus);
+      await LeadPipelineService.updateLeadStatus(idTransacao, newStatus);
 
       // Atualiza no estado local
       setLocalLeads(prev =>
         prev.map(item =>
-          item.contact_id === contactId
+          item.id_transacao === idTransacao
             ? { ...item, status: newStatus }
             : item
         )
@@ -154,9 +154,9 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
 
   const handleConfirmSale = async (payload: { valorVenda: number; dataFechamento?: Date | null; observacoes?: string | null }) => {
     if (!pendingLead) return;
-    const contactId: string | undefined = pendingLead.contact_id || null;
-    if (!contactId) {
-      toast({ title: 'Contato sem ID', description: 'Não foi possível identificar o contato para registrar a venda.', variant: 'destructive' as any });
+    const idTransacao: string | undefined = pendingLead.id_transacao || null;
+    if (!idTransacao) {
+      toast({ title: 'Lead sem ID', description: 'Não foi possível identificar o lead para registrar a venda.', variant: 'destructive' as any });
       setSaleModalOpen(false);
       setPendingLead(null);
       return;
@@ -164,7 +164,7 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
 
     try {
       await LeadPipelineService.closeSale({
-        contactId,
+        idTransacao,
         valorVenda: payload.valorVenda,
         dataFechamento: payload.dataFechamento || null,
         observacoes: payload.observacoes || null
@@ -172,7 +172,7 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
 
       setLocalLeads(prev =>
         prev.map(item =>
-          item.contact_id === contactId
+          item.id_transacao === idTransacao
             ? { ...item, status: 'Tratamento Fechado', valor_venda: payload.valorVenda }
             : item
         )
@@ -225,7 +225,7 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {column.leads.length > 0 ? (
                     column.leads.map(lead => {
-                      const dragId = (lead.contact_id && String(lead.contact_id)) || String(lead.telefone);
+                      const dragId = (lead.id_transacao && String(lead.id_transacao)) || String(lead.telefone);
                       return (
                         <DraggableLeadCard
                           key={dragId}

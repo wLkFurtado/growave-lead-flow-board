@@ -4,12 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 export type PipelineStatus = 'Agendado' | 'Tratamento Fechado' | null;
 
 export const LeadPipelineService = {
-  async updateLeadStatus(contactId: string, status: PipelineStatus) {
-    console.log('🔄 LeadPipelineService.updateLeadStatus', { contactId, status });
+  async updateLeadStatus(idTransacao: string, status: PipelineStatus) {
+    console.log('🔄 LeadPipelineService.updateLeadStatus', { idTransacao, status });
     const { data, error } = await supabase
       .from('whatsapp_anuncio')
       .update({ status })
-      .eq('contact_id', contactId)
+      .eq('id_transacao', idTransacao)
       .select();
 
     if (error) {
@@ -20,13 +20,13 @@ export const LeadPipelineService = {
   },
 
   async closeSale(params: {
-    contactId: string;
+    idTransacao: string;
     valorVenda: number;
     dataFechamento?: Date | null;
     observacoes?: string | null;
   }) {
-    const { contactId, valorVenda, dataFechamento, observacoes } = params;
-    console.log('💰 LeadPipelineService.closeSale', { contactId, valorVenda, dataFechamento, observacoes });
+    const { idTransacao, valorVenda, dataFechamento, observacoes } = params;
+    console.log('💰 LeadPipelineService.closeSale', { idTransacao, valorVenda, dataFechamento, observacoes });
 
     // 1) Atualiza o lead como fechado com valor_venda
     // Observação: o histórico será registrado automaticamente pela trigger do banco (trg_log_lead_status_change).
@@ -36,7 +36,7 @@ export const LeadPipelineService = {
         status: 'Tratamento Fechado',
         valor_venda: valorVenda,
       })
-      .eq('contact_id', contactId);
+      .eq('id_transacao', idTransacao);
 
     if (updError) {
       console.error('❌ closeSale update error:', updError);
