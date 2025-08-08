@@ -109,7 +109,8 @@ export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateR
         <MetricCard 
           title="Leads com Telefone" 
           value={metrics.totalLeadsTelefone} 
-          trend="up" 
+          trend="up"
+          tooltip="Contagem considerando datas com início inclusivo (>=) e fim exclusivo (< dia seguinte)."
         />
         <MetricCard 
           title="Custo por Lead" 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DateRange } from '@/types/common';
+import { BUSINESS_RULES } from '@/config/business';
 
 interface UseWhatsAppLeadsDataOptions {
   activeClient: string;
@@ -55,15 +56,18 @@ export const useWhatsAppLeadsData = ({
         // Apply date filter if needed
         if (!skipDateFilter && dateRange) {
           const fromDate = dateRange.from.toISOString().split('T')[0];
-          const toDate = (dateRange.to || dateRange.from).toISOString().split('T')[0];
+          const toBase = (dateRange.to || dateRange.from);
+          const toExclusive = new Date(toBase);
+          toExclusive.setDate(toExclusive.getDate() + 1);
+          const toExclusiveDate = toExclusive.toISOString().split('T')[0];
           
-          console.log('📅 useWhatsAppLeadsData: Aplicando filtro de data:', {
+          console.log('📅 useWhatsAppLeadsData: Aplicando filtro de data (início inclusivo, fim exclusivo):', {
             from: fromDate,
-            to: toDate,
+            toExclusive: toExclusiveDate,
             cliente: activeClient
           });
           
-          query = query.gte('data_criacao', fromDate).lte('data_criacao', toDate);
+          query = query.gte('data_criacao', fromDate).lt('data_criacao', toExclusiveDate);
         }
 
         const { data: wppData, error: wppError } = await query;
@@ -85,10 +89,18 @@ export const useWhatsAppLeadsData = ({
           throw new Error('Erro de segurança: dados de outros clientes detectados');
         }
 
+        const normalize = (phone?: string) => (phone || '').replace(/\D/g, '');
+        const withPhone = validatedData.filter(row => row.telefone);
+        const validPhones = withPhone.filter(row => normalize(row.telefone).length >= BUSINESS_RULES.VALID_PHONE_MIN_LENGTH);
+        const uniquePhones = new Set(validPhones.map(row => normalize(row.telefone))).size;
+
         console.log('✅ useWhatsAppLeadsData: Dados WPP validados:', {
           cliente: activeClient,
           total: validatedData.length,
-          comVenda: validatedData.filter(row => row.valor_venda > 0).length
+          comVenda: validatedData.filter(row => row.valor_venda > 0).length,
+          comTelefoneTruthy: withPhone.length,
+          comTelefoneValido: validPhones.length,
+          telefonesUnicosValidos: uniquePhones
         });
 
         setData(validatedData);

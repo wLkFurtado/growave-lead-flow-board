@@ -1,6 +1,8 @@
 
 import React from 'react';
-import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 interface MetricCardProps {
   title: string;
@@ -10,7 +12,9 @@ interface MetricCardProps {
   percentage?: number;
   className?: string;
   icon?: React.ReactNode;
+  tooltip?: string;
 }
+
 
 export const MetricCard = ({ 
   title, 
@@ -19,7 +23,8 @@ export const MetricCard = ({
   trend = 'neutral', 
   percentage,
   className = '',
-  icon
+  icon,
+  tooltip
 }: MetricCardProps) => {
   const formatValue = (val: number) => {
     return val.toLocaleString('pt-BR', { 
@@ -44,9 +49,25 @@ export const MetricCard = ({
                 {icon}
               </div>
             )}
-            <h3 className="text-slate-400 text-sm font-medium uppercase tracking-wide group-hover:text-slate-300 transition-colors duration-300">
-              {title}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-slate-400 text-sm font-medium uppercase tracking-wide group-hover:text-slate-300 transition-colors duration-300">
+                {title}
+              </h3>
+              {tooltip && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" aria-label="Informação" className="text-slate-400 hover:text-slate-300">
+                        <Info size={14} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs text-sm">{tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           </div>
           
           {trend !== 'neutral' && (
