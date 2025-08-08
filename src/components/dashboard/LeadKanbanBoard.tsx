@@ -8,6 +8,7 @@ import { Phone, PhoneOff, Info } from 'lucide-react';
 import { LeadPipelineService, PipelineStatus } from '@/services/LeadPipelineService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/use-toast';
+import { SaleModal } from './SaleModal';
 
 interface LeadKanbanBoardProps {
   leadsData: any[];
@@ -245,6 +246,17 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
           ))}
         </div>
       </DndContext>
+
+      <SaleModal
+        open={saleModalOpen}
+        leadName={pendingLead?.nome}
+        onConfirm={handleConfirmSale}
+        onCancel={() => {
+          setSaleModalOpen(false);
+          setPendingLead(null);
+        }}
+      />
     </section>
   );
 };
+

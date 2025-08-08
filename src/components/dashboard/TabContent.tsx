@@ -8,6 +8,7 @@ import { DateRangePicker } from './DateRangePicker';
 import { UserManagement } from './UserManagement';
 import { MyProfile } from './MyProfile';
 import { useAuth } from '@/hooks/useAuth';
+import { LeadKanbanBoard } from './LeadKanbanBoard';
 
 interface TabContentProps {
   activeTab: string;
@@ -65,6 +66,13 @@ export const TabContent = ({
           dateRange={dateRange}
         />
       );
+    
+    case 'kanban':
+      return (
+        <LeadKanbanBoard leadsData={whatsappLeads} />
+      );
+    
+
     
     case 'users':
       return isAdmin ? (
