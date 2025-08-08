@@ -27,7 +27,7 @@ const getColumnIdForLead = (lead: any): ColumnId => {
 
 export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
   const { isAdmin, profile } = useAuth();
-  const canMoveCards = isAdmin || profile?.role === 'admin';
+  const canMoveCards = !!profile;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   // Mantém estado local para refletir atualizações instantaneamente
