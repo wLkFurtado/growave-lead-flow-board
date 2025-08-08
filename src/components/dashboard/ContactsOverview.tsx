@@ -3,6 +3,7 @@ import React from 'react';
 import { ContactsTable } from './ContactsTable';
 import { DateRange } from '@/types/common';
 import { formatDate } from '@/utils/data/formatters';
+import { BUSINESS_RULES } from '@/config/business';
 
 interface ContactsOverviewProps {
   whatsappLeads: any[];
@@ -14,7 +15,7 @@ const normalizePhone = (phone?: string) => (phone || '').replace(/\D/g, '');
 
 export const ContactsOverview = ({ whatsappLeads, clientName, dateRange }: ContactsOverviewProps) => {
   // Usar apenas leads do WhatsApp com telefone válido
-  const leadsWithPhone = (whatsappLeads || []).filter(lead => normalizePhone(lead.telefone).length >= 8);
+  const leadsWithPhone = (whatsappLeads || []).filter(lead => normalizePhone(lead.telefone).length >= BUSINESS_RULES.VALID_PHONE_MIN_LENGTH);
 
   const contactsData = leadsWithPhone.map(lead => ({
     telefone: lead.telefone || '',

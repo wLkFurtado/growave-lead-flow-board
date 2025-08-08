@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatDate } from '@/utils/data/formatters';
+import { BUSINESS_RULES } from '@/config/business';
 
 interface Contact {
   telefone: string;
@@ -94,12 +95,12 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
   const metrics = useMemo(() => {
     const total = contactsData.length;
     const digits = (v: string) => (v || '').replace(/\D/g, '');
-    const withPhone = contactsData.filter(c => digits(c.telefone).length >= 8).length;
+    const withPhone = contactsData.filter(c => digits(c.telefone).length >= BUSINESS_RULES.VALID_PHONE_MIN_LENGTH).length;
     const withEmail = contactsData.filter(c => c.email && c.email.trim() !== '').length;
     const uniquePhones = new Set(
       contactsData
         .map(c => digits(c.telefone))
-        .filter(p => p.length >= 8)
+        .filter(p => p.length >= BUSINESS_RULES.VALID_PHONE_MIN_LENGTH)
     ).size;
     
     return { total, withPhone, withEmail, uniquePhones };

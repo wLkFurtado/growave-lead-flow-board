@@ -15,8 +15,9 @@ export const calculateClientMetrics = (
   const totalAlcance = facebookAds.reduce((sum, ad) => sum + (ad.alcance || 0), 0);
 
   // WhatsApp Leads metrics
+  const normalizePhone = (phone?: string) => String(phone || '').replace(/\D/g, '');
   const leadsComTelefone = whatsappLeads.filter(lead => 
-    lead.telefone && lead.telefone.length >= BUSINESS_RULES.VALID_PHONE_MIN_LENGTH
+    normalizePhone(lead.telefone).length >= BUSINESS_RULES.VALID_PHONE_MIN_LENGTH
   );
   const totalLeadsTelefone = leadsComTelefone.length;
 

@@ -7,6 +7,7 @@ import { DateRangePicker } from './DateRangePicker';
 import { DateRange } from '@/types/common';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { MetricsService } from '@/services/data/MetricsService';
 
 interface DashboardOverviewProps {
   adsData: any[];
@@ -17,68 +18,9 @@ interface DashboardOverviewProps {
 
 export const DashboardOverview = ({ adsData, leadsData, onDateRangeChange, dateRange }: DashboardOverviewProps) => {
   const metrics = useMemo(() => {
-    console.log('📊 Calculando métricas:', {
-      adsCount: adsData.length,
-      leadsCount: leadsData.length,
-      periode: {
-        from: dateRange.from.toISOString().split('T')[0],
-        to: dateRange.to.toISOString().split('T')[0]
-      }
-    });
-
-    const totalInvestido = adsData.reduce((sum, ad) => sum + (ad.investimento || 0), 0);
-    const totalCliques = adsData.reduce((sum, ad) => sum + (ad.cliques_no_link || 0), 0);
-    const totalMensagens = adsData.reduce((sum, ad) => sum + (ad.mensagens_iniciadas || 0), 0);
-    const totalAlcance = adsData.reduce((sum, ad) => sum + (ad.alcance || 0), 0);
-
-    const leadsComTelefone = leadsData.filter(lead => lead.telefone && lead.telefone.length > 0);
-    const totalLeadsTelefone = leadsComTelefone.length;
-
-    // Cálculos corrigidos com validações
-    const custoPorLeadTelefone = totalLeadsTelefone > 0 && totalInvestido > 0 
-      ? totalInvestido / totalLeadsTelefone 
-      : 0;
-    
-    const custoPorMensagemIniciada = totalMensagens > 0 && totalInvestido > 0 
-      ? totalInvestido / totalMensagens 
-      : 0;
-
-    // Calcular faturamento apenas de leads com vendas válidas
-    const vendasValidas = leadsData.filter(lead => 
-      typeof lead.valor_venda === 'number' && 
-      lead.valor_venda > 0 && 
-      !isNaN(lead.valor_venda)
-    );
-    
-    const faturamentoMes = vendasValidas.reduce((sum, lead) => sum + lead.valor_venda, 0);
-    
-    // ROI corrigido - só calcular se houver investimento e faturamento
-    let roi = 0;
-    if (totalInvestido > 0 && faturamentoMes > 0) {
-      roi = ((faturamentoMes - totalInvestido) / totalInvestido) * 100;
-    }
-
-    console.log('📊 Métricas calculadas:', {
-      totalInvestido,
-      totalLeadsTelefone,
-      custoPorLeadTelefone,
-      faturamentoMes,
-      vendasValidas: vendasValidas.length,
-      roi
-    });
-
-    return {
-      totalInvestido,
-      totalCliques,
-      totalMensagens,
-      totalLeadsTelefone,
-      totalAlcance,
-      custoPorLeadTelefone,
-      custoPorMensagemIniciada,
-      faturamentoMes,
-      roi,
-      vendasValidas: vendasValidas.length
-    };
+    const m = MetricsService.calculateForClient(adsData, leadsData);
+    console.log('📊 Métricas (centralizadas via MetricsService):', m);
+    return m;
   }, [adsData, leadsData, dateRange]);
 
   // Verificar inconsistências nos dados
