@@ -60,9 +60,9 @@ export const TabContent = ({
     case 'contacts':
       return (
         <ContactsOverview 
-          facebookAds={facebookAds}
           whatsappLeads={whatsappLeads}
           clientName={activeClient}
+          dateRange={dateRange}
         />
       );
     

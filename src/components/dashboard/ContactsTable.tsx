@@ -93,9 +93,14 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
   // Métricas
   const metrics = useMemo(() => {
     const total = contactsData.length;
-    const withPhone = contactsData.filter(c => c.telefone && c.telefone.trim() !== '').length;
+    const digits = (v: string) => (v || '').replace(/\D/g, '');
+    const withPhone = contactsData.filter(c => digits(c.telefone).length >= 8).length;
     const withEmail = contactsData.filter(c => c.email && c.email.trim() !== '').length;
-    const uniquePhones = new Set(contactsData.map(c => c.telefone)).size;
+    const uniquePhones = new Set(
+      contactsData
+        .map(c => digits(c.telefone))
+        .filter(p => p.length >= 8)
+    ).size;
     
     return { total, withPhone, withEmail, uniquePhones };
   }, [contactsData]);

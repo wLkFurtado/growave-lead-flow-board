@@ -1,58 +1,51 @@
 
 import React from 'react';
 import { ContactsTable } from './ContactsTable';
+import { DateRange } from '@/types/common';
+import { formatDate } from '@/utils/data/formatters';
 
 interface ContactsOverviewProps {
-  facebookAds: any[];
   whatsappLeads: any[];
   clientName: string;
+  dateRange?: DateRange;
 }
 
-export const ContactsOverview = ({ facebookAds, whatsappLeads, clientName }: ContactsOverviewProps) => {
-  // Combinar dados do Facebook e WhatsApp para criar lista de contatos
-  const contactsData = [
-    ...facebookAds.map(ad => ({
-      telefone: ad.telefone || '',
-      nome: ad.nome || '',
-      sobrenome: ad.sobrenome || '',
-      email: ad.email || '',
-      data_criacao: ad.data_criacao,
-      nome_anuncio: ad.nome_anuncio,
-      nome_campanha: ad.nome_campanha,
-      nome_conjunto: ad.nome_conjunto,
-      source_url: ad.source_url,
-      cidade: ad.cidade,
-      estado: ad.estado,
-      mensagem: ad.mensagem
-    })),
-    ...whatsappLeads.map(lead => ({
-      telefone: lead.telefone || '',
-      nome: lead.nome || '',
-      sobrenome: lead.sobrenome || '',
-      email: lead.email || '',
-      data_criacao: lead.data_criacao,
-      nome_anuncio: lead.nome_anuncio,
-      nome_campanha: lead.nome_campanha,
-      nome_conjunto: lead.nome_conjunto,
-      source_url: lead.source_url,
-      cidade: lead.cidade,
-      estado: lead.estado,
-      mensagem: lead.mensagem
-    }))
-  ];
+const normalizePhone = (phone?: string) => (phone || '').replace(/\D/g, '');
+
+export const ContactsOverview = ({ whatsappLeads, clientName, dateRange }: ContactsOverviewProps) => {
+  // Usar apenas leads do WhatsApp com telefone válido
+  const leadsWithPhone = (whatsappLeads || []).filter(lead => normalizePhone(lead.telefone).length >= 8);
+
+  const contactsData = leadsWithPhone.map(lead => ({
+    telefone: lead.telefone || '',
+    nome: lead.nome || '',
+    sobrenome: lead.sobrenome || '',
+    email: lead.email || '',
+    data_criacao: lead.data_criacao,
+    nome_anuncio: lead.nome_anuncio,
+    nome_campanha: lead.nome_campanha,
+    nome_conjunto: lead.nome_conjunto,
+    source_url: lead.source_url,
+    cidade: lead.cidade,
+    estado: lead.estado,
+    mensagem: lead.mensagem
+  }));
+
+  const periodText =
+    dateRange?.from && dateRange?.to
+      ? `Período: ${formatDate(dateRange.from)} — ${formatDate(dateRange.to)}`
+      : 'Apenas leads com telefone';
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-white">Contatos - {clientName}</h2>
-        <p className="text-slate-400 mt-1">
-          Todos os contatos obtidos através das campanhas
-        </p>
+        <p className="text-slate-400 mt-1">{periodText}</p>
       </div>
       
       <ContactsTable 
         contactsData={contactsData}
-        dateRange={{ from: new Date(), to: new Date() }}
+        dateRange={dateRange?.from && dateRange?.to ? { from: dateRange.from, to: dateRange.to } : { from: new Date(), to: new Date() }}
       />
     </div>
   );
