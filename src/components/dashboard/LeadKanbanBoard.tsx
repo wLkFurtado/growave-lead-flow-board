@@ -1,48 +1,63 @@
-
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { LeadCard } from './LeadCard';
+import { DraggableLeadCard } from './DraggableLeadCard';
+import { DroppableColumn } from './DroppableColumn';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Phone, PhoneOff, Info } from 'lucide-react';
+import { LeadPipelineService, PipelineStatus } from '@/services/LeadPipelineService';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/components/ui/use-toast';
 
 interface LeadKanbanBoardProps {
   leadsData: any[];
 }
 
+type ColumnId = 'contacted' | 'scheduled' | 'closed';
+
+const statusForColumn = (col: ColumnId): PipelineStatus =>
+  col === 'scheduled' ? 'Agendado' : col === 'closed' ? 'Tratamento Fechado' : null;
+
+const getColumnIdForLead = (lead: any): ColumnId => {
+  if (lead?.telefone && lead?.valor_venda) return 'closed';
+  if (lead?.telefone && lead?.status === 'Agendado') return 'scheduled';
+  return 'contacted';
+};
+
 export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
-  const categorizedLeads = useMemo(() => {
-    console.log('🔄 LeadKanbanBoard: Categorizando leads:', {
-      totalLeads: leadsData.length,
-      leadsWithPhone: leadsData.filter(lead => lead.telefone && lead.telefone.trim() !== '').length,
-      leadsWithoutPhone: leadsData.filter(lead => !lead.telefone || lead.telefone.trim() === '').length
-    });
+  const { isAdmin, profile } = useAuth();
+  const canMoveCards = isAdmin || profile?.role === 'admin';
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-    // Incluir TODOS os leads, mas separar por categoria
-    const leadsWithPhone = leadsData.filter(lead => lead.telefone && lead.telefone.trim() !== '');
-    const leadsWithoutPhone = leadsData.filter(lead => !lead.telefone || lead.telefone.trim() === '');
-
-    const enteredContact = leadsWithPhone.filter(lead =>
-      !lead.valor_venda && lead.status !== 'Agendado'
-    );
-    const scheduled = leadsWithPhone.filter(lead =>
-      !lead.valor_venda && lead.status === 'Agendado'
-    );
-    const closedDeal = leadsWithPhone.filter(lead =>
-      lead.valor_venda
-    );
-
-    console.log('📊 LeadKanbanBoard: Leads categorizados:', {
-      enteredContact: enteredContact.length,
-      scheduled: scheduled.length,
-      closedDeal: closedDeal.length,
-      withoutPhone: leadsWithoutPhone.length
-    });
-
-    return { enteredContact, scheduled, closedDeal, leadsWithoutPhone };
+  // Mantém estado local para refletir atualizações instantaneamente
+  const [localLeads, setLocalLeads] = useState<any[]>(leadsData || []);
+  useEffect(() => {
+    setLocalLeads(leadsData || []);
   }, [leadsData]);
+
+  // Controle do modal de venda
+  const [saleModalOpen, setSaleModalOpen] = useState(false);
+  const [pendingLead, setPendingLead] = useState<any | null>(null);
+
+  const leadsWithPhone = useMemo(
+    () => (localLeads || []).filter(lead => lead.telefone && String(lead.telefone).trim() !== ''),
+    [localLeads]
+  );
+  const leadsWithoutPhone = useMemo(
+    () => (localLeads || []).filter(lead => !lead.telefone || String(lead.telefone).trim() === ''),
+    [localLeads]
+  );
+
+  const categorizedLeads = useMemo(() => {
+    const enteredContact = leadsWithPhone.filter(lead => !lead.valor_venda && lead.status !== 'Agendado');
+    const scheduled = leadsWithPhone.filter(lead => !lead.valor_venda && lead.status === 'Agendado');
+    const closedDeal = leadsWithPhone.filter(lead => lead.valor_venda);
+    return { enteredContact, scheduled, closedDeal, leadsWithoutPhone };
+  }, [leadsWithPhone, leadsWithoutPhone]);
 
   const kanbanColumns = [
     {
-      id: 'contacted',
+      id: 'contacted' as ColumnId,
       title: 'Entrou em Contato',
       leads: categorizedLeads.enteredContact,
       color: 'border-blue-500',
@@ -50,7 +65,7 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
       headerColor: 'bg-blue-500'
     },
     {
-      id: 'scheduled',
+      id: 'scheduled' as ColumnId,
       title: 'Agendado',
       leads: categorizedLeads.scheduled,
       color: 'border-yellow-500',
@@ -58,7 +73,7 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
       headerColor: 'bg-yellow-500'
     },
     {
-      id: 'closed',
+      id: 'closed' as ColumnId,
       title: 'Tratamento Fechado',
       leads: categorizedLeads.closedDeal,
       color: 'border-emerald-500',
@@ -67,7 +82,108 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
     },
   ];
 
-  const totalLeadsWithPhone = leadsData.filter(lead => lead.telefone && lead.telefone.trim() !== '').length;
+  const totalLeadsWithPhone = leadsWithPhone.length;
+
+  const validateStatusChange = (from: ColumnId, to: ColumnId) => {
+    // Exemplo de regra: não pode ir direto para "Tratamento Fechado" se não estava "Agendado"
+    if (from !== 'scheduled' && to === 'closed') {
+      return { valid: false, message: 'Lead deve ser agendado antes de fechar.' };
+    }
+    return { valid: true };
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    if (!canMoveCards) {
+      toast({ title: 'Sem permissão', description: 'Você não pode mover cards do pipeline.', variant: 'destructive' as any });
+      return;
+    }
+
+    const lead = leadsWithPhone.find(l => {
+      const identity = (l.contact_id && String(l.contact_id)) || String(l.telefone);
+      return identity === String(active.id);
+    });
+
+    if (!lead) return;
+
+    const fromCol = getColumnIdForLead(lead);
+    const toCol = over.id as ColumnId;
+
+    if (fromCol === toCol) return;
+
+    const validation = validateStatusChange(fromCol, toCol);
+    if (!validation.valid) {
+      toast({ title: 'Movimentação inválida', description: validation.message, variant: 'destructive' as any });
+      return;
+    }
+
+    // Se for fechar, abrir modal para capturar valor
+    if (toCol === 'closed') {
+      setPendingLead(lead);
+      setSaleModalOpen(true);
+      return;
+    }
+
+    // Caso normal: atualizar status
+    const contactId: string | undefined = lead.contact_id || null;
+    if (!contactId) {
+      toast({ title: 'Contato sem ID', description: 'Não foi possível identificar o contato para atualizar o status.', variant: 'destructive' as any });
+      return;
+    }
+
+    const newStatus = statusForColumn(toCol);
+    try {
+      await LeadPipelineService.updateLeadStatus(contactId, newStatus);
+
+      // Atualiza no estado local
+      setLocalLeads(prev =>
+        prev.map(item =>
+          item.contact_id === contactId
+            ? { ...item, status: newStatus }
+            : item
+        )
+      );
+      toast({ title: 'Status atualizado', description: `Lead movido para "${toCol === 'scheduled' ? 'Agendado' : 'Entrou em Contato'}".` });
+    } catch (err: any) {
+      toast({ title: 'Erro ao atualizar', description: err.message || 'Tente novamente mais tarde.', variant: 'destructive' as any });
+    }
+  };
+
+  const handleConfirmSale = async (payload: { valorVenda: number; dataFechamento?: Date | null; observacoes?: string | null }) => {
+    if (!pendingLead) return;
+    const contactId: string | undefined = pendingLead.contact_id || null;
+    if (!contactId) {
+      toast({ title: 'Contato sem ID', description: 'Não foi possível identificar o contato para registrar a venda.', variant: 'destructive' as any });
+      setSaleModalOpen(false);
+      setPendingLead(null);
+      return;
+    }
+
+    try {
+      await LeadPipelineService.closeSale({
+        contactId,
+        valorVenda: payload.valorVenda,
+        dataFechamento: payload.dataFechamento || null,
+        observacoes: payload.observacoes || null
+      });
+
+      setLocalLeads(prev =>
+        prev.map(item =>
+          item.contact_id === contactId
+            ? { ...item, status: 'Tratamento Fechado', valor_venda: payload.valorVenda }
+            : item
+        )
+      );
+      toast({ title: 'Venda registrada', description: 'O lead foi movido para "Tratamento Fechado".' });
+    } catch (err: any) {
+      toast({ title: 'Erro ao registrar venda', description: err.message || 'Tente novamente.', variant: 'destructive' as any });
+    } finally {
+      setSaleModalOpen(false);
+      setPendingLead(null);
+    }
+  };
 
   return (
     <section className="space-y-6">
@@ -82,7 +198,7 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
             <PhoneOff className="w-4 h-4 text-red-400" />
             <span>Sem telefone: {categorizedLeads.leadsWithoutPhone.length}</span>
           </div>
-          <div>Total: {leadsData.length} leads</div>
+          <div>Total: {localLeads.length} leads</div>
         </div>
       </div>
 
@@ -94,38 +210,41 @@ export const LeadKanbanBoard = ({ leadsData }: LeadKanbanBoardProps) => {
           </AlertDescription>
         </Alert>
       )}
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {kanbanColumns.map(column => (
-          <div
-            key={column.id}
-            className={`bg-slate-800/30 backdrop-blur-lg border ${column.color} rounded-xl overflow-hidden`}
-          >
-            <div className={`${column.headerColor} px-6 py-4`}>
-              <h3 className="font-bold text-lg text-white text-center">
-                {column.title}
-              </h3>
-              <p className="text-center text-white/80 text-sm mt-1">
-                {column.leads.length} leads
-              </p>
-            </div>
-            
-            <div className={`${column.bgColor} p-4`}>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {column.leads.length > 0 ? (
-                  column.leads.map(lead => (
-                    <LeadCard key={lead.id || `${lead.nome}-${lead.telefone}`} lead={lead} />
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-slate-400 text-sm">Nenhum lead nesta etapa</p>
-                  </div>
-                )}
+
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {kanbanColumns.map(column => (
+            <DroppableColumn key={column.id} droppableId={column.id} className={`bg-slate-800/30 backdrop-blur-lg border ${column.color} rounded-xl overflow-hidden`}>
+              <div className={`${column.headerColor} px-6 py-4`}>
+                <h3 className="font-bold text-lg text-white text-center">{column.title}</h3>
+                <p className="text-center text-white/80 text-sm mt-1">{column.leads.length} leads</p>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
+
+              <div className={`${column.bgColor} p-4`}>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {column.leads.length > 0 ? (
+                    column.leads.map(lead => {
+                      const dragId = (lead.contact_id && String(lead.contact_id)) || String(lead.telefone);
+                      return (
+                        <DraggableLeadCard
+                          key={dragId}
+                          dragId={dragId}
+                          lead={lead}
+                          disabled={!canMoveCards}
+                        />
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-slate-400 text-sm">Nenhum lead nesta etapa</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DroppableColumn>
+          ))}
+        </div>
+      </DndContext>
     </section>
   );
 };
