@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DateRange } from '@/types/common';
 import { BUSINESS_RULES } from '@/config/business';
+import { addDays, format } from 'date-fns';
 
 interface UseWhatsAppLeadsQueryOptions {
   activeClient: string;
@@ -47,13 +48,11 @@ export const useWhatsAppLeadsQuery = ({
 
       // Apply date filter if needed
       if (!skipDateFilter && dateRange) {
-        const fromDate = dateRange.from.toISOString().split('T')[0];
-        const toBase = (dateRange.to || dateRange.from);
-        const toExclusive = new Date(toBase);
-        toExclusive.setDate(toExclusive.getDate() + 1);
-        const toExclusiveDate = toExclusive.toISOString().split('T')[0];
+        const fromDate = format(dateRange.from, 'yyyy-MM-dd');
+        const toBase = dateRange.to ?? dateRange.from;
+        const toExclusiveDate = format(addDays(toBase, 1), 'yyyy-MM-dd');
         
-        console.log('📅 useWhatsAppLeadsQuery: Aplicando filtro de data (início inclusivo, fim exclusivo):', {
+        console.log('📅 useWhatsAppLeadsQuery: Aplicando filtro de data (início inclusivo, fim exclusivo, timezone local):', {
           from: fromDate,
           toExclusive: toExclusiveDate,
           cliente: activeClient
