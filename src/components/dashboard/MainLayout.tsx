@@ -29,22 +29,27 @@ export const MainLayout = ({
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-[#39FF14]/3 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
       
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab}
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-      />
+      {/* Desktop sidebar */}
+      <div className="hidden md:block">
+        <Sidebar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab}
+          isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
+        />
+      </div>
       
       <DashboardHeader 
         activeTab={activeTab}
         isCollapsed={isCollapsed}
         onNavigateToProfile={onNavigateToProfile}
+        onSelectTab={setActiveTab}
       />
       
-      <main className={`pt-20 transition-all duration-300 ease-out ${
-        isCollapsed ? 'ml-16' : 'ml-64'
+      <main className={`pt-20 transition-all duration-300 ease-out left-0 ml-0 ${
+        isCollapsed ? 'md:ml-16' : 'md:ml-64'
       }`}>
+
         <div className="px-4 py-4 md:px-6 md:py-6">
           <div className="max-w-full mx-auto space-y-6">
             {children}

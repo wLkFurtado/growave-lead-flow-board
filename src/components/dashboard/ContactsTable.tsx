@@ -244,8 +244,8 @@ export const ContactsTable = ({ contactsData, dateRange }: ContactsTableProps) =
           </div>
 
           {/* Tabela */}
-          <div className="border border-[#00FF88]/30 rounded-lg overflow-hidden bg-transparent backdrop-blur-sm">
-            <Table>
+          <div className="border border-[#00FF88]/30 rounded-lg bg-transparent backdrop-blur-sm overflow-x-auto">
+            <Table className="min-w-[960px] md:min-w-0">
               <TableHeader>
                 <TableRow className="border-[#00FF88]/20 hover:bg-[#00FF88]/5">
                   <TableHead 
